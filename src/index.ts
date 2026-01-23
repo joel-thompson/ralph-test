@@ -32,4 +32,20 @@ if (args.includes('--help') || args.length === 0) {
   process.exit(0);
 }
 
-console.log('Math CLI initialized');
+// Parse command and arguments
+const command = args[0];
+const a = parseFloat(args[1]);
+const b = parseFloat(args[2]);
+
+// Handle add command
+if (command === 'add') {
+  if (isNaN(a) || isNaN(b)) {
+    console.error('Error: Invalid input. Please provide two valid numbers.');
+    process.exit(1);
+  }
+  console.log(a + b);
+  process.exit(0);
+}
+
+console.error(`Error: Unknown command '${command}'`);
+process.exit(1);
