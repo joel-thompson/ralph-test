@@ -1,6 +1,6 @@
 # Project Plan
 
-## Overview
+## Project Overview
 
 Typescript hono api which performs basic math operations.
 
@@ -99,7 +99,7 @@ Typescript hono api which performs basic math operations.
 1. Read activity.md first to understand current state
 2. Find next task with "passes": false
 3. Complete all steps for that task
-4. Verify in browser
+4. Verify with curl
 5. Update task to "passes": true
 6. Log completion in activity.md
 
