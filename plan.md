@@ -31,7 +31,7 @@ TypeScript CLI application which performs basic math operations.
       "Add --help flag to display usage",
       "Verify CLI runs and displays help"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
