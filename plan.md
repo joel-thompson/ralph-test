@@ -20,7 +20,7 @@ Typescript hono api which performs basic math operations.
       "Create project directory structure (src/)",
       "Set up dev scripts for running the server"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
@@ -31,7 +31,7 @@ Typescript hono api which performs basic math operations.
       "Add GET /health endpoint",
       "Verify server starts and responds"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
@@ -42,7 +42,7 @@ Typescript hono api which performs basic math operations.
       "Return sum in response",
       "Handle invalid input with error response"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
@@ -53,7 +53,7 @@ Typescript hono api which performs basic math operations.
       "Return difference in response",
       "Handle invalid input with error response"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
@@ -64,7 +64,7 @@ Typescript hono api which performs basic math operations.
       "Return product in response",
       "Handle invalid input with error response"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
@@ -76,7 +76,7 @@ Typescript hono api which performs basic math operations.
       "Handle division by zero error",
       "Handle invalid input with error response"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "testing",
@@ -89,7 +89,7 @@ Typescript hono api which performs basic math operations.
       "Test division by zero returns error",
       "Test invalid input handling for all endpoints"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",
@@ -101,7 +101,7 @@ Typescript hono api which performs basic math operations.
       "Add setup and running instructions",
       "Include curl examples for testing"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
