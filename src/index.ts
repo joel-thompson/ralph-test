@@ -31,6 +31,18 @@ app.post('/math/subtract', async (c) => {
   return c.json({ result })
 })
 
+app.post('/math/multiply', async (c) => {
+  const body = await c.req.json()
+  const { a, b } = body
+
+  if (typeof a !== 'number' || typeof b !== 'number') {
+    return c.json({ error: 'Invalid input: both a and b must be numbers' }, 400)
+  }
+
+  const result = a * b
+  return c.json({ result })
+})
+
 const port = 3001
 console.log(`[debug] Server starting on port ${port}`)
 serve({
