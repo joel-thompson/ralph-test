@@ -1,0 +1,31 @@
+{
+  "name": "ralph-test",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "bin": {
+    "math": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joel-thompson/ralph-test.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/joel-thompson/ralph-test/issues"
+  },
+  "homepage": "https://github.com/joel-thompson/ralph-test#readme",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
