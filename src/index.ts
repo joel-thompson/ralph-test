@@ -87,6 +87,22 @@ app.post("/math/sqrt", async (c) => {
   return c.json({ operation: "sqrt", number, result });
 });
 
+app.post("/math/modulo", async (c) => {
+  const body = await c.req.json();
+  const { dividend, divisor } = body;
+
+  if (typeof dividend !== "number" || typeof divisor !== "number") {
+    return c.json({ error: "Invalid input: both 'dividend' and 'divisor' must be numbers" }, 400);
+  }
+
+  if (divisor === 0) {
+    return c.json({ error: "Division by zero is not allowed" }, 400);
+  }
+
+  const result = dividend % divisor;
+  return c.json({ operation: "modulo", dividend, divisor, result });
+});
+
 const port = 3002;
 console.log(`[debug] Server starting on http://localhost:${port}`);
 

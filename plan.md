@@ -102,6 +102,29 @@ Typescript hono api which performs basic math operations.
     "passes": true
   },
   {
+    "category": "feature",
+    "description": "Implement modulo/remainder endpoint",
+    "steps": [
+      "Create POST /math/modulo endpoint",
+      "Accept dividend and divisor numbers in request body",
+      "Return remainder of division",
+      "Handle division by zero error",
+      "Handle invalid input with error response"
+    ],
+    "passes": true
+  },
+  {
+    "category": "feature",
+    "description": "Implement absolute value endpoint",
+    "steps": [
+      "Create POST /math/abs endpoint",
+      "Accept a number in request body",
+      "Return absolute value of the number",
+      "Handle invalid input with error response"
+    ],
+    "passes": false
+  },
+  {
     "category": "testing",
     "description": "Verify all math endpoints work correctly",
     "steps": [

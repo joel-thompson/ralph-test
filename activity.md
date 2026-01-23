@@ -365,3 +365,45 @@ This file logs what the agent accomplishes during each iteration:
 
 **Status:** ✓ Complete
 
+
+### 2026-01-23 - Implement Modulo/Remainder Endpoint
+
+**Task:** Feature - Implement modulo/remainder endpoint
+
+**Changes Made:**
+- Added POST /math/modulo endpoint to src/index.ts
+- Endpoint accepts JSON body with two numbers (dividend and divisor)
+- Returns JSON response with operation, inputs, and result (remainder)
+- Implements error handling for invalid input (non-number values)
+- Implements error handling for division by zero
+- Uses the modulo operator (%) to calculate the remainder
+
+**Verification:**
+- Built project and started server
+- Tested with valid input:
+  ```bash
+  curl -s -X POST http://localhost:3002/math/modulo -H "Content-Type: application/json" -d '{"dividend": 17, "divisor": 5}'
+  ```
+- Response:
+  ```json
+  {"operation":"modulo","dividend":17,"divisor":5,"result":2}
+  ```
+- Tested with division by zero:
+  ```bash
+  curl -s -X POST http://localhost:3002/math/modulo -H "Content-Type: application/json" -d '{"dividend": 10, "divisor": 0}'
+  ```
+- Response:
+  ```json
+  {"error":"Division by zero is not allowed"}
+  ```
+- Tested with invalid input:
+  ```bash
+  curl -s -X POST http://localhost:3002/math/modulo -H "Content-Type: application/json" -d '{"dividend": "seventeen", "divisor": 5}'
+  ```
+- Response:
+  ```json
+  {"error":"Invalid input: both 'dividend' and 'divisor' must be numbers"}
+  ```
+
+**Status:** ✓ Complete
+
