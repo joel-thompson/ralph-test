@@ -103,6 +103,18 @@ app.post("/math/modulo", async (c) => {
   return c.json({ operation: "modulo", dividend, divisor, result });
 });
 
+app.post("/math/abs", async (c) => {
+  const body = await c.req.json();
+  const { number } = body;
+
+  if (typeof number !== "number") {
+    return c.json({ error: "Invalid input: 'number' must be a number" }, 400);
+  }
+
+  const result = Math.abs(number);
+  return c.json({ operation: "abs", number, result });
+});
+
 const port = 3002;
 console.log(`[debug] Server starting on http://localhost:${port}`);
 
