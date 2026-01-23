@@ -101,7 +101,7 @@ Typescript hono api which performs basic math operations.
       "Add setup and running instructions",
       "Include curl examples for testing"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

@@ -213,3 +213,28 @@ Response: `{"error":"Division by zero is not allowed"}`
 
 **Status:** ✅ Complete
 
+### 2026-01-23 - Task 8: Create API documentation
+
+**Changes:**
+- Created comprehensive README.md file with full API documentation
+- Documented all available endpoints with detailed descriptions
+- Included request/response examples for each endpoint (addition, subtraction, multiplication, division, health check)
+- Added setup and running instructions (installation, development mode, production mode)
+- Included curl examples for testing all endpoints
+- Added error handling documentation
+- Documented input validation requirements
+- Created quick test suite section with all curl commands
+- Documented project structure and technologies used
+
+**Documentation includes:**
+- Health check endpoint: `GET /health`
+- Addition endpoint: `POST /math/add`
+- Subtraction endpoint: `POST /math/subtract`
+- Multiplication endpoint: `POST /math/multiply`
+- Division endpoint: `POST /math/divide`
+- All endpoints include valid and invalid input examples
+- Division endpoint includes division by zero example
+- Quick test suite for running all tests at once
+
+**Status:** ✅ Complete
+
