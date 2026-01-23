@@ -4,6 +4,8 @@ We are building the project from scratch in this repo.
 
 First read activity.md to see what was recently accomplished.
 
+Start the project locally with the appropriate command, check the package.json for the correct command. If it doesn't exist, you may need to set that up.
+
 Open plan.md and choose the single highest priority task where passes is false.
 
 Work on exactly ONE task: implement the change.
