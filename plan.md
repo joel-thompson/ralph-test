@@ -90,6 +90,18 @@ Typescript hono api which performs basic math operations.
     "passes": true
   },
   {
+    "category": "feature",
+    "description": "Implement square root endpoint",
+    "steps": [
+      "Create POST /math/sqrt endpoint",
+      "Accept a number in request body",
+      "Return square root of the number",
+      "Handle negative numbers with error response",
+      "Handle invalid input with error response"
+    ],
+    "passes": true
+  },
+  {
     "category": "testing",
     "description": "Verify all math endpoints work correctly",
     "steps": [
@@ -113,6 +125,18 @@ Typescript hono api which performs basic math operations.
       "Include curl examples for testing"
     ],
     "passes": true
+  },
+  {
+    "category": "testing",
+    "description": "End-to-end integration testing with running server",
+    "steps": [
+      "Start the dev server",
+      "Run automated test suite against all endpoints",
+      "Verify concurrent request handling",
+      "Test server stability under load",
+      "Verify server gracefully handles shutdown"
+    ],
+    "passes": false
   }
 ]
 ```

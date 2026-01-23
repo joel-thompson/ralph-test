@@ -71,6 +71,22 @@ app.post("/math/power", async (c) => {
   return c.json({ operation: "power", base, exponent, result });
 });
 
+app.post("/math/sqrt", async (c) => {
+  const body = await c.req.json();
+  const { number } = body;
+
+  if (typeof number !== "number") {
+    return c.json({ error: "Invalid input: 'number' must be a number" }, 400);
+  }
+
+  if (number < 0) {
+    return c.json({ error: "Cannot calculate square root of negative number" }, 400);
+  }
+
+  const result = Math.sqrt(number);
+  return c.json({ operation: "sqrt", number, result });
+});
+
 const port = 3002;
 console.log(`[debug] Server starting on http://localhost:${port}`);
 

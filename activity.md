@@ -315,3 +315,53 @@ This file logs what the agent accomplishes during each iteration:
 
 **Status:** ✓ Complete
 
+
+### 2026-01-23 - Implement Square Root Endpoint
+
+**Task:** Feature - Implement square root endpoint
+
+**Changes Made:**
+- Added POST /math/sqrt endpoint to src/index.ts
+- Endpoint accepts JSON body with a single number field
+- Returns JSON response with operation, input number, and result
+- Implements error handling for invalid input (non-number values)
+- Implements error handling for negative numbers (mathematical constraint)
+- Uses Math.sqrt() to calculate the square root
+
+**Verification:**
+- Built project and started server
+- Tested with valid input (perfect square):
+  ```bash
+  curl -s -X POST http://localhost:3002/math/sqrt -H "Content-Type: application/json" -d '{"number": 16}'
+  ```
+- Response:
+  ```json
+  {"operation":"sqrt","number":16,"result":4}
+  ```
+- Tested with another valid input:
+  ```bash
+  curl -s -X POST http://localhost:3002/math/sqrt -H "Content-Type: application/json" -d '{"number": 25}'
+  ```
+- Response:
+  ```json
+  {"operation":"sqrt","number":25,"result":5}
+  ```
+- Tested with negative number:
+  ```bash
+  curl -s -X POST http://localhost:3002/math/sqrt -H "Content-Type: application/json" -d '{"number": -9}'
+  ```
+- Response:
+  ```json
+  {"error":"Cannot calculate square root of negative number"}
+  ```
+- Tested with invalid input:
+  ```bash
+  curl -s -X POST http://localhost:3002/math/sqrt -H "Content-Type: application/json" -d '{"number": "sixteen"}'
+  ```
+- Response:
+  ```json
+  {"error":"Invalid input: 'number' must be a number"}
+  ```
+
+**Status:** ✓ Complete
+
