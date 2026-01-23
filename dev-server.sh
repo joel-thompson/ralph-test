@@ -9,5 +9,5 @@ if [ ! -z "$PID" ]; then
   sleep 1
 fi
 
-# Start the dev server
-npm run dev
+# Build and start the dev server
+npm run build && node dist/index.js
