@@ -103,7 +103,7 @@ TypeScript CLI application which performs basic math operations.
       "Include examples",
       "Include installation instructions"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
