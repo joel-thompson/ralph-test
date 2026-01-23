@@ -74,4 +74,24 @@ if (command === 'subtract') {
   process.exit(0);
 }
 
+if (command === 'multiply') {
+  if (args.length < 3) {
+    console.error("Error: multiply requires two arguments");
+    console.error("Usage: math multiply <a> <b>");
+    process.exit(1);
+  }
+
+  const a = parseFloat(args[1]!);
+  const b = parseFloat(args[2]!);
+
+  if (isNaN(a) || isNaN(b)) {
+    console.error("Error: both arguments must be valid numbers");
+    process.exit(1);
+  }
+
+  const product = a * b;
+  console.log(product);
+  process.exit(0);
+}
+
 console.log("Command not implemented yet");

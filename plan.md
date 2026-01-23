@@ -64,7 +64,7 @@ TypeScript CLI application which performs basic math operations.
       "Print product to stdout",
       "Handle invalid input with error message"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
