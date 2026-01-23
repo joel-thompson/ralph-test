@@ -5,8 +5,8 @@ This file logs what the agent accomplishes during each iteration:
 
 ## Current Status
 **Last Updated:** 2026-01-23
-**Tasks Completed:** 3
-**Current Task:** Implement addition command (completed)
+**Tasks Completed:** 4
+**Current Task:** Implement subtraction command (completed)
 
 ---
 
@@ -36,4 +36,13 @@ This file logs what the agent accomplishes during each iteration:
 - Command prints sum to stdout and exits successfully
 - Tested with valid inputs (5 + 3 = 8, 10.5 + 2.3 = 12.8)
 - Tested with invalid input (5 + abc) - correctly displays error message
+
+### 2026-01-23 - Subtraction Command Implemented
+- Created subtract command that accepts two numbers as arguments (math subtract <a> <b>)
+- Implemented parseFloat to handle integer and decimal inputs
+- Added validation to check for invalid inputs (NaN values)
+- Error handling displays clear error message for invalid inputs
+- Command prints difference to stdout and exits successfully
+- Tested with valid inputs (10 - 4 = 6, 15.5 - 3.2 = 12.3)
+- Tested with invalid input (10 - abc) - correctly displays error message
 

@@ -47,5 +47,15 @@ if (command === 'add') {
   process.exit(0);
 }
 
+// Handle subtract command
+if (command === 'subtract') {
+  if (isNaN(a) || isNaN(b)) {
+    console.error('Error: Invalid input. Please provide two valid numbers.');
+    process.exit(1);
+  }
+  console.log(a - b);
+  process.exit(0);
+}
+
 console.error(`Error: Unknown command '${command}'`);
 process.exit(1);
