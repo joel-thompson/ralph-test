@@ -5,7 +5,7 @@ This file logs what the agent accomplishes during each iteration:
 
 ## Current Status
 **Last Updated:** 2026-01-23
-**Tasks Completed:** 2
+**Tasks Completed:** 3
 **Current Task:** Complete
 
 ---
@@ -49,5 +49,18 @@ This file logs what the agent accomplishes during each iteration:
 - Used TypeScript non-null assertions after validating args.length
 
 **Verification:** Tested with valid inputs (5+3=8, 10.5+7.3=17.8, -5+3=-2), missing arguments (proper error), and invalid inputs (proper error messages)
+**Status:** ✅ Complete
+
+### 2026-01-23 - Implement subtraction command
+**Task:** Feature - Implement subtraction command
+**Changes:**
+- Created subtract command handler that accepts `math subtract <a> <b>` syntax
+- Added argument parsing using parseFloat for two number inputs
+- Implemented difference calculation and output to stdout
+- Added error handling for missing arguments (requires exactly 2 arguments)
+- Added error handling for invalid input (non-numeric values)
+- Used TypeScript non-null assertions after validating args.length
+
+**Verification:** Tested with valid inputs (10-4=6, 15.5-7.3=8.2, -5-3=-8), missing arguments (proper error), and invalid inputs (proper error messages)
 **Status:** ✅ Complete
 

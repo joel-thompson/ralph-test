@@ -54,4 +54,24 @@ if (command === 'add') {
   process.exit(0);
 }
 
+if (command === 'subtract') {
+  if (args.length < 3) {
+    console.error("Error: subtract requires two arguments");
+    console.error("Usage: math subtract <a> <b>");
+    process.exit(1);
+  }
+
+  const a = parseFloat(args[1]!);
+  const b = parseFloat(args[2]!);
+
+  if (isNaN(a) || isNaN(b)) {
+    console.error("Error: both arguments must be valid numbers");
+    process.exit(1);
+  }
+
+  const difference = a - b;
+  console.log(difference);
+  process.exit(0);
+}
+
 console.log("Command not implemented yet");

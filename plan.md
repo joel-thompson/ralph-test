@@ -53,7 +53,7 @@ TypeScript CLI application which performs basic math operations.
       "Print difference to stdout",
       "Handle invalid input with error message"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
