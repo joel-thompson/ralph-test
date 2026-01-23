@@ -42,7 +42,7 @@ Typescript hono api which performs basic math operations.
       "Return sum in response",
       "Handle invalid input with error response"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",

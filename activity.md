@@ -5,8 +5,8 @@ This file logs what the agent accomplishes during each iteration:
 
 ## Current Status
 **Last Updated:** 2026-01-23
-**Tasks Completed:** 1
-**Current Task:** Project setup complete
+**Tasks Completed:** 3
+**Current Task:** Addition endpoint complete
 
 ---
 
@@ -31,6 +31,37 @@ curl http://localhost:3001/health
 Response:
 ```json
 {"status":"ok"}
+```
+
+**Status:** ✅ Complete
+
+### 2026-01-23 - Task 3: Implement addition endpoint
+
+**Changes:**
+- Added POST /math/add endpoint in src/index.ts
+- Accepts two numbers (a and b) in request body
+- Returns sum in JSON response
+- Validates input and returns 400 error for non-numeric inputs
+
+**Testing:**
+Request (valid):
+```
+curl -X POST http://localhost:3001/math/add -H "Content-Type: application/json" -d '{"a": 5, "b": 3}'
+```
+
+Response:
+```json
+{"result":8}
+```
+
+Request (invalid):
+```
+curl -X POST http://localhost:3001/math/add -H "Content-Type: application/json" -d '{"a": "five", "b": 3}'
+```
+
+Response:
+```json
+{"error":"Invalid input: both a and b must be numbers"}
 ```
 
 **Status:** ✅ Complete
