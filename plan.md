@@ -79,6 +79,17 @@ Typescript hono api which performs basic math operations.
     "passes": true
   },
   {
+    "category": "feature",
+    "description": "Implement power/exponentiation endpoint",
+    "steps": [
+      "Create POST /math/power endpoint",
+      "Accept base and exponent numbers in request body",
+      "Return result of base raised to exponent power",
+      "Handle invalid input with error response"
+    ],
+    "passes": false
+  },
+  {
     "category": "testing",
     "description": "Verify all math endpoints work correctly",
     "steps": [
@@ -88,6 +99,18 @@ Typescript hono api which performs basic math operations.
       "Test division with valid inputs",
       "Test division by zero returns error",
       "Test invalid input handling for all endpoints"
+    ],
+    "passes": false
+  },
+  {
+    "category": "documentation",
+    "description": "Create API documentation",
+    "steps": [
+      "Create README.md file",
+      "Document all available endpoints",
+      "Include request/response examples for each endpoint",
+      "Add setup and running instructions",
+      "Include curl examples for testing"
     ],
     "passes": false
   }
