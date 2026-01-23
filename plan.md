@@ -102,7 +102,6 @@ Typescript hono api which performs basic math operations.
 4. Verify in browser
 5. Update task to "passes": true
 6. Log completion in activity.md
-7. Repeat until all tasks pass
 
 Important: Only modify the passes field. Do not remove or rewrite tasks.
 

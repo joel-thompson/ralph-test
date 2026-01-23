@@ -4,8 +4,6 @@ We are building the project from scratch in this repo.
 
 First read activity.md to see what was recently accomplished.
 
-Start the site locally with python3 -m http.server. If port is taken, try another port.
-
 Open plan.md and choose the single highest priority task where passes is false.
 
 Work on exactly ONE task: implement the change.
