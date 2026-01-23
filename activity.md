@@ -86,3 +86,35 @@ This file logs what the agent accomplishes during each iteration:
 
 **Status:** ✓ Complete
 
+### 2026-01-23 - Implement Subtraction Endpoint
+
+**Task:** Feature - Implement subtraction endpoint
+
+**Changes Made:**
+- Added POST /math/subtract endpoint to src/index.ts
+- Endpoint accepts JSON body with two numbers (a and b)
+- Returns JSON response with operation, inputs, and result
+- Implements error handling for invalid input (non-number values)
+- Changed server port from 3001 to 3002 to resolve port conflict
+
+**Verification:**
+- Built project and started server on port 3002
+- Tested with valid input:
+  ```bash
+  curl -X POST http://localhost:3002/math/subtract -H "Content-Type: application/json" -d '{"a": 10, "b": 3}'
+  ```
+- Response:
+  ```json
+  {"operation":"subtract","a":10,"b":3,"result":7}
+  ```
+- Tested with invalid input:
+  ```bash
+  curl -X POST http://localhost:3002/math/subtract -H "Content-Type: application/json" -d '{"a": "ten", "b": 3}'
+  ```
+- Response:
+  ```json
+  {"error":"Invalid input: both 'a' and 'b' must be numbers"}
+  ```
+
+**Status:** ✓ Complete
+
