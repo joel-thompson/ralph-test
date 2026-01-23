@@ -5,8 +5,8 @@ This file logs what the agent accomplishes during each iteration:
 
 ## Current Status
 **Last Updated:** 2026-01-23
-**Tasks Completed:** 3
-**Current Task:** Addition endpoint complete
+**Tasks Completed:** 4
+**Current Task:** Subtraction endpoint complete
 
 ---
 
@@ -57,6 +57,37 @@ Response:
 Request (invalid):
 ```
 curl -X POST http://localhost:3001/math/add -H "Content-Type: application/json" -d '{"a": "five", "b": 3}'
+```
+
+Response:
+```json
+{"error":"Invalid input: both a and b must be numbers"}
+```
+
+**Status:** ✅ Complete
+
+### 2026-01-23 - Task 4: Implement subtraction endpoint
+
+**Changes:**
+- Added POST /math/subtract endpoint in src/index.ts
+- Accepts two numbers (a and b) in request body
+- Returns difference in JSON response
+- Validates input and returns 400 error for non-numeric inputs
+
+**Testing:**
+Request (valid):
+```
+curl -X POST http://localhost:3001/math/subtract -H "Content-Type: application/json" -d '{"a": 10, "b": 3}'
+```
+
+Response:
+```json
+{"result":7}
+```
+
+Request (invalid):
+```
+curl -X POST http://localhost:3001/math/subtract -H "Content-Type: application/json" -d '{"a": "ten", "b": 3}'
 ```
 
 Response:
