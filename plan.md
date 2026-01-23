@@ -1,6 +1,6 @@
 # Project Plan
 
-## Overview
+## Project Overview
 
 Typescript hono api which performs basic math operations.
 
@@ -79,6 +79,52 @@ Typescript hono api which performs basic math operations.
     "passes": false
   },
   {
+    "category": "feature",
+    "description": "Implement power/exponentiation endpoint",
+    "steps": [
+      "Create POST /math/power endpoint",
+      "Accept base and exponent numbers in request body",
+      "Return result of base raised to exponent power",
+      "Handle invalid input with error response"
+    ],
+    "passes": false
+  },
+  {
+    "category": "feature",
+    "description": "Implement square root endpoint",
+    "steps": [
+      "Create POST /math/sqrt endpoint",
+      "Accept a number in request body",
+      "Return square root of the number",
+      "Handle negative numbers with error response",
+      "Handle invalid input with error response"
+    ],
+    "passes": false
+  },
+  {
+    "category": "feature",
+    "description": "Implement modulo/remainder endpoint",
+    "steps": [
+      "Create POST /math/modulo endpoint",
+      "Accept dividend and divisor numbers in request body",
+      "Return remainder of division",
+      "Handle division by zero error",
+      "Handle invalid input with error response"
+    ],
+    "passes": false
+  },
+  {
+    "category": "feature",
+    "description": "Implement absolute value endpoint",
+    "steps": [
+      "Create POST /math/abs endpoint",
+      "Accept a number in request body",
+      "Return absolute value of the number",
+      "Handle invalid input with error response"
+    ],
+    "passes": false
+  },
+  {
     "category": "testing",
     "description": "Verify all math endpoints work correctly",
     "steps": [
@@ -90,6 +136,31 @@ Typescript hono api which performs basic math operations.
       "Test invalid input handling for all endpoints"
     ],
     "passes": false
+  },
+  {
+    "category": "documentation",
+    "description": "Create API documentation",
+    "steps": [
+      "Create README.md file",
+      "Document all available endpoints",
+      "Include request/response examples for each endpoint",
+      "Add setup and running instructions",
+      "Include curl examples for testing"
+    ],
+    "passes": false
+  },
+  {
+    "category": "testing",
+    "description": "End-to-end integration testing with running server",
+    "steps": [
+      "Start the dev server",
+      "Run automated test suite against all endpoints",
+      "Verify concurrent request handling",
+      "Test server stability under load",
+      "Verify server gracefully handles shutdown",
+      "update documentation to include testing instructions for all endpoints"
+    ],
+    "passes": false
   }
 ]
 ```
@@ -99,7 +170,7 @@ Typescript hono api which performs basic math operations.
 1. Read activity.md first to understand current state
 2. Find next task with "passes": false
 3. Complete all steps for that task
-4. Verify in browser
+4. Verify with curl
 5. Update task to "passes": true
 6. Log completion in activity.md
 
