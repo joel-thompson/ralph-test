@@ -8,10 +8,15 @@
     "build": "tsc",
     "start": "node dist/index.js"
   },
-  "keywords": ["hono", "typescript", "api"],
+  "keywords": [
+    "hono",
+    "typescript",
+    "api"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@hono/node-server": "^1.19.9",
     "hono": "^4.0.0"
   },
   "devDependencies": {
