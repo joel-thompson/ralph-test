@@ -76,7 +76,7 @@ Typescript hono api which performs basic math operations.
       "Handle division by zero error",
       "Handle invalid input with error response"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "testing",
