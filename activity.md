@@ -189,3 +189,43 @@ This file logs what the agent accomplishes during each iteration:
 
 **Status:** ✓ Complete
 
+### 2026-01-23 - Implement Power/Exponentiation Endpoint
+
+**Task:** Feature - Implement power/exponentiation endpoint
+
+**Changes Made:**
+- Added POST /math/power endpoint to src/index.ts
+- Endpoint accepts JSON body with two numbers (base and exponent)
+- Returns JSON response with operation, inputs, and result
+- Implements error handling for invalid input (non-number values)
+- Uses Math.pow() to calculate base raised to exponent power
+
+**Verification:**
+- Built project and started server
+- Tested with valid input:
+  ```bash
+  curl -s -X POST http://localhost:3002/math/power -H "Content-Type: application/json" -d '{"base": 2, "exponent": 8}'
+  ```
+- Response:
+  ```json
+  {"operation":"power","base":2,"exponent":8,"result":256}
+  ```
+- Tested with another valid case:
+  ```bash
+  curl -s -X POST http://localhost:3002/math/power -H "Content-Type: application/json" -d '{"base": 3, "exponent": 4}'
+  ```
+- Response:
+  ```json
+  {"operation":"power","base":3,"exponent":4,"result":81}
+  ```
+- Tested with invalid input:
+  ```bash
+  curl -s -X POST http://localhost:3002/math/power -H "Content-Type: application/json" -d '{"base": "two", "exponent": 8}'
+  ```
+- Response:
+  ```json
+  {"error":"Invalid input: both 'base' and 'exponent' must be numbers"}
+  ```
+
+**Status:** ✓ Complete
+

@@ -59,6 +59,18 @@ app.post("/math/divide", async (c) => {
   return c.json({ operation: "divide", a, b, result });
 });
 
+app.post("/math/power", async (c) => {
+  const body = await c.req.json();
+  const { base, exponent } = body;
+
+  if (typeof base !== "number" || typeof exponent !== "number") {
+    return c.json({ error: "Invalid input: both 'base' and 'exponent' must be numbers" }, 400);
+  }
+
+  const result = Math.pow(base, exponent);
+  return c.json({ operation: "power", base, exponent, result });
+});
+
 const port = 3002;
 console.log(`[debug] Server starting on http://localhost:${port}`);
 

@@ -87,7 +87,7 @@ Typescript hono api which performs basic math operations.
       "Return result of base raised to exponent power",
       "Handle invalid input with error response"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "testing",
