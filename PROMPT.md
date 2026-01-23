@@ -20,19 +20,32 @@ After implementing, use curl to:
 
 ## Background Server Processes
 
+**Port restrictions:**
+- ONLY use ports 3001 or 3002 for the dev server
+- These are the only ports where you can view and kill processes
+
 **Starting/restarting the dev server:**
-- Run `./dev-server.sh` with run_in_background: true anytime you need to start or restart the server
-- The script automatically kills any existing server and starts fresh
+- Before starting, kill any existing server on the chosen port using `kill -9 $(lsof -ti:PORT)` where PORT is 3001 or 3002
+- Always call `nvm use` (or language equivalent like `pyenv local`, `rvm use`, etc.) before building/running to ensure the correct runtime version
+- Build the application using the appropriate build command (e.g., `npm run build`, `tsc`, `cargo build`, etc.)
+- Run the application directly with the runtime (e.g., `node dist/index.js`, `python app.py`, `cargo run`, etc.) - DO NOT use watchers or hot-reload tools
+- Run the server in the background with run_in_background: true
 - Wait 3 seconds with sleep after starting
 - Test the endpoint with curl
 - If curl succeeds, move on immediately - DO NOT read error logs
 - If curl fails, THEN check the background task output
 
 **When to restart (REQUIRED after):**
-- Installing new npm packages
+- ANY code changes (since there's no watcher)
+- Installing new packages/dependencies
 - Modifying dependencies or imports
 - Changing server configuration
 - Between tasks (always start with a fresh server)
+
+**After completing the current task:**
+- Kill ALL background processes that were started:
+  - Kill processes on ports 3001 and 3002: `kill -9 $(lsof -ti:3001)` and `kill -9 $(lsof -ti:3002)`
+  - Ensure complete cleanup of all background processes before finishing
 
 **Error handling:**
 - Sandbox permission errors like "operation not permitted /tmp/claude/tsx-..." are NORMAL and non-fatal
