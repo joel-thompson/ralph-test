@@ -20,7 +20,7 @@ Typescript hono api which performs basic math operations.
       "Create project directory structure (src/)",
       "Set up dev scripts for running the server"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
