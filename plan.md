@@ -76,7 +76,7 @@ TypeScript CLI application which performs basic math operations.
       "Handle division by zero error",
       "Handle invalid input with error message"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "testing",

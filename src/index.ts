@@ -67,5 +67,19 @@ if (command === 'multiply') {
   process.exit(0);
 }
 
+// Handle divide command
+if (command === 'divide') {
+  if (isNaN(a) || isNaN(b)) {
+    console.error('Error: Invalid input. Please provide two valid numbers.');
+    process.exit(1);
+  }
+  if (b === 0) {
+    console.error('Error: Division by zero is not allowed.');
+    process.exit(1);
+  }
+  console.log(a / b);
+  process.exit(0);
+}
+
 console.error(`Error: Unknown command '${command}'`);
 process.exit(1);
