@@ -90,6 +90,20 @@ TypeScript CLI application which performs basic math operations.
       "Test invalid input handling for all commands"
     ],
     "passes": true
+  },
+    {
+    "category": "documentation",
+    "description": "Write README.md",
+    "steps": [
+      "Write README.md",
+      "Include usage instructions",
+      "Include examples",
+      "Include installation instructions",
+      "Include usage instructions",
+      "Include examples",
+      "Include installation instructions"
+    ],
+    "passes": true
   }
 ]
 ```
