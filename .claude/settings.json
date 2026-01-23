@@ -8,7 +8,11 @@
     "allow": [
       "WebFetch(domain:registry.npmjs.org)",
       "WebFetch(domain:github.com)",
-      "mcp__playwright__*"
+      "mcp__playwright__*",
+      "Bash(kill -9 $(lsof -ti:3001))",
+      "Bash(lsof -ti:3001)",
+      "Bash(kill -9 $(lsof -ti:3002))",
+      "Bash(lsof -ti:3002)"
     ],
     "deny": [
       "Bash(sudo *)",
