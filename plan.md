@@ -2,7 +2,7 @@
 
 ## Overview
 
-Typescript hono api which performs basic math operations.
+TypeScript CLI application which performs basic math operations.
 
 ---
 
@@ -12,82 +12,82 @@ Typescript hono api which performs basic math operations.
 [
   {
     "category": "setup",
-    "description": "Initialize TypeScript Hono project",
+    "description": "Initialize TypeScript CLI project",
     "steps": [
       "Initialize package.json with TypeScript support",
-      "Install Hono and required dependencies",
+      "Install TypeScript and required dependencies",
       "Configure tsconfig.json",
       "Create project directory structure (src/)",
-      "Set up dev scripts for running the server"
+      "Set up build and run scripts"
+    ],
+    "passes": true
+  },
+  {
+    "category": "feature",
+    "description": "Create base CLI with help command",
+    "steps": [
+      "Create main entry point (src/index.ts)",
+      "Parse command-line arguments",
+      "Add --help flag to display usage",
+      "Verify CLI runs and displays help"
     ],
     "passes": false
   },
   {
     "category": "feature",
-    "description": "Create base Hono app with health check",
+    "description": "Implement addition command",
     "steps": [
-      "Create main app entry point (src/index.ts)",
-      "Initialize Hono application",
-      "Add GET /health endpoint",
-      "Verify server starts and responds"
+      "Create add command (math add <a> <b>)",
+      "Accept two numbers as arguments",
+      "Print sum to stdout",
+      "Handle invalid input with error message"
     ],
     "passes": false
   },
   {
     "category": "feature",
-    "description": "Implement addition endpoint",
+    "description": "Implement subtraction command",
     "steps": [
-      "Create POST /math/add endpoint",
-      "Accept two numbers in request body",
-      "Return sum in response",
-      "Handle invalid input with error response"
+      "Create subtract command (math subtract <a> <b>)",
+      "Accept two numbers as arguments",
+      "Print difference to stdout",
+      "Handle invalid input with error message"
     ],
     "passes": false
   },
   {
     "category": "feature",
-    "description": "Implement subtraction endpoint",
+    "description": "Implement multiplication command",
     "steps": [
-      "Create POST /math/subtract endpoint",
-      "Accept two numbers in request body",
-      "Return difference in response",
-      "Handle invalid input with error response"
+      "Create multiply command (math multiply <a> <b>)",
+      "Accept two numbers as arguments",
+      "Print product to stdout",
+      "Handle invalid input with error message"
     ],
     "passes": false
   },
   {
     "category": "feature",
-    "description": "Implement multiplication endpoint",
+    "description": "Implement division command",
     "steps": [
-      "Create POST /math/multiply endpoint",
-      "Accept two numbers in request body",
-      "Return product in response",
-      "Handle invalid input with error response"
-    ],
-    "passes": false
-  },
-  {
-    "category": "feature",
-    "description": "Implement division endpoint",
-    "steps": [
-      "Create POST /math/divide endpoint",
-      "Accept two numbers in request body",
-      "Return quotient in response",
+      "Create divide command (math divide <a> <b>)",
+      "Accept two numbers as arguments",
+      "Print quotient to stdout",
       "Handle division by zero error",
-      "Handle invalid input with error response"
+      "Handle invalid input with error message"
     ],
     "passes": false
   },
   {
     "category": "testing",
-    "description": "Verify all math endpoints work correctly",
+    "description": "Verify all math commands work correctly",
     "steps": [
       "Test addition with valid inputs",
       "Test subtraction with valid inputs",
       "Test multiplication with valid inputs",
       "Test division with valid inputs",
       "Test division by zero returns error",
-      "Test invalid input handling for all endpoints"
+      "Test invalid input handling for all commands"
     ],
     "passes": false
   }
@@ -99,7 +99,7 @@ Typescript hono api which performs basic math operations.
 1. Read activity.md first to understand current state
 2. Find next task with "passes": false
 3. Complete all steps for that task
-4. Verify in browser
+4. Verify by running the CLI
 5. Update task to "passes": true
 6. Log completion in activity.md
 
