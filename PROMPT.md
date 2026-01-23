@@ -10,11 +10,10 @@ Open plan.md and choose the single highest priority task where passes is false.
 
 Work on exactly ONE task: implement the change.
 
-After implementing, use Playwright to:
-1. Navigate to the local server URL
-2. Take a screenshot and save it as screenshots/[task-name].png
+After implementing:
+1. Run the CLI and verify the change.
 
-Append a dated progress entry to activity.md describing what you changed and the screenshot filename.
+Append a dated progress entry to activity.md describing what you changed.
 
 Update that task's passes in plan.md from false to true.
 

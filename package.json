@@ -1,0 +1,26 @@
+{
+  "name": "math-cli",
+  "version": "1.0.0",
+  "description": "TypeScript CLI application for basic math operations",
+  "main": "dist/index.js",
+  "bin": {
+    "math": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "keywords": [
+    "cli",
+    "math",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
