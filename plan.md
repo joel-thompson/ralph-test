@@ -89,7 +89,7 @@ TypeScript CLI application which performs basic math operations.
       "Test division by zero returns error",
       "Test invalid input handling for all commands"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
