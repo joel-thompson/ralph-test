@@ -32,4 +32,26 @@ if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
   process.exit(0);
 }
 
+const command = args[0];
+
+if (command === 'add') {
+  if (args.length < 3) {
+    console.error("Error: add requires two arguments");
+    console.error("Usage: math add <a> <b>");
+    process.exit(1);
+  }
+
+  const a = parseFloat(args[1]!);
+  const b = parseFloat(args[2]!);
+
+  if (isNaN(a) || isNaN(b)) {
+    console.error("Error: both arguments must be valid numbers");
+    process.exit(1);
+  }
+
+  const sum = a + b;
+  console.log(sum);
+  process.exit(0);
+}
+
 console.log("Command not implemented yet");
