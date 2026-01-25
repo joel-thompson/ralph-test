@@ -18,7 +18,8 @@ Typescript hono api which performs basic math operations.
       "Install Hono and required dependencies",
       "Configure tsconfig.json",
       "Create project directory structure (src/)",
-      "Set up dev scripts for running the server"
+      "Set up dev scripts for running the server",
+      "Set up jest for unit testing",
     ],
     "passes": false
   },
@@ -52,19 +53,6 @@ Typescript hono api which performs basic math operations.
       "Accept two numbers in request body",
       "Return difference in response",
       "Handle invalid input with error response"
-    ],
-    "passes": false
-  },
-  {
-    "category": "testing",
-    "description": "Verify all math endpoints work correctly",
-    "steps": [
-      "Test addition with valid inputs",
-      "Test subtraction with valid inputs",
-      "Test multiplication with valid inputs",
-      "Test division with valid inputs",
-      "Test division by zero returns error",
-      "Test invalid input handling for all endpoints"
     ],
     "passes": false
   },
