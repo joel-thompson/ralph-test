@@ -1,24 +1,36 @@
 @plan.md @activity.md
 
-## Overview
+## Instructions
 
-We are building the project from scratch in this repo.
+1. Read activity.md to understand current state and what was recently accomplished.
+2. Study plan.md thoroughly.
+3. Open plan.md and find the next highest leverage task with "passes": false
+4. Work on exactly ONE task: complete all steps for that task. Important: ONLY WORK ON A SINGLE TASK.
+5. Verify the task is working.
+6. Update the activity log.
+7. Update that task's passes value in plan.md from false to true. Important: Only modify the passes field. Do not remove or rewrite tasks.
+8. Make one git commit for that task only with a clear message. Important: Do not git init, do not change remotes, do not push.
 
-First read activity.md to see what was recently accomplished.
+## Activity Log
 
-Start the project locally with the appropriate command, check the package.json for the correct command. If it doesn't exist, you may need to set that up.
+After completing a task, append a dated progress entry to activity.md describing what you changed, and the result of verifying the task is working.
 
-Open plan.md and choose the single highest priority task where passes is false.
+If any problems or mistakes are discovered, append a dated entry to activity.md describing what happened, and what should be avoided in the future.
 
-Work on exactly ONE task: implement the change.
+Make note of any dependencies that were installed, and why.
 
-## Testing
+## Task Verification
 
 After implementing, use curl to:
 1. Make a request to the local server URL
 2. Verify the response is correct
+3. Write an unbiased unit test
 
-## Background Server Processes
+## Dependencies
+
+Reduce dependencies when possible. Use only well known dependencies.
+
+## Running the local dev server and background server processes
 
 **Port restrictions:**
 - ONLY use ports 3001 or 3002 for the dev server
@@ -74,18 +86,7 @@ TaskStop: task_id = "abc123"
 - The HTTP server still binds and works correctly
 - Trust the curl test, not error messages
 
-## Task Completion
 
-Append a dated progress entry to activity.md describing what you changed and the curl request and response.
-
-Update that task's passes in plan.md from false to true.
-
-Make one git commit for that task only with a clear message.
-
-Do not git init, do not change remotes, do not push.
-
-ONLY WORK ON A SINGLE TASK.
-
-## Completion Criteria Output
+## Plan Completion Criteria Output
 
 When ALL tasks have passes true, output <promise>COMPLETE</promise>
