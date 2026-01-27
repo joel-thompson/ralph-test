@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import { createSettings } from './commands/create-settings.js';
+import { scaffold } from './commands/scaffold.js';
 
 const program = new Command();
 
@@ -19,6 +20,23 @@ program
   .action(async (options) => {
     try {
       await createSettings({
+        workingDirectory: options.workingDirectory,
+        force: options.force,
+      });
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('scaffold')
+  .description('Create activity.md, plan.md, prompt.md files and screenshots/ folder')
+  .option('-w, --working-directory <path>', 'Working directory (default: current directory)')
+  .option('-f, --force', 'Overwrite existing files')
+  .action(async (options) => {
+    try {
+      await scaffold({
         workingDirectory: options.workingDirectory,
         force: options.force,
       });
