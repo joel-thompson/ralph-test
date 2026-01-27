@@ -65,7 +65,7 @@ Improve the README documentation by adding comprehensive example workflows that 
       "Show expected activity.md output after a few iterations",
       "Add this section after the 'Typical Workflow' section in README.md"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",

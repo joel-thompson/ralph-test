@@ -505,6 +505,318 @@ Brief description of what you're building.
 
 The `passes` field starts as `false` and Claude will change it to `true` when the task is complete.
 
+## Example Workflows
+
+### Building a New Feature from Scratch
+
+This example demonstrates using Ralph to build a complete new feature: a user notification system.
+
+**Scenario:** You want to add a notification system to your Node.js application that can send emails and in-app notifications to users.
+
+#### Step 1: Create the Feature Directory
+
+```bash
+# From your project root
+mkdir -p features/notifications
+cd features/notifications
+```
+
+#### Step 2: Write the Spec
+
+Create `spec.md` with your requirements:
+
+```markdown
+# User Notification System
+
+## Project Overview
+
+Build a flexible notification system that supports multiple delivery methods (email, in-app) and can be easily extended for future notification types (SMS, push).
+
+## Requirements
+
+- Send notifications via email using nodemailer
+- Store in-app notifications in database (PostgreSQL)
+- Mark notifications as read/unread
+- Support notification templates
+- Handle notification preferences per user
+- Queue notifications for async delivery
+
+## Technical Constraints
+
+- Use TypeScript with strict mode
+- Follow repository pattern for data access
+- Use existing database connection pool
+- Minimize dependencies (only add nodemailer)
+- Must work with existing User model
+
+## API Design
+
+```typescript
+interface NotificationService {
+  send(userId: string, notification: NotificationInput): Promise<void>
+  markAsRead(notificationId: string): Promise<void>
+  getUserNotifications(userId: string): Promise<Notification[]>
+}
+
+interface NotificationInput {
+  type: 'email' | 'in-app'
+  subject: string
+  body: string
+  template?: string
+}
+```
+
+## Database Schema
+
+```sql
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id),
+  type VARCHAR(50) NOT NULL,
+  subject VARCHAR(255) NOT NULL,
+  body TEXT NOT NULL,
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## Testing & Verification
+
+- Unit tests for NotificationService (mock email sending)
+- Unit tests for NotificationRepository (database operations)
+- Integration test: Create notification and verify in database
+- Manual test: Send test email and verify delivery
+- Build must complete with no TypeScript errors
+```
+
+#### Step 3: Generate the Plan
+
+Ask an AI assistant to create your plan:
+
+```
+Please read @spec.md and generate a plan.md file for implementing this notification system.
+Break it down into 6-10 tasks with specific, actionable steps.
+Include verification steps for each task.
+Use the Ralph loop plan.md format with JSON task list.
+```
+
+#### Step 4: Review and Customize the Generated Plan
+
+Edit `plan.md` to ensure tasks are appropriately sized:
+
+```markdown
+# Project Plan
+
+## Project Overview
+
+Implement a user notification system with email and in-app delivery.
+
+@spec.md
+
+---
+
+## Task List
+
+```json
+[
+  {
+    "category": "setup",
+    "description": "Set up database schema and install dependencies",
+    "steps": [
+      "Install nodemailer and @types/nodemailer dependencies",
+      "Create database migration file for notifications table",
+      "Run migration to create notifications table in development database",
+      "Verify table exists with: psql -c '\\d notifications'",
+      "Run npm run build to ensure no TypeScript errors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "implementation",
+    "description": "Create Notification entity and types",
+    "steps": [
+      "Create src/entities/Notification.ts with Notification interface matching database schema",
+      "Create src/types/notifications.ts with NotificationInput, NotificationType types",
+      "Add type exports to src/types/index.ts",
+      "Run npm run build and fix any TypeScript errors",
+      "Verify types are properly exported"
+    ],
+    "passes": false
+  },
+  {
+    "category": "implementation",
+    "description": "Implement NotificationRepository for database operations",
+    "steps": [
+      "Create src/repositories/NotificationRepository.ts",
+      "Implement create() method to insert notifications into database",
+      "Implement findByUserId() to get user's notifications",
+      "Implement markAsRead() to update read status",
+      "Add proper error handling and database connection usage",
+      "Write unit tests in tests/repositories/NotificationRepository.test.ts",
+      "Run npm test and verify NotificationRepository tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "implementation",
+    "description": "Create EmailService for sending emails",
+    "steps": [
+      "Create src/services/EmailService.ts",
+      "Configure nodemailer transport with SMTP settings from environment variables",
+      "Implement sendEmail() method with error handling",
+      "Add email template rendering support",
+      "Write unit tests with mocked nodemailer in tests/services/EmailService.test.ts",
+      "Run npm test and verify EmailService tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "implementation",
+    "description": "Implement NotificationService orchestration layer",
+    "steps": [
+      "Create src/services/NotificationService.ts",
+      "Implement send() method that handles both email and in-app notifications",
+      "Use NotificationRepository for in-app notifications",
+      "Use EmailService for email notifications",
+      "Implement getUserNotifications() and markAsRead() methods",
+      "Add proper error handling and logging",
+      "Write unit tests in tests/services/NotificationService.test.ts",
+      "Run npm test and verify NotificationService tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "Add API routes for notifications",
+    "steps": [
+      "Create src/routes/notifications.ts",
+      "Add POST /api/notifications route to send notification",
+      "Add GET /api/notifications route to get user notifications",
+      "Add PATCH /api/notifications/:id/read route to mark as read",
+      "Add authentication middleware to protect routes",
+      "Register routes in src/app.ts",
+      "Run npm run build and verify no TypeScript errors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "testing",
+    "description": "Write integration tests",
+    "steps": [
+      "Create tests/integration/notifications.test.ts",
+      "Test creating in-app notification and verifying it's stored in database",
+      "Test sending email notification (mock SMTP)",
+      "Test retrieving user notifications",
+      "Test marking notification as read",
+      "Run npm test and verify all integration tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "verification",
+    "description": "Manual testing and documentation",
+    "steps": [
+      "Start the application in development mode",
+      "Send a test email notification via API and verify email delivery",
+      "Send a test in-app notification and verify it appears in GET endpoint",
+      "Test marking notification as read",
+      "Update API documentation with new notification endpoints",
+      "Run npm run build and npm test to verify everything still works"
+    ],
+    "passes": false
+  }
+]
+```
+```
+
+#### Step 5: Customize the Prompt (Optional)
+
+The default `prompt.md` works well, but you can add feature-specific instructions:
+
+```bash
+ral scaffold -w features/notifications
+```
+
+Edit `features/notifications/prompt.md` to add:
+
+```markdown
+## Additional Instructions
+
+- Follow the existing code style in src/repositories/ and src/services/
+- Use the connection pool from src/database/pool.ts
+- For email configuration, use environment variables: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
+- Add [debug] prefix to debug log statements
+- Write tests that can run without external dependencies (mock email sending)
+```
+
+#### Step 6: Run the Loop
+
+```bash
+# From project root
+ral run -w features/notifications -m 15
+```
+
+#### Expected Output
+
+```
+Iteration 1/15
+[Claude sets up database schema and installs nodemailer]
+Input tokens: 12453
+Output tokens: 1876
+Cost this iteration: $0.089
+Cumulative cost: $0.089
+
+Iteration 2/15
+[Claude creates Notification entity and types]
+Input tokens: 14231
+Output tokens: 1234
+Cost this iteration: $0.078
+Cumulative cost: $0.167
+
+...
+
+Iteration 8/15
+[Claude completes final verification task]
+Input tokens: 18492
+Output tokens: 987
+Cost this iteration: $0.091
+Cumulative cost: $0.634
+
+<promise>COMPLETE</promise>
+
+✓ Ralph loop completed successfully!
+Total iterations: 8
+Total cost: $0.634
+```
+
+#### Step 7: Review the Results
+
+After completion, check:
+
+- `features/notifications/activity.md` - Detailed log of what was implemented
+- `git log` - Incremental commits for each task
+- Run `npm test` - All tests should pass
+- Check `src/` - New files: entities/Notification.ts, repositories/NotificationRepository.ts, services/NotificationService.ts, services/EmailService.ts, routes/notifications.ts
+
+#### What This Example Demonstrates
+
+- **Complete workflow**: From requirements to working implementation
+- **Feature isolation**: Using working directory for feature-specific loop files
+- **AI-assisted planning**: Letting AI help break down the spec into tasks
+- **Incremental development**: Each task builds on previous ones
+- **Self-verification**: Claude tests its own work at each step
+- **Cost tracking**: See exactly how much the implementation costs
+- **Activity logging**: Full audit trail of what was built and how
+
+#### Tips for This Workflow
+
+- Start with a detailed spec.md - the better your spec, the better the plan
+- Review the AI-generated plan carefully before running the loop
+- Set max-iterations higher than you think you need (you can always stop early)
+- Check activity.md between iterations if you want to monitor progress
+- Use git to review changes incrementally
+- If a task fails, you can adjust plan.md and resume
+
 ## Working Directory Behavior
 
 The `-w, --working-directory` option allows you to organize multiple Ralph loops within your project:

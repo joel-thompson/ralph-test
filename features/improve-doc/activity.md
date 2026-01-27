@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-27
-**Tasks Completed:** 3
-**Current Task:** Setting Up Your Plan section added
+**Tasks Completed:** 4
+**Current Task:** Building a New Feature from Scratch workflow example added
 
 ---
 
@@ -84,6 +84,46 @@
   - Handling Dependencies (order tasks properly, make dependencies explicit)
 - Included "The plan.md Format" subsection with complete example structure showing Project Overview, @spec.md reference, and Task List JSON format
 - Explained the `passes` field convention (starts false, Claude changes to true)
+
+**Verification:**
+- Build completed successfully with `pnpm build`
+- All tests pass: 66 tests passed across 9 test files
+- No errors or warnings during build or test execution
+- Documentation changes don't affect functionality
+
+**Problems Encountered:** None
+
+**Dependencies Installed:** None
+
+---
+
+### 2026-01-27 - Added Building a New Feature from Scratch Workflow Example
+
+**Task:** Add 'Building a New Feature from Scratch' workflow example
+
+**Changes Made:**
+- Added comprehensive "Example Workflows" section to README.md after "Setting Up Your Plan" section
+- Created detailed "Building a New Feature from Scratch" subsection demonstrating complete workflow
+- Used realistic example: building a user notification system with email and in-app notifications
+- Structured as step-by-step tutorial with 7 steps:
+  1. Create the Feature Directory - Shows directory setup commands
+  2. Write the Spec - Complete spec.md example with requirements, technical constraints, API design, database schema, testing criteria
+  3. Generate the Plan - Example prompts for AI-assisted plan generation
+  4. Review and Customize the Generated Plan - Full example plan.md with 8 realistic tasks (setup, implementation, integration, testing, verification)
+  5. Customize the Prompt (Optional) - Shows how to add feature-specific instructions to prompt.md
+  6. Run the Loop - Command to execute with expected token usage and cost output
+  7. Review the Results - What to check after completion
+- Included "What This Example Demonstrates" section highlighting key concepts:
+  - Complete workflow from requirements to implementation
+  - Feature isolation using working directory
+  - AI-assisted planning
+  - Incremental development
+  - Self-verification
+  - Cost tracking
+  - Activity logging
+- Added "Tips for This Workflow" section with practical advice for using the pattern
+- Example plan includes realistic tasks with appropriate granularity and verification steps
+- Shows expected cost tracking output ($0.634 total for 8 iterations)
 
 **Verification:**
 - Build completed successfully with `pnpm build`
