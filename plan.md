@@ -20,8 +20,22 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
       "Configure tsconfig.json for CLI output",
       "Create project directory structure (src/commands/, src/utils/, src/templates/)",
       "Set up bin entry point for 'ral' command",
+      "Create src/index.ts main entry point with Commander setup",
       "Configure build and test scripts",
-      "Configure package.json for npm publishing (name, version, files, bin)"
+      "Configure package.json for npm publishing (name, version, files, bin)",
+      "Verify CLI builds and runs (npx ts-node src/index.ts --help)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "infrastructure",
+    "description": "Create shared utilities and patterns",
+    "steps": [
+      "Create src/utils/file-helpers.ts for file operations (writeFileIfNotExists, ensureDirectory)",
+      "Create src/utils/validation.ts for input validation (validateWorkingDirectory, validateRequiredFiles)",
+      "Create src/utils/errors.ts for consistent error handling and messaging",
+      "Implement dependency injection pattern for testability (FileSystem interface)",
+      "Write unit tests for utility functions"
     ],
     "passes": false
   },
@@ -33,10 +47,12 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
       "Define CLAUDE_SETTINGS_TEMPLATE as TypeScript object (JSON.stringify when writing)",
       "Define MCP_SETTINGS_TEMPLATE as TypeScript object (JSON.stringify when writing)",
       "Create src/commands/create-settings.ts handler",
+      "Implement -w flag for working directory (default to cwd)",
       "Generate .claude/settings.json from template object",
       "Generate .mcp.json from template object",
       "Implement -f flag for overwrite behavior",
-      "Skip existing files when -f is not set",
+      "Skip existing files when -f is not set (log skipped files)",
+      "Register command in src/index.ts",
       "Write unit tests for create-settings logic",
       "Integration test: run CLI, verify files created, cleanup"
     ],
@@ -50,13 +66,14 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
       "Add PLAN_TEMPLATE as template string to src/templates/index.ts",
       "Add PROMPT_TEMPLATE as template string to src/templates/index.ts",
       "Create src/commands/scaffold.ts handler",
-      "Implement -w flag for working directory",
+      "Implement -w flag for working directory (default to cwd)",
       "Implement -f flag for overwrite behavior",
       "Generate activity.md from template string",
       "Generate plan.md from template string",
       "Generate prompt.md from template string",
       "Create screenshots/ folder",
-      "Skip existing files when -f is not set",
+      "Skip existing files when -f is not set (log skipped files)",
+      "Register command in src/index.ts",
       "Write unit tests for scaffold logic",
       "Integration test: run CLI, verify files created, cleanup"
     ],
@@ -67,28 +84,19 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
     "description": "Implement run command",
     "steps": [
       "Create src/commands/run.ts handler",
-      "Implement -w flag for working directory",
-      "Implement -m flag for max iterations",
+      "Implement -w flag for working directory (default to cwd)",
+      "Implement -m flag for max iterations (required)",
       "Create src/utils/claude-runner.ts wrapper (calls: claude -p <prompt> --output-format json)",
+      "Validate required files exist (plan.md, prompt.md, activity.md)",
+      "Abort with helpful message if files missing (suggest running ral scaffold)",
       "Parse JSON response: result, usage.input_tokens, usage.output_tokens, usage.cache_read_input_tokens, total_cost_usd",
-      "Validate required files exist (plan, prompt, activity)",
-      "Abort with helpful message if files missing (suggest running scaffold)",
+      "Handle invalid JSON or Claude CLI errors gracefully",
       "Implement loop with iteration tracking and cumulative token/cost totals",
       "Check for <promise>COMPLETE</promise> in response to exit early (exit 0)",
       "Print per-iteration and cumulative stats (tokens, cost)",
       "Exit 1 if max iterations reached without completion",
+      "Register command in src/index.ts",
       "Write unit tests with mocked Claude runner"
-    ],
-    "passes": false
-  },
-  {
-    "category": "feature",
-    "description": "Create shared utilities",
-    "steps": [
-      "Create src/utils/file-helpers.ts for file operations",
-      "Create src/utils/validation.ts for input validation",
-      "Implement dependency injection pattern for testability",
-      "Ensure DRY principles across commands"
     ],
     "passes": false
   },
