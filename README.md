@@ -817,6 +817,353 @@ After completion, check:
 - Use git to review changes incrementally
 - If a task fails, you can adjust plan.md and resume
 
+### Refactoring Existing Code
+
+This example demonstrates using Ralph to refactor existing code with dependent tasks that build on each other.
+
+**Scenario:** You have an Express.js API with inconsistent error handling scattered across route handlers. You want to refactor it to use a centralized error handling system.
+
+#### Step 1: Create the Feature Directory
+
+```bash
+# From your project root
+mkdir -p features/error-handling-refactor
+cd features/error-handling-refactor
+```
+
+#### Step 2: Write the Spec
+
+Create `spec.md` describing the refactoring goals:
+
+```markdown
+# Centralized Error Handling Refactor
+
+## Project Overview
+
+Refactor the Express API to use a consistent, centralized error handling pattern with custom error classes and middleware.
+
+## Current State
+
+- Error handling is inconsistent across routes
+- Some routes send raw error messages
+- Error responses have different formats
+- Stack traces sometimes leak to clients
+- No distinction between operational vs programmer errors
+
+## Target State
+
+- Custom AppError class for operational errors
+- Centralized error handling middleware
+- Consistent error response format
+- Proper logging of errors
+- Stack traces only in development mode
+- All routes use standardized error handling
+
+## Technical Approach
+
+### Custom Error Class
+
+```typescript
+class AppError extends Error {
+  constructor(
+    public statusCode: number,
+    public message: string,
+    public isOperational: boolean = true
+  ) {
+    super(message)
+    Object.setPrototypeOf(this, AppError.prototype)
+  }
+}
+```
+
+### Error Response Format
+
+```typescript
+interface ErrorResponse {
+  status: 'error'
+  statusCode: number
+  message: string
+  stack?: string  // only in development
+}
+```
+
+### Middleware Signature
+
+```typescript
+function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void
+```
+
+## Migration Strategy
+
+1. Create custom error class and middleware
+2. Update one route file at a time
+3. Test each route after migration
+4. Remove old error handling code
+5. Update tests to match new error format
+
+## Testing & Verification
+
+- Unit tests for AppError class
+- Unit tests for error middleware
+- Integration tests for error responses
+- Manual testing of error scenarios
+- All existing tests should still pass
+- Build must complete with no TypeScript errors
+
+## Files to Modify
+
+- Create: src/errors/AppError.ts
+- Create: src/middleware/errorHandler.ts
+- Update: src/routes/users.ts (10 error handling points)
+- Update: src/routes/posts.ts (8 error handling points)
+- Update: src/routes/comments.ts (6 error handling points)
+- Update: src/app.ts (register middleware)
+- Update: tests/* (update assertions for new error format)
+```
+
+#### Step 3: Generate the Plan
+
+Ask an AI assistant to create a refactoring plan:
+
+```
+Please read @spec.md and generate a plan.md for this error handling refactor.
+Break it down into tasks that can be completed sequentially.
+Each task should refactor a manageable chunk and include verification.
+Make sure tasks have proper dependencies (e.g., create error classes before using them).
+```
+
+#### Step 4: Review the Generated Plan
+
+Edit `plan.md` to ensure proper task ordering:
+
+```markdown
+# Project Plan
+
+## Project Overview
+
+Refactor Express API to use centralized error handling with custom error classes.
+
+@spec.md
+
+---
+
+## Task List
+
+```json
+[
+  {
+    "category": "implementation",
+    "description": "Create AppError custom error class",
+    "steps": [
+      "Create src/errors/AppError.ts file",
+      "Implement AppError class extending Error with statusCode, message, and isOperational properties",
+      "Add proper TypeScript typing and Error prototype setup",
+      "Create error factory functions for common cases: badRequest(), notFound(), unauthorized(), etc.",
+      "Write unit tests in tests/errors/AppError.test.ts",
+      "Run npm test and verify AppError tests pass",
+      "Run npm run build and verify no TypeScript errors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "implementation",
+    "description": "Create centralized error handling middleware",
+    "steps": [
+      "Create src/middleware/errorHandler.ts file",
+      "Implement errorHandler function with Express error middleware signature",
+      "Handle AppError instances by sending formatted JSON response",
+      "Handle unknown errors with 500 status and generic message",
+      "Include stack traces only when NODE_ENV !== 'production'",
+      "Add error logging with appropriate log levels",
+      "Write unit tests in tests/middleware/errorHandler.test.ts",
+      "Run npm test and verify errorHandler tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "refactoring",
+    "description": "Refactor users.ts routes to use AppError",
+    "steps": [
+      "Open src/routes/users.ts and identify all error handling points",
+      "Replace res.status().json() error responses with throw new AppError()",
+      "Use appropriate error factory functions (notFound, badRequest, etc.)",
+      "Remove try-catch blocks that just pass errors to next() (let async errors bubble)",
+      "For async routes, ensure errors properly propagate to error middleware",
+      "Update tests/routes/users.test.ts to expect new error response format",
+      "Run npm test and verify users route tests pass",
+      "Manual test: curl user endpoints and verify error responses"
+    ],
+    "passes": false
+  },
+  {
+    "category": "refactoring",
+    "description": "Refactor posts.ts routes to use AppError",
+    "steps": [
+      "Open src/routes/posts.ts and identify all error handling points",
+      "Replace existing error handling with AppError throws",
+      "Use appropriate error factory functions",
+      "Update tests/routes/posts.test.ts for new error format",
+      "Run npm test and verify posts route tests pass",
+      "Manual test: curl post endpoints and verify error responses"
+    ],
+    "passes": false
+  },
+  {
+    "category": "refactoring",
+    "description": "Refactor comments.ts routes to use AppError",
+    "steps": [
+      "Open src/routes/comments.ts and identify all error handling points",
+      "Replace existing error handling with AppError throws",
+      "Use appropriate error factory functions",
+      "Update tests/routes/comments.test.ts for new error format",
+      "Run npm test and verify comments route tests pass",
+      "Manual test: curl comment endpoints and verify error responses"
+    ],
+    "passes": false
+  },
+  {
+    "category": "integration",
+    "description": "Register error middleware in app.ts and remove old error handling",
+    "steps": [
+      "Open src/app.ts",
+      "Import errorHandler middleware",
+      "Register errorHandler as the last middleware (after all routes)",
+      "Remove any old error handling middleware or logic",
+      "Verify middleware is registered after route handlers but before app.listen",
+      "Run npm run build and verify no TypeScript errors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "testing",
+    "description": "Run full test suite and integration testing",
+    "steps": [
+      "Run npm test and verify ALL tests pass (not just new tests)",
+      "Check test output for any tests that were skipped or failed",
+      "Run npm run build and verify no TypeScript errors or warnings",
+      "Start application in development mode: npm run dev",
+      "Test error scenarios manually:",
+      "  - GET /api/users/invalid-id (should return 404 with proper format)",
+      "  - POST /api/posts with invalid data (should return 400)",
+      "  - GET /api/protected without auth (should return 401)",
+      "Verify error responses match ErrorResponse format from spec",
+      "Verify stack traces appear in development but not in production mode"
+    ],
+    "passes": false
+  },
+  {
+    "category": "cleanup",
+    "description": "Clean up old error handling code and update documentation",
+    "steps": [
+      "Search codebase for any remaining old-style error handling patterns",
+      "Remove any unused error handling utilities or functions",
+      "Update API documentation to reflect new error response format",
+      "Add JSDoc comments to AppError class and errorHandler middleware",
+      "Run npm run build one final time to verify everything compiles",
+      "Run npm test to ensure all tests still pass"
+    ],
+    "passes": false
+  }
+]
+```
+```
+
+#### Step 5: Scaffold and Customize
+
+```bash
+ral scaffold -w features/error-handling-refactor
+```
+
+The default prompt works well for refactoring, but you could add specific guidance:
+
+```markdown
+## Additional Instructions
+
+- Preserve existing functionality - only change error handling mechanism
+- Keep the same HTTP status codes that were used before
+- When refactoring routes, update one route handler at a time
+- Make sure async errors properly propagate (use express-async-errors or wrap handlers)
+- Test each file after refactoring before moving to the next
+```
+
+#### Step 6: Run the Loop
+
+```bash
+# From project root
+ral run -w features/error-handling-refactor -m 12
+```
+
+#### Expected Output
+
+```
+Iteration 1/12
+[Claude creates AppError class]
+Cost this iteration: $0.067
+
+Iteration 2/12
+[Claude creates errorHandler middleware]
+Cost this iteration: $0.071
+
+Iteration 3/12
+[Claude refactors users.ts routes]
+Cost this iteration: $0.083
+
+...
+
+Iteration 8/12
+[Claude completes cleanup and documentation]
+Cost this iteration: $0.059
+Cumulative cost: $0.523
+
+<promise>COMPLETE</promise>
+
+✓ Ralph loop completed successfully!
+Total iterations: 8
+Total cost: $0.523
+```
+
+#### Step 7: Review the Changes
+
+Check the refactoring results:
+
+```bash
+# View what changed
+git log --oneline -8
+
+# Review the diff for a specific commit
+git show HEAD~3
+
+# Check that tests pass
+npm test
+
+# Verify build
+npm run build
+```
+
+#### What This Example Demonstrates
+
+- **Sequential dependencies**: Tasks build on each other (create classes → create middleware → use in routes)
+- **Incremental refactoring**: One route file at a time, not everything at once
+- **Test-driven changes**: Update tests alongside code changes
+- **Risk mitigation**: Verify each step before moving to the next
+- **Preserve functionality**: Change implementation without breaking existing behavior
+- **Complete migration**: From initial setup through cleanup and documentation
+
+#### Tips for Refactoring with Ralph
+
+- **Break it down**: Don't try to refactor the entire codebase in one task
+- **Dependencies matter**: Order tasks so foundational changes come first
+- **Test continuously**: Verify tests pass after each task, not just at the end
+- **One file at a time**: When updating multiple files, make each file a separate task
+- **Keep it working**: Each task should leave the codebase in a working state
+- **Document the "why"**: Include context in the spec about why you're refactoring
+- **Consider rollback**: Incremental git commits make it easy to undo if needed
+
 ## Working Directory Behavior
 
 The `-w, --working-directory` option allows you to organize multiple Ralph loops within your project:

@@ -76,7 +76,7 @@ Improve the README documentation by adding comprehensive example workflows that 
       "Include tips for breaking down refactoring into verifiable steps",
       "Add to the workflows section in README.md"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",

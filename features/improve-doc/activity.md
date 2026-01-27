@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-27
-**Tasks Completed:** 4
-**Current Task:** Building a New Feature from Scratch workflow example added
+**Tasks Completed:** 5
+**Current Task:** Refactoring Existing Code workflow example added
 
 ---
 
@@ -124,6 +124,67 @@
 - Added "Tips for This Workflow" section with practical advice for using the pattern
 - Example plan includes realistic tasks with appropriate granularity and verification steps
 - Shows expected cost tracking output ($0.634 total for 8 iterations)
+
+**Verification:**
+- Build completed successfully with `pnpm build`
+- All tests pass: 66 tests passed across 9 test files
+- No errors or warnings during build or test execution
+- Documentation changes don't affect functionality
+
+**Problems Encountered:** None
+
+**Dependencies Installed:** None
+
+---
+
+### 2026-01-27 - Added Refactoring Existing Code Workflow Example
+
+**Task:** Add 'Refactoring Existing Code' workflow example
+
+**Changes Made:**
+- Added comprehensive "Refactoring Existing Code" workflow section to README.md after "Building a New Feature from Scratch" section
+- Used realistic example: refactoring Express.js API error handling to use centralized error handling system
+- Structured as step-by-step tutorial with 7 steps matching previous workflow format:
+  1. Create the Feature Directory - Directory setup commands
+  2. Write the Spec - Complete spec.md example covering:
+     - Current state vs target state comparison
+     - Custom AppError class design
+     - Error response format interface
+     - Middleware signature
+     - Migration strategy (one route at a time)
+     - Testing & verification criteria
+     - List of files to modify
+  3. Generate the Plan - Example prompts for AI-assisted refactoring plan generation
+  4. Review the Generated Plan - Full example plan.md with 8 sequential tasks:
+     - Create AppError custom error class
+     - Create centralized error handling middleware
+     - Refactor users.ts routes to use AppError
+     - Refactor posts.ts routes to use AppError
+     - Refactor comments.ts routes to use AppError
+     - Register error middleware in app.ts
+     - Run full test suite and integration testing
+     - Clean up old error handling code and update documentation
+  5. Scaffold and Customize - Shows how to add refactoring-specific instructions to prompt.md
+  6. Run the Loop - Command to execute with expected token usage output (8 iterations, $0.523)
+  7. Review the Changes - Git commands to review refactoring results
+- Included "What This Example Demonstrates" section highlighting key concepts:
+  - Sequential dependencies (tasks build on each other)
+  - Incremental refactoring (one route file at a time)
+  - Test-driven changes
+  - Risk mitigation
+  - Preserve functionality
+  - Complete migration
+- Added "Tips for Refactoring with Ralph" section with 7 practical tips:
+  - Break it down into manageable chunks
+  - Order tasks by dependencies
+  - Test continuously
+  - One file at a time
+  - Keep codebase working after each task
+  - Document the "why"
+  - Consider rollback with git commits
+- Example demonstrates proper task dependency ordering (create base classes before using them)
+- Shows realistic refactoring scope with multiple route files to update
+- Emphasizes verification at each step (tests, build, manual testing)
 
 **Verification:**
 - Build completed successfully with `pnpm build`
