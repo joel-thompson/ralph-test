@@ -56,7 +56,7 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
       "Write unit tests for create-settings logic",
       "Integration test: run CLI, verify files created, cleanup"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",

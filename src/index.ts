@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
+import { createSettings } from './commands/create-settings.js';
 
 const program = new Command();
 
@@ -9,6 +10,22 @@ program
   .description('Ralph loop CLI - A tool for managing Claude-based development loops')
   .version('1.0.0');
 
-// Commands will be registered here
+// Register commands
+program
+  .command('create-settings')
+  .description('Create .claude/settings.json and .mcp.json configuration files')
+  .option('-w, --working-directory <path>', 'Working directory (default: current directory)')
+  .option('-f, --force', 'Overwrite existing files')
+  .action(async (options) => {
+    try {
+      await createSettings({
+        workingDirectory: options.workingDirectory,
+        force: options.force,
+      });
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  });
 
 program.parse();
