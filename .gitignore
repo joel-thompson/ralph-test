@@ -3,4 +3,4 @@ dist/
 .cache/
 *.log
 .DS_Store
-
+.pnpm-store/
