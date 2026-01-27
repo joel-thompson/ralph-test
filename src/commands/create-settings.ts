@@ -1,7 +1,7 @@
-import path from "path";
-import { CLAUDE_SETTINGS_TEMPLATE, MCP_SETTINGS_TEMPLATE } from "../templates/index.js";
-import { FileSystem, DefaultFileSystem, ensureDirectory, writeFileIfNotExists } from "../utils/file-helpers.js";
-import { validateWorkingDirectory } from "../utils/validation.js";
+import path from 'path';
+import { CLAUDE_SETTINGS_TEMPLATE, MCP_SETTINGS_TEMPLATE } from '../templates/index.js';
+import { FileSystem, DefaultFileSystem, ensureDirectory, writeFileIfNotExists } from '../utils/file-helpers.js';
+import { validateWorkingDirectory } from '../utils/validation.js';
 
 export interface CreateSettingsOptions {
   workingDirectory?: string;
@@ -19,11 +19,11 @@ export async function createSettings(
   await validateWorkingDirectory(workingDir, fs);
 
   // Ensure .claude directory exists
-  const claudeDir = path.join(workingDir, ".claude");
+  const claudeDir = path.join(workingDir, '.claude');
   await ensureDirectory(claudeDir, fs);
 
   // Create .claude/settings.json
-  const claudeSettingsPath = path.join(claudeDir, "settings.json");
+  const claudeSettingsPath = path.join(claudeDir, 'settings.json');
   const claudeSettingsContent = JSON.stringify(CLAUDE_SETTINGS_TEMPLATE, null, 2);
   const claudeResult = await writeFileIfNotExists(claudeSettingsPath, claudeSettingsContent, force, fs);
 
@@ -34,7 +34,7 @@ export async function createSettings(
   }
 
   // Create .mcp.json
-  const mcpPath = path.join(workingDir, ".mcp.json");
+  const mcpPath = path.join(workingDir, '.mcp.json');
   const mcpContent = JSON.stringify(MCP_SETTINGS_TEMPLATE, null, 2);
   const mcpResult = await writeFileIfNotExists(mcpPath, mcpContent, force, fs);
 

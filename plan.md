@@ -46,7 +46,7 @@ Three improvements to the Ralph loop CLI (`ral`):
       "package.json",
       "eslint.config.js (new)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "migration",

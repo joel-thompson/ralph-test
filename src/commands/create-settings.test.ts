@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createSettings } from "./create-settings.js";
-import { FileSystem } from "../utils/file-helpers.js";
-import path from "path";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { createSettings } from './create-settings.js';
+import { FileSystem } from '../utils/file-helpers.js';
+import path from 'path';
 
-describe("create-settings", () => {
+describe('create-settings', () => {
   let mockFs: FileSystem;
   let writtenFiles: Map<string, string>;
 
@@ -28,25 +28,25 @@ describe("create-settings", () => {
     };
   });
 
-  it("should create .claude/settings.json and .mcp.json in working directory", async () => {
-    const workingDir = "/test/dir";
+  it('should create .claude/settings.json and .mcp.json in working directory', async () => {
+    const workingDir = '/test/dir';
 
     await createSettings({ workingDirectory: workingDir }, mockFs);
 
-    const claudeSettingsPath = path.join(workingDir, ".claude", "settings.json");
-    const mcpPath = path.join(workingDir, ".mcp.json");
+    const claudeSettingsPath = path.join(workingDir, '.claude', 'settings.json');
+    const mcpPath = path.join(workingDir, '.mcp.json');
 
     expect(writtenFiles.has(claudeSettingsPath)).toBe(true);
     expect(writtenFiles.has(mcpPath)).toBe(true);
   });
 
-  it("should create valid JSON in settings files", async () => {
-    const workingDir = "/test/dir";
+  it('should create valid JSON in settings files', async () => {
+    const workingDir = '/test/dir';
 
     await createSettings({ workingDirectory: workingDir }, mockFs);
 
-    const claudeSettingsPath = path.join(workingDir, ".claude", "settings.json");
-    const mcpPath = path.join(workingDir, ".mcp.json");
+    const claudeSettingsPath = path.join(workingDir, '.claude', 'settings.json');
+    const mcpPath = path.join(workingDir, '.mcp.json');
 
     const claudeSettings = writtenFiles.get(claudeSettingsPath);
     const mcpSettings = writtenFiles.get(mcpPath);
@@ -55,9 +55,9 @@ describe("create-settings", () => {
     expect(() => JSON.parse(mcpSettings!)).not.toThrow();
   });
 
-  it("should not overwrite existing files when force is false", async () => {
-    const workingDir = "/test/dir";
-    const claudeSettingsPath = path.join(workingDir, ".claude", "settings.json");
+  it('should not overwrite existing files when force is false', async () => {
+    const workingDir = '/test/dir';
+    const claudeSettingsPath = path.join(workingDir, '.claude', 'settings.json');
 
     // Pre-populate with existing content
     writtenFiles.set(claudeSettingsPath, '{"existing": "content"}');
@@ -67,9 +67,9 @@ describe("create-settings", () => {
     expect(writtenFiles.get(claudeSettingsPath)).toBe('{"existing": "content"}');
   });
 
-  it("should overwrite existing files when force is true", async () => {
-    const workingDir = "/test/dir";
-    const claudeSettingsPath = path.join(workingDir, ".claude", "settings.json");
+  it('should overwrite existing files when force is true', async () => {
+    const workingDir = '/test/dir';
+    const claudeSettingsPath = path.join(workingDir, '.claude', 'settings.json');
 
     // Pre-populate with existing content
     writtenFiles.set(claudeSettingsPath, '{"existing": "content"}');
@@ -78,23 +78,23 @@ describe("create-settings", () => {
 
     const newContent = writtenFiles.get(claudeSettingsPath);
     expect(newContent).not.toBe('{"existing": "content"}');
-    expect(newContent).toContain("mcpServers");
+    expect(newContent).toContain('mcpServers');
   });
 
-  it("should use current working directory when no workingDirectory option provided", async () => {
+  it('should use current working directory when no workingDirectory option provided', async () => {
     const cwd = process.cwd();
 
     await createSettings({}, mockFs);
 
-    const claudeSettingsPath = path.join(cwd, ".claude", "settings.json");
-    const mcpPath = path.join(cwd, ".mcp.json");
+    const claudeSettingsPath = path.join(cwd, '.claude', 'settings.json');
+    const mcpPath = path.join(cwd, '.mcp.json');
 
     expect(writtenFiles.has(claudeSettingsPath)).toBe(true);
     expect(writtenFiles.has(mcpPath)).toBe(true);
   });
 
-  it("should throw ValidationError when working directory does not exist", async () => {
-    const nonExistentDir = "/non/existent/dir";
+  it('should throw ValidationError when working directory does not exist', async () => {
+    const nonExistentDir = '/non/existent/dir';
     const mockFsWithNoDir: FileSystem = {
       ...mockFs,
       exists: async (filePath: string) => {

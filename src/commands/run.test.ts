@@ -1,30 +1,30 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { run } from "./run.js";
-import { ClaudeRunner, ClaudeResponse } from "../utils/claude-runner.js";
-import { CommandError } from "../utils/errors.js";
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { run } from './run.js';
+import { ClaudeRunner, ClaudeResponse } from '../utils/claude-runner.js';
+import { CommandError } from '../utils/errors.js';
 // import { FileSystem } from '../utils/file-helpers.js';
-import * as validation from "../utils/validation.js";
-import * as path from "path";
+import * as validation from '../utils/validation.js';
+import * as path from 'path';
 
 // Mock validation module
-vi.mock("../utils/validation.js");
+vi.mock('../utils/validation.js');
 
 // Mock process.exit to throw a predictable error
 const mockExit = vi.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
   throw new Error(`process.exit(${code})`);
 }) as any;
 
-describe("run command", () => {
-  const testDir = "/test/dir";
+describe('run command', () => {
+  const testDir = '/test/dir';
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockExit.mockClear();
   });
 
-  it("should validate working directory exists", async () => {
+  it('should validate working directory exists', async () => {
     vi.mocked(validation.validateWorkingDirectory).mockRejectedValue(
-      new Error("Working directory does not exist")
+      new Error('Working directory does not exist')
     );
 
     await expect(
@@ -35,11 +35,11 @@ describe("run command", () => {
     ).rejects.toThrow();
   });
 
-  it("should validate required files exist", async () => {
+  it('should validate required files exist', async () => {
     vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
     vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
       valid: false,
-      missing: ["plan.md", "prompt.md"],
+      missing: ['plan.md', 'prompt.md'],
     });
 
     await expect(
@@ -50,7 +50,7 @@ describe("run command", () => {
     ).rejects.toThrow(CommandError);
   });
 
-  it("should run loop and exit with code 0 when COMPLETE is found", async () => {
+  it('should run loop and exit with code 0 when COMPLETE is found', async () => {
     // Mock validation
     vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
     vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
@@ -61,7 +61,7 @@ describe("run command", () => {
     // Mock Claude runner
     const mockRunner: ClaudeRunner = {
       runClaude: vi.fn().mockResolvedValue({
-        result: "Task is done. <promise>COMPLETE</promise>",
+        result: 'Task is done. <promise>COMPLETE</promise>',
         usage: {
           input_tokens: 1000,
           output_tokens: 500,
@@ -88,12 +88,12 @@ describe("run command", () => {
     // Verify Claude runner was called once
     expect(mockRunner.runClaude).toHaveBeenCalledTimes(1);
     expect(mockRunner.runClaude).toHaveBeenCalledWith(
-      path.join(testDir, "prompt.md"),
+      path.join(testDir, 'prompt.md'),
       testDir
     );
   });
 
-  it("should run loop and exit with code 1 when max iterations reached", async () => {
+  it('should run loop and exit with code 1 when max iterations reached', async () => {
     // Mock validation
     vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
     vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
@@ -104,7 +104,7 @@ describe("run command", () => {
     // Mock Claude runner (never returns COMPLETE)
     const mockRunner: ClaudeRunner = {
       runClaude: vi.fn().mockResolvedValue({
-        result: "Still working on it...",
+        result: 'Still working on it...',
         usage: {
           input_tokens: 1000,
           output_tokens: 500,
@@ -132,7 +132,7 @@ describe("run command", () => {
     expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
   });
 
-  it("should track cumulative stats across iterations", async () => {
+  it('should track cumulative stats across iterations', async () => {
     // Mock validation
     vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
     vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
@@ -140,7 +140,7 @@ describe("run command", () => {
       missing: [],
     });
 
-    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     // Mock Claude runner with different stats for each iteration
     let callCount = 0;
@@ -148,7 +148,7 @@ describe("run command", () => {
       runClaude: vi.fn().mockImplementation(async () => {
         callCount++;
         return {
-          result: "Working...",
+          result: 'Working...',
           usage: {
             input_tokens: 1000 * callCount,
             output_tokens: 500 * callCount,
@@ -177,21 +177,21 @@ describe("run command", () => {
     const logs = consoleSpy.mock.calls.map((call) => call[0]);
 
     // After iteration 1: cumulative should be 1000, 500, 200, $0.05
-    expect(logs).toContain("Total Tokens In: 1000");
-    expect(logs).toContain("Total Tokens Out: 500");
-    expect(logs).toContain("Total Cache Read: 200");
-    expect(logs).toContain("Total Cost: $0.0500");
+    expect(logs).toContain('Total Tokens In: 1000');
+    expect(logs).toContain('Total Tokens Out: 500');
+    expect(logs).toContain('Total Cache Read: 200');
+    expect(logs).toContain('Total Cost: $0.0500');
 
     // After iteration 2: cumulative should be 3000, 1500, 600, $0.15
-    expect(logs).toContain("Total Tokens In: 3000");
-    expect(logs).toContain("Total Tokens Out: 1500");
-    expect(logs).toContain("Total Cache Read: 600");
-    expect(logs).toContain("Total Cost: $0.1500");
+    expect(logs).toContain('Total Tokens In: 3000');
+    expect(logs).toContain('Total Tokens Out: 1500');
+    expect(logs).toContain('Total Cache Read: 600');
+    expect(logs).toContain('Total Cost: $0.1500');
 
     consoleSpy.mockRestore();
   });
 
-  it("should handle Claude CLI errors gracefully", async () => {
+  it('should handle Claude CLI errors gracefully', async () => {
     // Mock validation
     vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
     vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
@@ -201,7 +201,7 @@ describe("run command", () => {
 
     // Mock Claude runner that throws an error
     const mockRunner: ClaudeRunner = {
-      runClaude: vi.fn().mockRejectedValue(new Error("Claude CLI failed")),
+      runClaude: vi.fn().mockRejectedValue(new Error('Claude CLI failed')),
     };
 
     await expect(
@@ -215,7 +215,7 @@ describe("run command", () => {
     ).rejects.toThrow(CommandError);
   });
 
-  it("should complete early if COMPLETE is found in later iteration", async () => {
+  it('should complete early if COMPLETE is found in later iteration', async () => {
     // Mock validation
     vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
     vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
@@ -230,7 +230,7 @@ describe("run command", () => {
         callCount++;
         if (callCount === 3) {
           return {
-            result: "All done! <promise>COMPLETE</promise>",
+            result: 'All done! <promise>COMPLETE</promise>',
             usage: {
               input_tokens: 1000,
               output_tokens: 500,
@@ -240,7 +240,7 @@ describe("run command", () => {
           } as ClaudeResponse;
         }
         return {
-          result: "Still working...",
+          result: 'Still working...',
           usage: {
             input_tokens: 1000,
             output_tokens: 500,

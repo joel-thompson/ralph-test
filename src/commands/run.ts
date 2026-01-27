@@ -82,7 +82,7 @@ export async function run(
       console.log(`Cost: $${iterationStats.cost.toFixed(4)}`);
 
       // Print cumulative stats
-      console.log(`\nCumulative Stats:`);
+      console.log('\nCumulative Stats:');
       console.log(`Total Tokens In: ${cumulative.totalInputTokens}`);
       console.log(`Total Tokens Out: ${cumulative.totalOutputTokens}`);
       console.log(`Total Cache Read: ${cumulative.totalCacheReadTokens}`);
