@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-27
-**Tasks Completed:** 6
-**Current Task:** Debugging/Bug Fix workflow example added
+**Tasks Completed:** 7
+**Current Task:** Tips and Best Practices section added
 
 ---
 
@@ -257,6 +257,78 @@
 - All tests pass: 66 tests passed across 9 test files
 - No errors or warnings during build or test execution
 - Documentation changes don't affect functionality
+
+**Problems Encountered:** None
+
+**Dependencies Installed:** None
+
+---
+
+### 2026-01-27 - Added Tips and Best Practices Section
+
+**Task:** Add 'Tips and Best Practices' section
+
+**Changes Made:**
+- Added comprehensive "Tips and Best Practices" section to README.md after "Debugging and Fixing a Bug" workflow section
+- Created four major subsections covering all aspects of effective Ralph loop usage:
+
+1. **Writing Effective Plans** subsection:
+   - Task Granularity: Explained optimal task size (5-15 minutes), provided examples of too large, too small, and just right tasks
+   - Task Categories: Listed standard categories (setup, implementation, refactoring, testing, verification, cleanup, documentation)
+   - Clear Steps: Guidance on using action verbs, being specific about files, including verification
+   - Verification is Critical: Emphasized combining automated and manual verification with specific examples
+   - Handle Dependencies: Explained proper task ordering and making dependencies explicit
+   - Avoid These Pitfalls: Four common pitfalls with ❌/✅ examples (vague descriptions, missing verification, too ambitious, duplicate work)
+
+2. **Customizing prompt.md** subsection:
+   - Add Project-Specific Context: Example showing TypeScript/Express/PostgreSQL context
+   - Add Coding Standards: Example with variable naming, JSDoc, async/await preferences, [debug] prefix
+   - Add Testing Requirements: Example with unit test structure, mocking, coverage goals
+   - Add Technology-Specific Guidance: React/Next.js example with hooks, Context API, Tailwind, react-hook-form
+   - Keep It Concise: Explained token usage impact and focusing on what's different from standard practices
+
+3. **Choosing max-iterations** subsection:
+   - How to Choose the Right Number: Provided formula (number_of_tasks + buffer) with examples for 5, 10, 20 tasks
+   - Why Add a Buffer: Listed 4 reasons (test failures, build errors, complexity, investigation)
+   - Too Few Iterations: Explained exit code 1, progress preservation, resuming
+   - Too Many Iterations: Explained early completion, unused iterations don't cost anything
+   - Cost Considerations: Typical per-iteration costs ($0.05-$0.15), example calculations, monitoring advice
+   - Iterative Approach: Showed conservative start pattern with progress checking and continuation
+   - When to Use Higher Limits: Three scenarios (complex features, exploratory work, critical path)
+
+4. **Common Pitfalls and Solutions** subsection:
+   - Documented 11 common pitfalls with symptoms and solutions:
+     1. Tasks too large (solution: break into smaller pieces, <3 files/<100 lines)
+     2. Missing file context (solution: add review task or include file paths in steps)
+     3. Unclear success criteria (solution: explicit measurable verification with examples)
+     4. Tests don't exist (solution: proper task ordering)
+     5. Dependencies not installed (solution: include installation in task steps)
+     6. Git commit messages unclear (solution: descriptive commits with task description)
+     7. Task passes set to true prematurely (solution: emphasize verification)
+     8. Context grows too large (solution: keep plan.md focused, passes field helps)
+     9. Loop gets stuck (solution: 4 strategies to handle stuck loops)
+     10. No spec.md for complex features (solution: write spec with requirements, constraints, examples)
+   - Each pitfall includes symptom, solution, and often an example
+
+5. **Workflow Tips** subsection:
+   - 9 practical tips for using Ralph effectively:
+     1. Start Small: Begin with 3-5 task projects, gradually increase complexity
+     2. Review Frequently: Check activity.md after iterations, pause if needed
+     3. Use Git Effectively: Leverage incremental commits, git revert for mistakes
+     4. Iterate on Your Plan: Refine task writing skills over time
+     5. Leverage AI for Planning: Use Claude/ChatGPT to generate plans, always review
+     6. Monitor Costs: Track spending, optimize plan.md/prompt.md
+     7. Parallel Features: Work on multiple features with different working directories
+     8. Document Learnings: Use activity.md for insights, root causes, patterns discovered
+   - Each tip includes practical guidance and context
+
+**Verification:**
+- Build completed successfully with `pnpm build`
+- All tests pass: 66 tests passed across 9 test files
+- No errors or warnings during build or test execution
+- Documentation changes don't affect functionality
+- Section is comprehensive, well-organized, and provides actionable guidance
+- Content flows logically from planning → customization → execution → troubleshooting
 
 **Problems Encountered:** None
 

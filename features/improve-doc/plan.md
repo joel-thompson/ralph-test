@@ -99,7 +99,7 @@ Improve the README documentation by adding comprehensive example workflows that 
       "Include common pitfalls and how to avoid them",
       "Add after the workflow examples in README.md"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

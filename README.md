@@ -1531,6 +1531,247 @@ Check `activity.md` for detailed investigation findings:
 - **Check related code**: Bug fixes often reveal related issues that should also be addressed
 - **Keep debug logs**: Consider keeping some debug logs as permanent logging (with appropriate level)
 
+## Tips and Best Practices
+
+### Writing Effective Plans
+
+**Task Granularity**
+- Aim for tasks that represent 5-15 minutes of focused development work
+- Too large: "Implement entire authentication system" - break into smaller tasks
+- Too small: "Add one import statement" - combine with related changes
+- Just right: "Create JWT verification middleware with error handling and tests"
+
+**Task Categories**
+- Use consistent categories to organize work: `setup`, `implementation`, `refactoring`, `testing`, `verification`, `cleanup`, `documentation`
+- Categories help you understand the type of work and track progress across different phases
+
+**Clear Steps**
+- Start steps with action verbs: "Create", "Implement", "Update", "Refactor", "Test", "Verify"
+- Be specific about files: "Update src/routes/users.ts" not "Update the routes"
+- Include what to verify: "Run npm test and verify UserService tests pass"
+- Make steps sequential and logical
+
+**Verification is Critical**
+- Every task should include a verification step
+- Combine automated and manual verification:
+  - Automated: "Run npm test", "Run npm run build", "Run linter"
+  - Manual: "Test login flow in browser", "Verify error messages are user-friendly"
+- Be specific about what success looks like: "All tests pass with no warnings"
+
+**Handle Dependencies**
+- Order tasks to respect dependencies (create base classes before using them)
+- Make dependencies explicit in steps: "Uses AppError from previous task"
+- If tasks are independent, they can run in any order (but Claude processes sequentially)
+
+**Avoid These Pitfalls**
+- ❌ Vague descriptions: "Fix the bugs" → ✅ "Fix cart persistence race condition in CartContext"
+- ❌ Missing verification: Steps end with code changes → ✅ Always end with verification
+- ❌ Too ambitious: "Build entire feature" in one task → ✅ Break into setup, implementation, testing
+- ❌ Duplicate work: Multiple tasks doing similar things → ✅ Consolidate related changes
+
+### Customizing prompt.md
+
+The default `prompt.md` provides a solid workflow, but you can customize it for specific needs:
+
+**Add Project-Specific Context**
+```markdown
+## Project Context
+
+- This is a TypeScript Node.js API using Express and PostgreSQL
+- We follow functional programming patterns - avoid classes where possible
+- Use Zod for validation, not manual checks
+- All database queries use the connection pool from src/database/pool.ts
+```
+
+**Add Coding Standards**
+```markdown
+## Coding Standards
+
+- Use descriptive variable names (no abbreviations except common ones like `id`, `url`)
+- Add JSDoc comments for public functions
+- Prefer async/await over .then() chains
+- Handle errors explicitly - no empty catch blocks
+- Add [debug] prefix to debug log statements
+```
+
+**Add Testing Requirements**
+```markdown
+## Testing Requirements
+
+- Every new function needs unit tests in tests/ directory matching src/ structure
+- Test both success and error cases
+- Use describe/it blocks with clear descriptions
+- Mock external dependencies (database, APIs)
+- Aim for >80% code coverage on new code
+```
+
+**Add Technology-Specific Guidance**
+```markdown
+## Framework Guidelines
+
+- React components: Use functional components with hooks, no class components
+- State management: Use Context API for global state, local state for component-specific
+- Styling: Use Tailwind CSS classes, avoid inline styles
+- Forms: Use react-hook-form for form handling
+```
+
+**Keep It Concise**
+- The prompt is included in every iteration, affecting token usage
+- Be specific but brief - every word counts
+- Focus on what's different from standard practices, not common knowledge
+
+### Choosing max-iterations
+
+The `-m, --max-iterations` parameter determines how many times Claude can iterate:
+
+**How to Choose the Right Number**
+
+Start with this formula:
+```
+max-iterations = number_of_tasks + buffer
+```
+
+For example:
+- 5 tasks in plan.md → use `-m 8` (5 tasks + 3 buffer)
+- 10 tasks in plan.md → use `-m 13` (10 tasks + 3 buffer)
+- 20 tasks in plan.md → use `-m 25` (20 tasks + 5 buffer)
+
+**Why Add a Buffer?**
+- Claude might need extra iterations if:
+  - Tests fail and need fixing
+  - Build errors need resolution
+  - A task is more complex than anticipated
+  - Investigation reveals additional work needed
+
+**Too Few Iterations**
+- Loop exits with code 1 (incomplete)
+- Progress is saved - you can resume by running again
+- Better to set it conservatively and run again than waste iterations
+
+**Too Many Iterations**
+- Loop completes early when Claude outputs `<promise>COMPLETE</promise>`
+- Unused iterations don't cost anything
+- No harm in setting it higher than needed
+
+**Cost Considerations**
+- Each iteration costs based on token usage (input + output)
+- Typical costs: $0.05 - $0.15 per iteration depending on context size
+- Monitor cumulative cost output to track spending
+- Example: 10 iterations ≈ $0.50 - $1.50 for a feature
+
+**Iterative Approach**
+```bash
+# Start conservative
+ral run -m 5
+
+# Check progress in activity.md
+cat activity.md
+
+# Continue if needed
+ral run -m 5  # Continues where it left off
+```
+
+**When to Use Higher Limits**
+- Complex features with many tasks: `-m 20` or higher
+- Exploratory work where scope is unclear: `-m 15`
+- Critical path work where you want it finished: `number_of_tasks * 2`
+
+### Common Pitfalls and Solutions
+
+**Pitfall: Tasks are too large**
+- Symptom: Claude makes many changes but verification fails, or takes multiple iterations per task
+- Solution: Break tasks into smaller pieces. If a task touches >3 files or >100 lines, split it
+- Example: Instead of "Implement user authentication", use separate tasks for "Create auth middleware", "Add login route", "Add registration route", "Write auth tests"
+
+**Pitfall: Missing file context**
+- Symptom: Claude makes incorrect changes because it doesn't understand existing code
+- Solution: Add a task that says "Review existing files X, Y, Z and document current patterns" before implementation tasks
+- Better: Include relevant file paths in task steps: "Review src/utils/auth.ts to understand existing auth patterns"
+
+**Pitfall: Unclear success criteria**
+- Symptom: Claude marks task complete but it doesn't work as expected
+- Solution: Make verification steps explicit and measurable
+- Bad: "Test that it works"
+- Good: "Run npm test and verify auth.test.ts passes all 5 test cases with no errors"
+
+**Pitfall: Tests don't exist**
+- Symptom: Claude tries to run tests but test files don't exist yet
+- Solution: Order tasks so test creation comes before test execution
+- Pattern: Task 1: "Implement feature X", Task 2: "Write tests for feature X", Task 3: "Run tests and verify"
+
+**Pitfall: Dependencies not installed**
+- Symptom: Code uses a library that isn't installed
+- Solution: Include dependency installation in task steps
+- Example: "Install zod package: npm install zod", then "Create validation schemas using zod"
+
+**Pitfall: Git commit messages are unclear**
+- Symptom: Hard to understand what changed from commit history
+- Solution: The default prompt already handles this, but if you customize prompt.md, ensure commit messages remain descriptive
+- Pattern: Include task description in commit: "feat: Add JWT verification middleware"
+
+**Pitfall: Task passes set to true prematurely**
+- Symptom: Tasks marked complete but code doesn't work
+- Solution: Emphasize verification in prompt.md: "Only set passes to true after verification confirms the task works"
+- Add verification reminders in task steps: "IMPORTANT: Run all tests before marking complete"
+
+**Pitfall: Context grows too large**
+- Symptom: Later iterations slow down or cost increases significantly
+- Solution: Keep plan.md focused on remaining work. Consider completed tasks "archived" mentally
+- The passes field helps - Claude focuses on `passes: false` tasks
+
+**Pitfall: Loop gets stuck**
+- Symptom: Claude repeatedly fails on the same task
+- Solution: Pause the loop, review the issue, and either:
+  - Fix the issue manually and update plan.md to skip that task
+  - Modify the task steps to provide more guidance
+  - Break the problematic task into smaller tasks
+  - Add investigative task before the problematic one
+
+**Pitfall: No spec.md for complex features**
+- Symptom: Claude implements features incorrectly because requirements weren't clear
+- Solution: Write a spec.md for any non-trivial feature and reference it with `@spec.md` in plan.md
+- Include: requirements, constraints, examples, API contracts, testing criteria
+
+### Workflow Tips
+
+**Start Small**
+- First Ralph loop? Start with a simple 3-5 task project to learn the workflow
+- Gradually increase complexity as you understand how Claude interprets tasks
+
+**Review Frequently**
+- Check `activity.md` after every few iterations to ensure Claude is on track
+- If something seems wrong, pause and adjust plan.md
+
+**Use Git Effectively**
+- Each task gets a commit - use this to review incremental changes
+- If a task went wrong, you can git revert that specific commit
+
+**Iterate on Your Plan**
+- Your first plan won't be perfect - that's okay
+- After running a loop, review what worked and what didn't
+- Refine your task writing skills over time
+
+**Leverage AI for Planning**
+- Use Claude or ChatGPT to help generate your plan.md
+- Provide context and let AI suggest task breakdown
+- Always review and refine the generated plan before running
+
+**Monitor Costs**
+- Keep an eye on cumulative cost output
+- If costs are higher than expected, review your plan.md and prompt.md for optimization opportunities
+- Smaller context = lower costs
+
+**Parallel Features**
+- Work on multiple features in parallel using different working directories
+- Each feature has its own plan, activity log, and prompt
+- Run them sequentially or in separate terminal sessions
+
+**Document Learnings**
+- Use activity.md not just for logging, but for capturing insights
+- When debugging, document root causes found
+- When refactoring, document patterns discovered
+- This creates valuable documentation for your team
+
 ## Working Directory Behavior
 
 The `-w, --working-directory` option allows you to organize multiple Ralph loops within your project:
