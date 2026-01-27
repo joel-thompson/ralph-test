@@ -102,3 +102,26 @@
 - Fixed by adding `setTimeout` to the globals configuration for test files in eslint.config.js
 - All pnpm commands (install, build, test, lint) now work correctly
 - Migration from bun to pnpm is fully verified and working
+
+### 2026-01-27 - Question: Verify .pnpm-store folder is needed and if it can be git ignored
+
+**Task Description:** Verify .pnpm-store folder is needed and if it can be git ignored
+
+**Investigation:**
+- Confirmed .pnpm-store/ folder exists in project root
+- The .pnpm-store/ folder is pnpm's local package cache/store
+- It stores hard links or copies of packages to optimize disk space and installation speed
+- Similar to npm's .npm cache or yarn's cache folder
+
+**Changes Made:**
+- No changes needed - .pnpm-store/ was already added to .gitignore in the cleanup task
+
+**Testing and Verification:**
+- Verified .pnpm-store/ exists with v10 subdirectory (contains pnpm store version 10 packages)
+- Confirmed .pnpm-store/ is in .gitignore (line 6)
+- Ran `git status .pnpm-store/` - confirmed it's not tracked by git (working tree clean)
+
+**Notes:**
+- .pnpm-store/ SHOULD be git ignored as it's a local cache directory
+- This folder is machine-specific and should not be shared across machines
+- Already properly configured in the cleanup task - no additional action required

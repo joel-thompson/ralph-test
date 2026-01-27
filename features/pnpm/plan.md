@@ -60,7 +60,7 @@ Switch package manager from bun to pnpm. Update lockfile, documentation, and any
     "steps": [
       "check the purpose of this folder, see if it is currently tracked by git",
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
