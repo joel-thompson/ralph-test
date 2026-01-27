@@ -87,7 +87,7 @@ Improve the README documentation by adding comprehensive example workflows that 
       "Demonstrate how activity.md captures the debugging process",
       "Add to the workflows section in README.md"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",

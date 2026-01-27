@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-27
-**Tasks Completed:** 5
-**Current Task:** Refactoring Existing Code workflow example added
+**Tasks Completed:** 6
+**Current Task:** Debugging/Bug Fix workflow example added
 
 ---
 
@@ -185,6 +185,72 @@
 - Example demonstrates proper task dependency ordering (create base classes before using them)
 - Shows realistic refactoring scope with multiple route files to update
 - Emphasizes verification at each step (tests, build, manual testing)
+
+**Verification:**
+- Build completed successfully with `pnpm build`
+- All tests pass: 66 tests passed across 9 test files
+- No errors or warnings during build or test execution
+- Documentation changes don't affect functionality
+
+**Problems Encountered:** None
+
+**Dependencies Installed:** None
+
+---
+
+### 2026-01-27 - Added Debugging/Bug Fix Workflow Example
+
+**Task:** Add 'Debugging/Bug Fix' workflow example
+
+**Changes Made:**
+- Added comprehensive "Debugging and Fixing a Bug" workflow section to README.md after "Refactoring Existing Code" section
+- Used realistic example: debugging and fixing intermittent shopping cart persistence bug (items disappearing on navigation/refresh)
+- Structured as step-by-step tutorial with 7 steps matching previous workflow format:
+  1. Create the Feature Directory - Directory setup commands
+  2. Write the Spec - Complete spec.md example covering:
+     - Problem statement (intermittent cart item loss)
+     - Current implementation details (React Context, localStorage, useEffect)
+     - Suspected issues (race conditions, serialization, context timing, quota)
+     - Investigation tasks list
+     - Proposed solution approaches
+     - Testing strategy (unit tests, integration tests, manual scenarios)
+     - Success criteria
+     - Files to modify
+  3. Generate the Plan - Example prompts for AI-assisted debugging plan generation
+  4. Review the Generated Plan - Full example plan.md with 9 sequential tasks:
+     - Review CartContext implementation and identify issues (investigation)
+     - Review storage utilities and test for serialization issues (investigation)
+     - Add debugging logs to track cart persistence flow (investigation)
+     - Add error handling and validation to storage utilities (bugfix)
+     - Fix CartContext initialization race condition (bugfix)
+     - Implement debouncing for cart localStorage updates (bugfix)
+     - Write comprehensive tests for cart persistence edge cases (testing)
+     - Manual testing of all bug scenarios (verification)
+     - Final verification and cleanup (verification)
+  5. Scaffold the Loop Files - Shows scaffold command and prompt.md customization for debugging
+  6. Run the Loop - Command to execute with expected token usage output (9 iterations, $0.587)
+  7. Review the Fix - Git commands to review debugging results and check activity.md for root cause analysis
+- Included "What This Example Demonstrates" section highlighting key concepts:
+  - Structured debugging (investigation before fixes)
+  - Root cause analysis
+  - Incremental fixes
+  - Comprehensive testing
+  - Activity logging (debugging trail)
+  - Debug instrumentation
+- Added "Tips for Debugging with Ralph" section with 8 practical tips:
+  - Investigate first (understand root cause before fixing)
+  - Add instrumentation (temporary debug logs)
+  - Test hypotheses (each investigation task tests a theory)
+  - Document findings (capture learnings in activity.md)
+  - Small fixes (break into verifiable changes)
+  - Reproduce reliably (include reproduction steps)
+  - Check related code (bug fixes reveal related issues)
+  - Keep debug logs (consider permanent logging)
+- Example demonstrates debugging workflow progression: investigation → identification → fixes → verification
+- Shows how to structure investigation tasks with specific debugging steps
+- Includes realistic manual testing scenarios (5 scenarios: navigate, refresh, close/reopen, many items, localStorage disabled)
+- Emphasizes documentation of root cause findings in activity.md
+- Example plan separates investigation, bugfix, testing, and verification categories
 
 **Verification:**
 - Build completed successfully with `pnpm build`

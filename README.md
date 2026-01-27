@@ -1164,6 +1164,373 @@ npm run build
 - **Document the "why"**: Include context in the spec about why you're refactoring
 - **Consider rollback**: Incremental git commits make it easy to undo if needed
 
+### Debugging and Fixing a Bug
+
+This example demonstrates using Ralph to systematically investigate, fix, and verify a bug.
+
+**Scenario:** Users are reporting that the shopping cart occasionally loses items when they navigate away and come back. The bug is intermittent and you need to investigate the root cause, implement a fix, and verify it works.
+
+#### Step 1: Create the Feature Directory
+
+```bash
+# From your project root
+mkdir -p features/cart-bug-fix
+cd features/cart-bug-fix
+```
+
+#### Step 2: Write the Spec
+
+Create `spec.md` documenting the bug and investigation approach:
+
+```markdown
+# Shopping Cart Persistence Bug Fix
+
+## Problem Statement
+
+Users report that items in their shopping cart sometimes disappear when they:
+- Navigate to other pages and return
+- Refresh the page
+- Close and reopen the browser (within session)
+
+The bug is intermittent - it happens sometimes but not always, making it hard to reproduce consistently.
+
+## Current Implementation
+
+The shopping cart uses:
+- React Context API for state management (CartContext)
+- localStorage for persistence
+- useEffect hook to sync cart to localStorage on changes
+
+Key files:
+- `src/contexts/CartContext.tsx` - Cart state management
+- `src/hooks/useCart.ts` - Custom hook for cart operations
+- `src/components/Cart/CartItem.tsx` - Individual cart item display
+- `src/utils/storage.ts` - localStorage wrapper functions
+
+## Suspected Issues
+
+Based on user reports and initial code review:
+
+1. **Race condition**: localStorage updates may not complete before page unload
+2. **Serialization issues**: Complex cart items may not serialize/deserialize correctly
+3. **Context reset timing**: CartContext may initialize before localStorage data loads
+4. **localStorage quota**: Storage may be full, causing silent failures
+
+## Investigation Tasks
+
+1. Review localStorage sync logic in CartContext
+2. Check for race conditions in useEffect dependencies
+3. Verify error handling around localStorage operations
+4. Test with various cart item types and sizes
+5. Check browser console for any suppressed errors
+6. Add logging to track when cart data is written/read
+
+## Proposed Solution
+
+Once root cause is identified:
+- Add proper error handling around localStorage operations
+- Implement debouncing for cart updates to avoid rapid writes
+- Add validation for cart data before saving/loading
+- Ensure CartContext initialization waits for localStorage data
+- Add error logging to catch silent failures
+
+## Testing Strategy
+
+- **Unit tests**: Test storage utilities with mocked localStorage
+- **Integration tests**: Test CartContext with actual storage operations
+- **Manual testing scenarios**:
+  - Add items → navigate away → return (should persist)
+  - Add items → refresh page (should persist)
+  - Add items → close/open tab within session (should persist)
+  - Fill cart with many items → verify all persist
+  - Test with localStorage disabled (should gracefully degrade)
+  - Test with full localStorage (should handle error)
+
+## Success Criteria
+
+- Cart items persist reliably across navigation
+- Cart items persist across page refreshes
+- No console errors related to cart operations
+- Graceful degradation when localStorage unavailable
+- All tests pass
+- Bug cannot be reproduced after fix
+
+## Files to Modify
+
+- `src/contexts/CartContext.tsx` - Fix initialization and sync logic
+- `src/utils/storage.ts` - Add error handling and validation
+- `tests/contexts/CartContext.test.tsx` - Add tests for persistence edge cases
+- `tests/utils/storage.test.ts` - Add error handling tests
+```
+
+#### Step 3: Generate the Plan
+
+Ask an AI assistant to create a debugging plan:
+
+```
+Please read @spec.md and generate a plan.md for investigating and fixing this shopping cart bug.
+Break it down into investigation tasks first, then fix tasks, then verification tasks.
+Include specific debugging steps and verification criteria for each task.
+```
+
+#### Step 4: Review the Generated Plan
+
+Edit `plan.md` to structure the debugging workflow:
+
+```markdown
+# Project Plan
+
+## Project Overview
+
+Investigate and fix shopping cart persistence bug where items intermittently disappear.
+
+@spec.md
+
+---
+
+## Task List
+
+```json
+[
+  {
+    "category": "investigation",
+    "description": "Review current CartContext implementation and identify issues",
+    "steps": [
+      "Read src/contexts/CartContext.tsx and understand current implementation",
+      "Check useEffect dependencies and localStorage sync logic",
+      "Look for race conditions in cart state updates",
+      "Review error handling (or lack thereof) around localStorage",
+      "Document findings in activity.md with specific line numbers",
+      "Identify suspected root causes"
+    ],
+    "passes": false
+  },
+  {
+    "category": "investigation",
+    "description": "Review storage utilities and test for serialization issues",
+    "steps": [
+      "Read src/utils/storage.ts implementation",
+      "Check JSON.stringify/parse error handling",
+      "Test with complex cart objects (nested data, special characters)",
+      "Verify localStorage quota handling",
+      "Check if storage operations can fail silently",
+      "Document any issues found in activity.md"
+    ],
+    "passes": false
+  },
+  {
+    "category": "investigation",
+    "description": "Add debugging logs to track cart persistence flow",
+    "steps": [
+      "Add [debug] logs in CartContext when cart state changes",
+      "Add [debug] logs in storage.ts for read/write operations",
+      "Add [debug] logs for localStorage success/failure",
+      "Add timestamp to each log for tracking timing issues",
+      "Test manually: add items, navigate, check console logs",
+      "Analyze log output to identify when/why cart data is lost"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bugfix",
+    "description": "Add error handling and validation to storage utilities",
+    "steps": [
+      "Update src/utils/storage.ts to wrap localStorage in try-catch",
+      "Add validation for data before JSON.stringify",
+      "Return error instead of throwing when localStorage fails",
+      "Add fallback behavior when localStorage is unavailable",
+      "Handle quota exceeded errors gracefully",
+      "Write unit tests in tests/utils/storage.test.ts for error cases",
+      "Run npm test and verify storage tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bugfix",
+    "description": "Fix CartContext initialization race condition",
+    "steps": [
+      "Update CartContext to properly initialize from localStorage on mount",
+      "Use useState initializer function to read from storage synchronously",
+      "Remove useEffect that was causing initialization race condition",
+      "Ensure cart state is set before first render",
+      "Add loading state if needed for async initialization",
+      "Test manually: refresh page with items in cart, verify items appear immediately"
+    ],
+    "passes": false
+  },
+  {
+    "category": "bugfix",
+    "description": "Implement debouncing for cart localStorage updates",
+    "steps": [
+      "Add debounce utility or install lodash.debounce",
+      "Wrap localStorage write in debounced function (300ms delay)",
+      "Ensure last update always completes (use trailing edge debounce)",
+      "Add beforeunload event listener to force final write on page unload",
+      "Test: rapidly add/remove items, verify all changes persist",
+      "Run npm run build and verify no TypeScript errors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "testing",
+    "description": "Write comprehensive tests for cart persistence edge cases",
+    "steps": [
+      "Update tests/contexts/CartContext.test.tsx",
+      "Add test: cart initializes from localStorage on mount",
+      "Add test: cart persists after adding items",
+      "Add test: cart handles localStorage unavailable (graceful degradation)",
+      "Add test: cart handles localStorage quota exceeded",
+      "Add test: rapid cart updates all persist (debouncing test)",
+      "Run npm test and verify all CartContext tests pass"
+    ],
+    "passes": false
+  },
+  {
+    "category": "verification",
+    "description": "Manual testing of all bug scenarios",
+    "steps": [
+      "Start application: npm run dev",
+      "Test scenario 1: Add items → navigate away → return",
+      "  - Add 3 items to cart, click to product page, return to cart",
+      "  - Verify: All 3 items still in cart",
+      "Test scenario 2: Add items → refresh page",
+      "  - Add 5 items to cart, refresh browser (Cmd+R)",
+      "  - Verify: All 5 items still in cart",
+      "Test scenario 3: Add items → close/reopen tab",
+      "  - Add items, close tab, open new tab to same URL",
+      "  - Verify: Items still in cart (within session)",
+      "Test scenario 4: Fill cart with many items",
+      "  - Add 20+ items, navigate away, return",
+      "  - Verify: All items persist",
+      "Test scenario 5: localStorage disabled",
+      "  - Disable localStorage in browser dev tools",
+      "  - Add items (should work but not persist)",
+      "  - Verify: No console errors, graceful degradation",
+      "Check browser console for any errors or warnings",
+      "Document test results in activity.md"
+    ],
+    "passes": false
+  },
+  {
+    "category": "verification",
+    "description": "Final verification and cleanup",
+    "steps": [
+      "Run full test suite: npm test (all tests must pass)",
+      "Run build: npm run build (no TypeScript errors)",
+      "Remove or reduce debug logging added during investigation",
+      "Update any relevant documentation about cart persistence",
+      "Try to reproduce original bug - should not be reproducible",
+      "Check git log to review all changes made",
+      "Document root cause and fix summary in activity.md"
+    ],
+    "passes": false
+  }
+]
+```
+```
+
+#### Step 5: Scaffold the Loop Files
+
+```bash
+ral scaffold -w features/cart-bug-fix
+```
+
+Copy your spec and plan into the feature directory, then customize `prompt.md` if needed:
+
+```markdown
+## Additional Instructions
+
+- When investigating, read the code carefully and document specific issues found
+- Add [debug] prefix to debug log statements during investigation
+- Preserve existing functionality - only fix the bug, don't refactor unrelated code
+- Test each fix incrementally before moving to the next task
+- Pay attention to async/timing issues - use debugger or detailed logs
+```
+
+#### Step 6: Run the Loop
+
+```bash
+# From project root
+ral run -w features/cart-bug-fix -m 15
+```
+
+#### Expected Output
+
+```
+Iteration 1/15
+[Claude reviews CartContext implementation]
+Cost this iteration: $0.053
+
+Iteration 2/15
+[Claude reviews storage utilities]
+Cost this iteration: $0.048
+
+Iteration 3/15
+[Claude adds debugging logs and identifies race condition]
+Cost this iteration: $0.071
+
+Iteration 4/15
+[Claude adds error handling to storage utilities]
+Cost this iteration: $0.082
+
+...
+
+Iteration 9/15
+[Claude completes final verification]
+Cost this iteration: $0.067
+Cumulative cost: $0.587
+
+<promise>COMPLETE</promise>
+
+✓ Ralph loop completed successfully!
+Total iterations: 9
+Total cost: $0.587
+```
+
+#### Step 7: Review the Fix
+
+After completion:
+
+```bash
+# Review what changed
+git log --oneline -9
+
+# See the specific fix
+git diff HEAD~5 HEAD -- src/contexts/CartContext.tsx
+
+# Verify tests pass
+npm test
+
+# Check activity log for root cause analysis
+cat features/cart-bug-fix/activity.md
+```
+
+Check `activity.md` for detailed investigation findings:
+- Root cause identified (e.g., "Race condition in useEffect causing cart to initialize before localStorage data loaded")
+- Specific code issues found with line numbers
+- Description of the fix applied
+- Test results for each scenario
+
+#### What This Example Demonstrates
+
+- **Structured debugging**: Investigation tasks before fix tasks
+- **Root cause analysis**: Understanding the problem before applying fixes
+- **Incremental fixes**: Small, testable changes rather than big rewrites
+- **Comprehensive testing**: Both automated tests and manual verification
+- **Activity logging**: Full debugging trail captured for future reference
+- **Debug instrumentation**: Adding temporary logging to understand behavior
+
+#### Tips for Debugging with Ralph
+
+- **Investigate first**: Don't jump to fixes - understand the root cause
+- **Add instrumentation**: Temporary debug logs help Claude understand what's happening
+- **Test hypotheses**: Each investigation task should test a specific theory about the bug
+- **Document findings**: Use activity.md to capture what you learned during investigation
+- **Small fixes**: Break the fix into small, verifiable changes
+- **Reproduce reliably**: Include steps to reproduce in spec, verify you can't reproduce after fix
+- **Check related code**: Bug fixes often reveal related issues that should also be addressed
+- **Keep debug logs**: Consider keeping some debug logs as permanent logging (with appropriate level)
+
 ## Working Directory Behavior
 
 The `-w, --working-directory` option allows you to organize multiple Ralph loops within your project:
