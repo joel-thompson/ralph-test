@@ -100,6 +100,20 @@ Improve the README documentation by adding comprehensive example workflows that 
       "Add after the workflow examples in README.md"
     ],
     "passes": true
+  },
+  {
+    "category": "documentation",
+    "description": "Simplify README structure and reduce redundancy",
+    "steps": [
+      "Remove 'Installation' section since package is not yet published to npm",
+      "Move workflow examples into a separate EXAMPLES.md file, keeping only brief summaries in README",
+      "Consolidate overlapping content between 'Setting Up Your Plan' and 'Tips and Best Practices'",
+      "Reduce repetition in the workflow examples - use one detailed example, make others more concise",
+      "Add a 'Quick Start' section at the top for users who want to get going fast",
+      "Ensure README flows logically: Quick Start → Core Concepts → Commands → Advanced Usage",
+      "Keep README under 500 lines by moving detailed examples elsewhere"
+    ],
+    "passes": true
   }
 ]
 ```

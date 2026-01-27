@@ -1,297 +1,146 @@
 # Ralph Loop CLI (`ral`)
 
-A TypeScript-based CLI tool for managing Claude-based development loops. The Ralph loop is a structured approach to AI-assisted development where Claude iteratively works on tasks following a plan until completion.
+A TypeScript CLI tool for AI-assisted development loops where Claude iteratively works through a structured plan until completion.
 
-## Installation
-
-```bash
-npm install -g ral
-```
-
-Or use directly with `npx`:
+## Quick Start
 
 ```bash
-npx ral <command>
-```
-
-## Local Development Setup
-
-For contributors or coworkers who want to work on the CLI itself:
-
-### 1. Clone and Install
-
-```bash
-# Clone the repository
+# 1. Clone and set up (for contributors)
 git clone <repository-url>
 cd ralph-test
-
-# Install dependencies
-pnpm install
-
-# Build the project
-pnpm build
-```
-
-### 2. Make `ral` Command Available
-
-After building, choose one of these options to use the `ral` command globally:
-
-**Option 1: pnpm link (Recommended)**
-```bash
+pnpm install && pnpm build
 pnpm link --global
-```
-One command that auto-updates when you rebuild. Run from the project directory.
 
-**Option 2: Shell Alias**
-```bash
-# Add to your .zshrc or .bashrc
-alias ral='/absolute/path/to/ralph-test/dist/index.js'
-```
-Simple and explicit. Replace with your actual path to the project.
+# 2. Create a new project
+mkdir my-project && cd my-project
 
-**Option 3: Add to PATH**
-```bash
-# Add to your .zshrc or .bashrc
-export PATH="/absolute/path/to/ralph-test/dist:$PATH"
-```
-Makes the command available system-wide. Replace with your actual path.
+# 3. Set up Ralph loop files
+ral scaffold
 
-After making changes to the code, rebuild with `pnpm build` and the `ral` command will use the updated code (Option 1 handles this automatically).
+# 4. Edit your plan
+# Edit plan.md - define your tasks in JSON format
+# Edit prompt.md - customize instructions (optional)
 
-**Note:** Once published to npm, you can install globally with `npm install -g ral`.
+# 5. Run the loop
+ral run -m 10
 
-### Development Commands
-
-```bash
-# Lint code
-pnpm run lint
-
-# Run in development mode (no -- needed with pnpm)
-pnpm run dev <command>
-
-# Examples:
-pnpm run dev scaffold -w ./features/my-feature
-pnpm run dev run -w ./features/my-feature -m 10
-pnpm run dev create-settings
+# 6. Monitor progress
+cat activity.md
+git log
 ```
 
 ## Prerequisites
 
 - Node.js 18+
-- Claude CLI installed and configured (`npm install -g @anthropic-ai/claude`)
-- Valid Anthropic API key configured for Claude CLI
+- Claude CLI: `npm install -g @anthropic-ai/claude`
+- Anthropic API key configured for Claude CLI
 
-## Package Manager
+## Core Concepts
 
-This project uses **pnpm** for package management and running scripts, which provides faster installs and efficient disk space usage with content-addressable storage.
+### The Ralph Loop
+
+Ralph automates iterative development by having Claude:
+1. Read the activity log to understand current state
+2. Find the next incomplete task in your plan
+3. Complete all steps for that task
+4. Verify the task works
+5. Update the activity log
+6. Mark the task as complete
+7. Make a git commit
+8. Repeat until all tasks are done
+
+### Key Files
+
+- **plan.md**: JSON task list with descriptions, steps, and pass/fail status
+- **activity.md**: Detailed log of what Claude accomplished each iteration
+- **prompt.md**: Instructions that guide Claude's behavior
+- **spec.md** (optional): Detailed specification/requirements document
+
+### Working Directory Pattern
+
+```bash
+# Organize features in subdirectories
+mkdir -p features/my-feature
+ral scaffold -w features/my-feature
+# Edit features/my-feature/plan.md and spec.md
+ral run -w features/my-feature -m 15
+
+# Claude runs from project root (can edit source files)
+# But reads plan/activity from features/my-feature/
+```
+
+This lets you work on multiple features in parallel with isolated plans.
 
 ## Commands
 
-### `ral create-settings`
-
-Generate configuration files for Claude and MCP (Model Context Protocol) settings.
-
-**Usage:**
-```bash
-ral create-settings [options]
-```
-
-**Options:**
-- `-w, --working-directory <path>` - Target directory for settings files (default: current directory)
-- `-f, --force` - Overwrite existing files if they exist
-
-**Created Files:**
-- `.claude/settings.json` - Claude configuration with MCP filesystem server
-- `.mcp.json` - MCP server configuration
-
-**Examples:**
-```bash
-# Create settings in current directory
-ral create-settings
-
-# Create settings in specific directory
-ral create-settings -w ./my-project
-
-# Overwrite existing settings files
-ral create-settings -f
-```
-
----
-
 ### `ral scaffold`
 
-Generate the Ralph loop file structure with starter templates.
+Generate Ralph loop file structure with starter templates.
 
-**Usage:**
 ```bash
-ral scaffold [options]
+ral scaffold                    # Create in current directory
+ral scaffold -w ./my-feature    # Create in subdirectory
+ral scaffold -f                 # Overwrite existing files
 ```
 
-**Options:**
-- `-w, --working-directory <path>` - Target directory for scaffold files (default: current directory)
-- `-f, --force` - Overwrite existing files if they exist
-
-**Created Files:**
-- `activity.md` - Activity log for tracking what the agent accomplishes each iteration
-- `plan.md` - Project plan with structured task list
-- `prompt.md` - Instructions for Claude to follow during the loop
-- `screenshots/` - Directory for storing screenshots
-
-**Examples:**
-```bash
-# Scaffold in current directory
-ral scaffold
-
-# Scaffold in new project directory
-ral scaffold -w ./my-new-project
-
-# Overwrite existing scaffold files
-ral scaffold -f
-```
-
----
+Creates: `activity.md`, `plan.md`, `prompt.md`, `screenshots/`
 
 ### `ral run`
 
-Execute the Ralph loop by repeatedly calling Claude with your prompt until completion or max iterations.
+Execute the Ralph loop.
 
-**Usage:**
 ```bash
-ral run -m <iterations> [options]
+ral run -m <max-iterations>           # Required: set iteration limit
+ral run -m 10 -w ./features/auth     # Run with specific working directory
 ```
-
-**Options:**
-- `-m, --max-iterations <number>` - Maximum number of iterations (required)
-- `-w, --working-directory <path>` - Working directory containing loop files (default: current directory)
-
-**Required Files:**
-- `plan.md` - Project plan with tasks
-- `prompt.md` - Instructions for Claude
-- `activity.md` - Activity log
 
 **Behavior:**
-- Runs Claude CLI with your prompt file for up to `max-iterations` times
-- Tracks and displays per-iteration and cumulative token usage and costs
-- Exits with code 0 if Claude outputs `<promise>COMPLETE</promise>`
+- Iterates up to max-iterations times
+- Tracks token usage and costs per iteration
+- Exits with code 0 when Claude outputs `<promise>COMPLETE</promise>`
 - Exits with code 1 if max iterations reached without completion
-
-**Examples:**
-```bash
-# Run loop for up to 10 iterations
-ral run -m 10
-
-# Run loop in specific directory
-ral run -m 5 -w ./my-project
-
-# Typical workflow
-ral scaffold -w ./my-project
-cd ./my-project
-# Edit plan.md and prompt.md
-ral run -m 20
-
-# Feature development workflow - run from project root, point at feature folder
-# Claude runs in project root (can edit source files), but @ references point to feature folder
-ral scaffold -w features/auth
-ral run -w features/auth -m 10
-
-# Multiple features in parallel
-ral scaffold -w features/api-v2
-ral scaffold -w features/dashboard
-ral run -w features/api-v2 -m 5
-ral run -w features/dashboard -m 5
-```
 
 **Output:**
 ```
 Iteration 1/10
-Input tokens: 15234
-Output tokens: 2341
-Cache read tokens: 0
+Input tokens: 15234, Output tokens: 2341
 Cost this iteration: $0.123
 Cumulative cost: $0.123
-
-Iteration 2/10
-...
 ```
 
-## Typical Workflow
+### `ral create-settings`
 
-1. **Create a new project**
-   ```bash
-   mkdir my-ai-project
-   cd my-ai-project
-   ```
+Generate Claude and MCP configuration files (optional).
 
-2. **Scaffold the Ralph loop structure**
-   ```bash
-   ral scaffold
-   ```
+```bash
+ral create-settings              # Create in current directory
+ral create-settings -w ./project # Create in subdirectory
+ral create-settings -f           # Overwrite existing
+```
 
-3. **Configure Claude and MCP (optional)**
-   ```bash
-   ral create-settings
-   ```
+Creates: `.claude/settings.json`, `.mcp.json`
 
-4. **Edit your project plan**
-   - Open `plan.md` and define your tasks in the JSON structure
-   - Each task should have: category, description, steps, and `passes: false`
+## Writing Your Plan
 
-5. **Customize the prompt**
-   - Edit `prompt.md` with specific instructions for Claude
-   - The default prompt instructs Claude to:
-     - Read activity.md to understand current state
-     - Find next task with `passes: false` in plan.md
-     - Complete all steps for that task
-     - Verify the task works
-     - Update activity.md with what was done
-     - Change task's `passes` to `true` in plan.md
-     - Make a git commit
+### 1. Write a Spec (Recommended for Complex Features)
 
-6. **Run the loop**
-   ```bash
-   ral run -m 20
-   ```
-
-7. **Monitor progress**
-   - Check `activity.md` for detailed logs of what Claude accomplished
-   - Review `plan.md` to see which tasks have `passes: true`
-   - Examine git commits to see incremental changes
-
-## Writing a Spec (spec.md)
-
-Before creating your plan, consider writing a `spec.md` file to serve as a comprehensive specification document for your project or feature. This acts as a Product Requirements Document (PRD) that describes what you're building.
-
-### Purpose
-
-The spec.md file provides detailed context that Claude needs to complete tasks effectively, while keeping plan.md focused on the task breakdown. By referencing `@spec.md` in your plan.md or prompt.md, Claude receives the full requirements context without cluttering the task list.
-
-### What to Include in a Spec
-
-Your spec.md should contain:
-
-- **Project overview**: High-level description of what you're building
-- **Requirements**: Functional and non-functional requirements
-- **Constraints**: Technical limitations, dependencies, or standards to follow
-- **API contracts**: Expected interfaces, function signatures, or data structures
-- **Examples**: Sample inputs/outputs, use cases, or user flows
-- **Technical details**: Architecture decisions, libraries to use, coding patterns
-- **Testing criteria**: How to verify the implementation works
-
-### Example Spec Structure
+Create `spec.md` with detailed requirements:
 
 ```markdown
+# Feature Name
+
 ## Project Overview
-Brief description of the feature or project
+What you're building and why.
 
 ## Requirements
-- Must support X, Y, and Z
-- Should integrate with existing A component
-- Performance: Must handle N requests per second
+- Functional requirement 1
+- Functional requirement 2
+- Non-functional requirements
 
 ## Technical Constraints
-- Use TypeScript with strict mode
-- Follow existing codebase patterns
-- Dependencies: Prefer well-known libraries, minimize new dependencies
+- Use TypeScript strict mode
+- Follow existing patterns in src/
+- Minimize dependencies
 
 ## API Design
 ```typescript
@@ -300,316 +149,33 @@ interface MyFeature {
 }
 ```
 
-## Examples
-```typescript
-// Expected usage
-const result = await feature.doSomething("input")
-// result should be { success: true, data: ... }
-```
-
 ## Testing & Verification
-- Unit tests must pass
-- Integration tests for X scenario
-- Manual verification: Run Y and check Z
+- Unit tests for all functions
+- Integration test for end-to-end flow
+- Manual test: do X and verify Y
 ```
 
-### Using the Spec with Your Plan
+### 2. Generate a Plan with AI
 
-Reference the spec in your plan.md using the `@` syntax:
+Use Claude or ChatGPT to generate your task breakdown:
+
+**Example prompt:**
+```
+I have a spec.md file describing a new feature. Please read @spec.md
+and generate a plan.md with 6-10 tasks in the Ralph loop JSON format.
+Each task should have: category, description, clear steps, and verification.
+Tasks should be 5-15 minutes of work each.
+```
+
+### 3. Review and Refine the Plan
+
+Edit `plan.md` to ensure quality:
 
 ```markdown
 # Project Plan
 
 ## Project Overview
-
-Building a new authentication system for the application.
-
-@spec.md
-
----
-
-## Task List
-...
-```
-
-This pattern ensures:
-- **plan.md stays focused** on task breakdown and execution steps
-- **spec.md holds the detailed requirements** that inform how tasks should be completed
-- **Claude has full context** when working on each task
-- **Requirements are centralized** and easy to update without modifying tasks
-
-### Benefits
-
-- **Separation of concerns**: Requirements (spec) vs. execution plan (tasks)
-- **Better context**: Claude understands the "why" behind each task
-- **Easier maintenance**: Update requirements once in spec.md instead of across multiple tasks
-- **Clearer communication**: Team members can review spec.md to understand the feature
-- **Reusability**: Same spec can inform multiple plan iterations or approaches
-
-## Setting Up Your Plan
-
-Once you have your spec (or a clear idea of what you want to build), you need to create a `plan.md` file that breaks down the work into actionable tasks. While you can write this by hand, using an AI assistant to help generate the task breakdown is highly effective.
-
-### AI-Assisted Plan Generation
-
-Rather than manually creating every task and step, leverage an AI agent (Claude, ChatGPT, or similar) to help translate your requirements into a structured plan. This approach:
-
-- Helps identify tasks you might overlook
-- Suggests logical task ordering and dependencies
-- Creates consistent task descriptions and verification steps
-- Saves time on the initial planning phase
-
-### Example Prompts for Generating Plans
-
-When asking an AI to generate your plan, provide clear context:
-
-**From a spec file:**
-```
-I have a spec.md file that describes a new feature I want to build.
-Please read @spec.md and generate a plan.md with a task list in the required JSON format.
-Break down the implementation into 5-8 tasks, each with clear steps and verification criteria.
-```
-
-**From requirements:**
-```
-I need to add user authentication to my web app with the following requirements:
-- JWT-based authentication
-- Login and registration endpoints
-- Password hashing with bcrypt
-- Protected route middleware
-- Unit tests for all components
-
-Please generate a plan.md file with tasks broken down into implementable steps.
-Each task should be verifiable and include specific steps for implementation and testing.
-```
-
-**For refactoring:**
-```
-I want to refactor the error handling in my Express API to use a centralized error handler.
-The refactoring should:
-- Create a custom error class
-- Add error handling middleware
-- Update all routes to use the new pattern
-- Ensure error responses are consistent
-
-Generate a plan.md with tasks that can be completed one at a time.
-```
-
-### Reviewing and Refining the Generated Plan
-
-IMPORTANT: Always manually review and refine the AI-generated plan before running the Ralph loop.
-
-**Check for:**
-- **Task clarity**: Each task description should be specific and unambiguous
-- **Step completeness**: Steps should cover implementation AND verification
-- **Realistic scope**: Tasks shouldn't be too large (multiple files, complex changes) or too small (single line changes)
-- **Proper ordering**: Dependencies should be respected (e.g., create function before writing tests for it)
-- **Verification criteria**: Each task should specify how to verify it works (run tests, check build, manual verification)
-
-**Good task example:**
-```json
-{
-  "category": "implementation",
-  "description": "Create JWT authentication middleware",
-  "steps": [
-    "Install jsonwebtoken and @types/jsonwebtoken dependencies",
-    "Create middleware/auth.ts file",
-    "Implement verifyToken middleware function that validates JWT from Authorization header",
-    "Add error handling for expired, invalid, or missing tokens",
-    "Export middleware for use in route protection",
-    "Write unit tests in tests/middleware/auth.test.ts",
-    "Run npm test to verify tests pass"
-  ],
-  "passes": false
-}
-```
-
-**Too vague (bad example):**
-```json
-{
-  "description": "Add authentication",
-  "steps": ["Implement auth"],
-  "passes": false
-}
-```
-
-**Too granular (bad example):**
-```json
-{
-  "description": "Import jsonwebtoken on line 1 of auth.ts",
-  "steps": ["Add import statement"],
-  "passes": false
-}
-```
-
-### Tips for Effective Plans
-
-**Task Granularity:**
-- Aim for tasks that take 5-15 minutes for an experienced developer
-- If a task feels like it would take more than 30 minutes, break it down further
-- Combine trivial changes (like adding one import) into larger, cohesive tasks
-
-**Clear Verification Steps:**
-- Always include a verification step in the task (run tests, check build, manual test)
-- Be specific: "Run npm test and verify UserService tests pass" rather than "Test the code"
-- Include both automated checks (tests, linting) and manual verification when needed
-
-**Writing Good Task Descriptions:**
-- Use action verbs: "Implement", "Create", "Refactor", "Add", "Update"
-- Be specific about what changes: "Create UserRepository class" not "Add database stuff"
-- Include context when helpful: "Update login route to use JWT middleware" clarifies the scope
-
-**Handling Dependencies:**
-- Order tasks so dependencies come first (e.g., create utility functions before using them)
-- Make dependencies explicit in task steps: "Requires auth middleware from previous task"
-- Consider creating foundational tasks first (types, interfaces, base classes)
-
-### The plan.md Format
-
-Your plan.md should follow this structure:
-
-```markdown
-# Project Plan
-
-## Project Overview
-
 Brief description of what you're building.
-
-@spec.md
-
----
-
-## Task List
-
-```json
-[
-  {
-    "category": "setup",
-    "description": "Task description here",
-    "steps": [
-      "Step 1 with specific action",
-      "Step 2 with specific action",
-      "Verification: Run tests and check output"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Next task",
-    "steps": ["..."],
-    "passes": false
-  }
-]
-```
-```
-
-The `passes` field starts as `false` and Claude will change it to `true` when the task is complete.
-
-## Example Workflows
-
-### Building a New Feature from Scratch
-
-This example demonstrates using Ralph to build a complete new feature: a user notification system.
-
-**Scenario:** You want to add a notification system to your Node.js application that can send emails and in-app notifications to users.
-
-#### Step 1: Create the Feature Directory
-
-```bash
-# From your project root
-mkdir -p features/notifications
-cd features/notifications
-```
-
-#### Step 2: Write the Spec
-
-Create `spec.md` with your requirements:
-
-```markdown
-# User Notification System
-
-## Project Overview
-
-Build a flexible notification system that supports multiple delivery methods (email, in-app) and can be easily extended for future notification types (SMS, push).
-
-## Requirements
-
-- Send notifications via email using nodemailer
-- Store in-app notifications in database (PostgreSQL)
-- Mark notifications as read/unread
-- Support notification templates
-- Handle notification preferences per user
-- Queue notifications for async delivery
-
-## Technical Constraints
-
-- Use TypeScript with strict mode
-- Follow repository pattern for data access
-- Use existing database connection pool
-- Minimize dependencies (only add nodemailer)
-- Must work with existing User model
-
-## API Design
-
-```typescript
-interface NotificationService {
-  send(userId: string, notification: NotificationInput): Promise<void>
-  markAsRead(notificationId: string): Promise<void>
-  getUserNotifications(userId: string): Promise<Notification[]>
-}
-
-interface NotificationInput {
-  type: 'email' | 'in-app'
-  subject: string
-  body: string
-  template?: string
-}
-```
-
-## Database Schema
-
-```sql
-CREATE TABLE notifications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id),
-  type VARCHAR(50) NOT NULL,
-  subject VARCHAR(255) NOT NULL,
-  body TEXT NOT NULL,
-  read BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-## Testing & Verification
-
-- Unit tests for NotificationService (mock email sending)
-- Unit tests for NotificationRepository (database operations)
-- Integration test: Create notification and verify in database
-- Manual test: Send test email and verify delivery
-- Build must complete with no TypeScript errors
-```
-
-#### Step 3: Generate the Plan
-
-Ask an AI assistant to create your plan:
-
-```
-Please read @spec.md and generate a plan.md file for implementing this notification system.
-Break it down into 6-10 tasks with specific, actionable steps.
-Include verification steps for each task.
-Use the Ralph loop plan.md format with JSON task list.
-```
-
-#### Step 4: Review and Customize the Generated Plan
-
-Edit `plan.md` to ensure tasks are appropriately sized:
-
-```markdown
-# Project Plan
-
-## Project Overview
-
-Implement a user notification system with email and in-app delivery.
 
 @spec.md
 
@@ -623,105 +189,23 @@ Implement a user notification system with email and in-app delivery.
     "category": "setup",
     "description": "Set up database schema and install dependencies",
     "steps": [
-      "Install nodemailer and @types/nodemailer dependencies",
-      "Create database migration file for notifications table",
-      "Run migration to create notifications table in development database",
-      "Verify table exists with: psql -c '\\d notifications'",
-      "Run npm run build to ensure no TypeScript errors"
+      "Install required npm packages: zod, bcrypt",
+      "Create database migration for users table",
+      "Run migration: npm run migrate",
+      "Verify table exists: psql -c '\\d users'",
+      "Run npm run build - should have no TypeScript errors"
     ],
     "passes": false
   },
   {
     "category": "implementation",
-    "description": "Create Notification entity and types",
+    "description": "Create User repository with CRUD operations",
     "steps": [
-      "Create src/entities/Notification.ts with Notification interface matching database schema",
-      "Create src/types/notifications.ts with NotificationInput, NotificationType types",
-      "Add type exports to src/types/index.ts",
-      "Run npm run build and fix any TypeScript errors",
-      "Verify types are properly exported"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Implement NotificationRepository for database operations",
-    "steps": [
-      "Create src/repositories/NotificationRepository.ts",
-      "Implement create() method to insert notifications into database",
-      "Implement findByUserId() to get user's notifications",
-      "Implement markAsRead() to update read status",
-      "Add proper error handling and database connection usage",
-      "Write unit tests in tests/repositories/NotificationRepository.test.ts",
-      "Run npm test and verify NotificationRepository tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Create EmailService for sending emails",
-    "steps": [
-      "Create src/services/EmailService.ts",
-      "Configure nodemailer transport with SMTP settings from environment variables",
-      "Implement sendEmail() method with error handling",
-      "Add email template rendering support",
-      "Write unit tests with mocked nodemailer in tests/services/EmailService.test.ts",
-      "Run npm test and verify EmailService tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Implement NotificationService orchestration layer",
-    "steps": [
-      "Create src/services/NotificationService.ts",
-      "Implement send() method that handles both email and in-app notifications",
-      "Use NotificationRepository for in-app notifications",
-      "Use EmailService for email notifications",
-      "Implement getUserNotifications() and markAsRead() methods",
-      "Add proper error handling and logging",
-      "Write unit tests in tests/services/NotificationService.test.ts",
-      "Run npm test and verify NotificationService tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "integration",
-    "description": "Add API routes for notifications",
-    "steps": [
-      "Create src/routes/notifications.ts",
-      "Add POST /api/notifications route to send notification",
-      "Add GET /api/notifications route to get user notifications",
-      "Add PATCH /api/notifications/:id/read route to mark as read",
-      "Add authentication middleware to protect routes",
-      "Register routes in src/app.ts",
-      "Run npm run build and verify no TypeScript errors"
-    ],
-    "passes": false
-  },
-  {
-    "category": "testing",
-    "description": "Write integration tests",
-    "steps": [
-      "Create tests/integration/notifications.test.ts",
-      "Test creating in-app notification and verifying it's stored in database",
-      "Test sending email notification (mock SMTP)",
-      "Test retrieving user notifications",
-      "Test marking notification as read",
-      "Run npm test and verify all integration tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "verification",
-    "description": "Manual testing and documentation",
-    "steps": [
-      "Start the application in development mode",
-      "Send a test email notification via API and verify email delivery",
-      "Send a test in-app notification and verify it appears in GET endpoint",
-      "Test marking notification as read",
-      "Update API documentation with new notification endpoints",
-      "Run npm run build and npm test to verify everything still works"
+      "Create src/repositories/UserRepository.ts",
+      "Implement create, findById, findByEmail, update methods",
+      "Add proper TypeScript types and error handling",
+      "Write unit tests in tests/repositories/UserRepository.test.ts",
+      "Run npm test - verify UserRepository tests pass"
     ],
     "passes": false
   }
@@ -729,1144 +213,220 @@ Implement a user notification system with email and in-app delivery.
 ```
 ```
 
-#### Step 5: Customize the Prompt (Optional)
+**Good task characteristics:**
+- ✅ Clear, specific description
+- ✅ 5-15 minutes of focused work
+- ✅ Explicit verification step
+- ✅ Lists specific files to create/modify
+- ❌ Avoid: "Implement everything" (too vague)
+- ❌ Avoid: "Add one import" (too small)
 
-The default `prompt.md` works well, but you can add feature-specific instructions:
+### 4. Customize the Prompt (Optional)
 
-```bash
-ral scaffold -w features/notifications
-```
-
-Edit `features/notifications/prompt.md` to add:
+Edit `prompt.md` to add project-specific guidance:
 
 ```markdown
-## Additional Instructions
+## Project Context
+- TypeScript Node.js API using Express and PostgreSQL
+- Follow existing patterns in src/repositories/ and src/services/
+- Use Zod for validation
 
-- Follow the existing code style in src/repositories/ and src/services/
-- Use the connection pool from src/database/pool.ts
-- For email configuration, use environment variables: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
+## Coding Standards
 - Add [debug] prefix to debug log statements
-- Write tests that can run without external dependencies (mock email sending)
+- Add JSDoc comments for public functions
+- Prefer async/await over .then() chains
+
+## Testing Requirements
+- Write unit tests for all new functions
+- Mock external dependencies (database, APIs)
 ```
 
-#### Step 6: Run the Loop
+## Choosing max-iterations
+
+Formula: `max-iterations = number_of_tasks + buffer`
+
+Examples:
+- 5 tasks → use `-m 8` (5 + 3 buffer)
+- 10 tasks → use `-m 13` (10 + 3 buffer)
+- 20 tasks → use `-m 25` (20 + 5 buffer)
+
+**Why a buffer?**
+- Tests might fail and need fixing
+- Build errors need resolution
+- Tasks might be more complex than anticipated
+
+**Cost:** Typically $0.05-$0.15 per iteration depending on context size.
+
+**Tip:** Start conservative and run again if needed. Progress is saved.
 
 ```bash
-# From project root
+ral run -m 5    # Run 5 iterations
+cat activity.md # Check progress
+ral run -m 5    # Continue where you left off
+```
+
+## Common Pitfalls and Solutions
+
+| Pitfall | Solution |
+|---------|----------|
+| Tasks too large (>30 min) | Break into smaller tasks (<15 min each) |
+| Unclear success criteria | Add explicit verification: "Run tests, verify X passes" |
+| Missing dependencies | Include installation in task steps |
+| Tests don't exist yet | Order tasks: implement → write tests → run tests |
+| Context grows too large | Keep plan focused; completed tasks marked `passes: true` |
+| Loop gets stuck on a task | Pause, fix manually or refine task steps, resume |
+
+## Example Workflows
+
+For detailed, real-world examples see [EXAMPLES.md](EXAMPLES.md):
+
+1. **Building a New Feature from Scratch**: Complete workflow for implementing a notification system
+2. **Refactoring Existing Code**: Systematic refactoring of error handling across an Express API
+3. **Debugging and Fixing a Bug**: Structured investigation and fix for an intermittent cart bug
+
+Quick example - Building a feature:
+```bash
+# 1. Create feature directory and spec
+mkdir -p features/notifications
+cd features/notifications
+# Write spec.md with requirements
+
+# 2. Generate plan with AI assistant
+# "Please read @spec.md and generate a plan.md..."
+
+# 3. Scaffold and run
+cd ../..  # back to project root
+ral scaffold -w features/notifications
 ral run -w features/notifications -m 15
+
+# 4. Review results
+cat features/notifications/activity.md
+git log --oneline
 ```
-
-#### Expected Output
-
-```
-Iteration 1/15
-[Claude sets up database schema and installs nodemailer]
-Input tokens: 12453
-Output tokens: 1876
-Cost this iteration: $0.089
-Cumulative cost: $0.089
-
-Iteration 2/15
-[Claude creates Notification entity and types]
-Input tokens: 14231
-Output tokens: 1234
-Cost this iteration: $0.078
-Cumulative cost: $0.167
-
-...
-
-Iteration 8/15
-[Claude completes final verification task]
-Input tokens: 18492
-Output tokens: 987
-Cost this iteration: $0.091
-Cumulative cost: $0.634
-
-<promise>COMPLETE</promise>
-
-✓ Ralph loop completed successfully!
-Total iterations: 8
-Total cost: $0.634
-```
-
-#### Step 7: Review the Results
-
-After completion, check:
-
-- `features/notifications/activity.md` - Detailed log of what was implemented
-- `git log` - Incremental commits for each task
-- Run `npm test` - All tests should pass
-- Check `src/` - New files: entities/Notification.ts, repositories/NotificationRepository.ts, services/NotificationService.ts, services/EmailService.ts, routes/notifications.ts
-
-#### What This Example Demonstrates
-
-- **Complete workflow**: From requirements to working implementation
-- **Feature isolation**: Using working directory for feature-specific loop files
-- **AI-assisted planning**: Letting AI help break down the spec into tasks
-- **Incremental development**: Each task builds on previous ones
-- **Self-verification**: Claude tests its own work at each step
-- **Cost tracking**: See exactly how much the implementation costs
-- **Activity logging**: Full audit trail of what was built and how
-
-#### Tips for This Workflow
-
-- Start with a detailed spec.md - the better your spec, the better the plan
-- Review the AI-generated plan carefully before running the loop
-- Set max-iterations higher than you think you need (you can always stop early)
-- Check activity.md between iterations if you want to monitor progress
-- Use git to review changes incrementally
-- If a task fails, you can adjust plan.md and resume
-
-### Refactoring Existing Code
-
-This example demonstrates using Ralph to refactor existing code with dependent tasks that build on each other.
-
-**Scenario:** You have an Express.js API with inconsistent error handling scattered across route handlers. You want to refactor it to use a centralized error handling system.
-
-#### Step 1: Create the Feature Directory
-
-```bash
-# From your project root
-mkdir -p features/error-handling-refactor
-cd features/error-handling-refactor
-```
-
-#### Step 2: Write the Spec
-
-Create `spec.md` describing the refactoring goals:
-
-```markdown
-# Centralized Error Handling Refactor
-
-## Project Overview
-
-Refactor the Express API to use a consistent, centralized error handling pattern with custom error classes and middleware.
-
-## Current State
-
-- Error handling is inconsistent across routes
-- Some routes send raw error messages
-- Error responses have different formats
-- Stack traces sometimes leak to clients
-- No distinction between operational vs programmer errors
-
-## Target State
-
-- Custom AppError class for operational errors
-- Centralized error handling middleware
-- Consistent error response format
-- Proper logging of errors
-- Stack traces only in development mode
-- All routes use standardized error handling
-
-## Technical Approach
-
-### Custom Error Class
-
-```typescript
-class AppError extends Error {
-  constructor(
-    public statusCode: number,
-    public message: string,
-    public isOperational: boolean = true
-  ) {
-    super(message)
-    Object.setPrototypeOf(this, AppError.prototype)
-  }
-}
-```
-
-### Error Response Format
-
-```typescript
-interface ErrorResponse {
-  status: 'error'
-  statusCode: number
-  message: string
-  stack?: string  // only in development
-}
-```
-
-### Middleware Signature
-
-```typescript
-function errorHandler(
-  err: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void
-```
-
-## Migration Strategy
-
-1. Create custom error class and middleware
-2. Update one route file at a time
-3. Test each route after migration
-4. Remove old error handling code
-5. Update tests to match new error format
-
-## Testing & Verification
-
-- Unit tests for AppError class
-- Unit tests for error middleware
-- Integration tests for error responses
-- Manual testing of error scenarios
-- All existing tests should still pass
-- Build must complete with no TypeScript errors
-
-## Files to Modify
-
-- Create: src/errors/AppError.ts
-- Create: src/middleware/errorHandler.ts
-- Update: src/routes/users.ts (10 error handling points)
-- Update: src/routes/posts.ts (8 error handling points)
-- Update: src/routes/comments.ts (6 error handling points)
-- Update: src/app.ts (register middleware)
-- Update: tests/* (update assertions for new error format)
-```
-
-#### Step 3: Generate the Plan
-
-Ask an AI assistant to create a refactoring plan:
-
-```
-Please read @spec.md and generate a plan.md for this error handling refactor.
-Break it down into tasks that can be completed sequentially.
-Each task should refactor a manageable chunk and include verification.
-Make sure tasks have proper dependencies (e.g., create error classes before using them).
-```
-
-#### Step 4: Review the Generated Plan
-
-Edit `plan.md` to ensure proper task ordering:
-
-```markdown
-# Project Plan
-
-## Project Overview
-
-Refactor Express API to use centralized error handling with custom error classes.
-
-@spec.md
-
----
-
-## Task List
-
-```json
-[
-  {
-    "category": "implementation",
-    "description": "Create AppError custom error class",
-    "steps": [
-      "Create src/errors/AppError.ts file",
-      "Implement AppError class extending Error with statusCode, message, and isOperational properties",
-      "Add proper TypeScript typing and Error prototype setup",
-      "Create error factory functions for common cases: badRequest(), notFound(), unauthorized(), etc.",
-      "Write unit tests in tests/errors/AppError.test.ts",
-      "Run npm test and verify AppError tests pass",
-      "Run npm run build and verify no TypeScript errors"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Create centralized error handling middleware",
-    "steps": [
-      "Create src/middleware/errorHandler.ts file",
-      "Implement errorHandler function with Express error middleware signature",
-      "Handle AppError instances by sending formatted JSON response",
-      "Handle unknown errors with 500 status and generic message",
-      "Include stack traces only when NODE_ENV !== 'production'",
-      "Add error logging with appropriate log levels",
-      "Write unit tests in tests/middleware/errorHandler.test.ts",
-      "Run npm test and verify errorHandler tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "refactoring",
-    "description": "Refactor users.ts routes to use AppError",
-    "steps": [
-      "Open src/routes/users.ts and identify all error handling points",
-      "Replace res.status().json() error responses with throw new AppError()",
-      "Use appropriate error factory functions (notFound, badRequest, etc.)",
-      "Remove try-catch blocks that just pass errors to next() (let async errors bubble)",
-      "For async routes, ensure errors properly propagate to error middleware",
-      "Update tests/routes/users.test.ts to expect new error response format",
-      "Run npm test and verify users route tests pass",
-      "Manual test: curl user endpoints and verify error responses"
-    ],
-    "passes": false
-  },
-  {
-    "category": "refactoring",
-    "description": "Refactor posts.ts routes to use AppError",
-    "steps": [
-      "Open src/routes/posts.ts and identify all error handling points",
-      "Replace existing error handling with AppError throws",
-      "Use appropriate error factory functions",
-      "Update tests/routes/posts.test.ts for new error format",
-      "Run npm test and verify posts route tests pass",
-      "Manual test: curl post endpoints and verify error responses"
-    ],
-    "passes": false
-  },
-  {
-    "category": "refactoring",
-    "description": "Refactor comments.ts routes to use AppError",
-    "steps": [
-      "Open src/routes/comments.ts and identify all error handling points",
-      "Replace existing error handling with AppError throws",
-      "Use appropriate error factory functions",
-      "Update tests/routes/comments.test.ts for new error format",
-      "Run npm test and verify comments route tests pass",
-      "Manual test: curl comment endpoints and verify error responses"
-    ],
-    "passes": false
-  },
-  {
-    "category": "integration",
-    "description": "Register error middleware in app.ts and remove old error handling",
-    "steps": [
-      "Open src/app.ts",
-      "Import errorHandler middleware",
-      "Register errorHandler as the last middleware (after all routes)",
-      "Remove any old error handling middleware or logic",
-      "Verify middleware is registered after route handlers but before app.listen",
-      "Run npm run build and verify no TypeScript errors"
-    ],
-    "passes": false
-  },
-  {
-    "category": "testing",
-    "description": "Run full test suite and integration testing",
-    "steps": [
-      "Run npm test and verify ALL tests pass (not just new tests)",
-      "Check test output for any tests that were skipped or failed",
-      "Run npm run build and verify no TypeScript errors or warnings",
-      "Start application in development mode: npm run dev",
-      "Test error scenarios manually:",
-      "  - GET /api/users/invalid-id (should return 404 with proper format)",
-      "  - POST /api/posts with invalid data (should return 400)",
-      "  - GET /api/protected without auth (should return 401)",
-      "Verify error responses match ErrorResponse format from spec",
-      "Verify stack traces appear in development but not in production mode"
-    ],
-    "passes": false
-  },
-  {
-    "category": "cleanup",
-    "description": "Clean up old error handling code and update documentation",
-    "steps": [
-      "Search codebase for any remaining old-style error handling patterns",
-      "Remove any unused error handling utilities or functions",
-      "Update API documentation to reflect new error response format",
-      "Add JSDoc comments to AppError class and errorHandler middleware",
-      "Run npm run build one final time to verify everything compiles",
-      "Run npm test to ensure all tests still pass"
-    ],
-    "passes": false
-  }
-]
-```
-```
-
-#### Step 5: Scaffold and Customize
-
-```bash
-ral scaffold -w features/error-handling-refactor
-```
-
-The default prompt works well for refactoring, but you could add specific guidance:
-
-```markdown
-## Additional Instructions
-
-- Preserve existing functionality - only change error handling mechanism
-- Keep the same HTTP status codes that were used before
-- When refactoring routes, update one route handler at a time
-- Make sure async errors properly propagate (use express-async-errors or wrap handlers)
-- Test each file after refactoring before moving to the next
-```
-
-#### Step 6: Run the Loop
-
-```bash
-# From project root
-ral run -w features/error-handling-refactor -m 12
-```
-
-#### Expected Output
-
-```
-Iteration 1/12
-[Claude creates AppError class]
-Cost this iteration: $0.067
-
-Iteration 2/12
-[Claude creates errorHandler middleware]
-Cost this iteration: $0.071
-
-Iteration 3/12
-[Claude refactors users.ts routes]
-Cost this iteration: $0.083
-
-...
-
-Iteration 8/12
-[Claude completes cleanup and documentation]
-Cost this iteration: $0.059
-Cumulative cost: $0.523
-
-<promise>COMPLETE</promise>
-
-✓ Ralph loop completed successfully!
-Total iterations: 8
-Total cost: $0.523
-```
-
-#### Step 7: Review the Changes
-
-Check the refactoring results:
-
-```bash
-# View what changed
-git log --oneline -8
-
-# Review the diff for a specific commit
-git show HEAD~3
-
-# Check that tests pass
-npm test
-
-# Verify build
-npm run build
-```
-
-#### What This Example Demonstrates
-
-- **Sequential dependencies**: Tasks build on each other (create classes → create middleware → use in routes)
-- **Incremental refactoring**: One route file at a time, not everything at once
-- **Test-driven changes**: Update tests alongside code changes
-- **Risk mitigation**: Verify each step before moving to the next
-- **Preserve functionality**: Change implementation without breaking existing behavior
-- **Complete migration**: From initial setup through cleanup and documentation
-
-#### Tips for Refactoring with Ralph
-
-- **Break it down**: Don't try to refactor the entire codebase in one task
-- **Dependencies matter**: Order tasks so foundational changes come first
-- **Test continuously**: Verify tests pass after each task, not just at the end
-- **One file at a time**: When updating multiple files, make each file a separate task
-- **Keep it working**: Each task should leave the codebase in a working state
-- **Document the "why"**: Include context in the spec about why you're refactoring
-- **Consider rollback**: Incremental git commits make it easy to undo if needed
-
-### Debugging and Fixing a Bug
-
-This example demonstrates using Ralph to systematically investigate, fix, and verify a bug.
-
-**Scenario:** Users are reporting that the shopping cart occasionally loses items when they navigate away and come back. The bug is intermittent and you need to investigate the root cause, implement a fix, and verify it works.
-
-#### Step 1: Create the Feature Directory
-
-```bash
-# From your project root
-mkdir -p features/cart-bug-fix
-cd features/cart-bug-fix
-```
-
-#### Step 2: Write the Spec
-
-Create `spec.md` documenting the bug and investigation approach:
-
-```markdown
-# Shopping Cart Persistence Bug Fix
-
-## Problem Statement
-
-Users report that items in their shopping cart sometimes disappear when they:
-- Navigate to other pages and return
-- Refresh the page
-- Close and reopen the browser (within session)
-
-The bug is intermittent - it happens sometimes but not always, making it hard to reproduce consistently.
-
-## Current Implementation
-
-The shopping cart uses:
-- React Context API for state management (CartContext)
-- localStorage for persistence
-- useEffect hook to sync cart to localStorage on changes
-
-Key files:
-- `src/contexts/CartContext.tsx` - Cart state management
-- `src/hooks/useCart.ts` - Custom hook for cart operations
-- `src/components/Cart/CartItem.tsx` - Individual cart item display
-- `src/utils/storage.ts` - localStorage wrapper functions
-
-## Suspected Issues
-
-Based on user reports and initial code review:
-
-1. **Race condition**: localStorage updates may not complete before page unload
-2. **Serialization issues**: Complex cart items may not serialize/deserialize correctly
-3. **Context reset timing**: CartContext may initialize before localStorage data loads
-4. **localStorage quota**: Storage may be full, causing silent failures
-
-## Investigation Tasks
-
-1. Review localStorage sync logic in CartContext
-2. Check for race conditions in useEffect dependencies
-3. Verify error handling around localStorage operations
-4. Test with various cart item types and sizes
-5. Check browser console for any suppressed errors
-6. Add logging to track when cart data is written/read
-
-## Proposed Solution
-
-Once root cause is identified:
-- Add proper error handling around localStorage operations
-- Implement debouncing for cart updates to avoid rapid writes
-- Add validation for cart data before saving/loading
-- Ensure CartContext initialization waits for localStorage data
-- Add error logging to catch silent failures
-
-## Testing Strategy
-
-- **Unit tests**: Test storage utilities with mocked localStorage
-- **Integration tests**: Test CartContext with actual storage operations
-- **Manual testing scenarios**:
-  - Add items → navigate away → return (should persist)
-  - Add items → refresh page (should persist)
-  - Add items → close/open tab within session (should persist)
-  - Fill cart with many items → verify all persist
-  - Test with localStorage disabled (should gracefully degrade)
-  - Test with full localStorage (should handle error)
-
-## Success Criteria
-
-- Cart items persist reliably across navigation
-- Cart items persist across page refreshes
-- No console errors related to cart operations
-- Graceful degradation when localStorage unavailable
-- All tests pass
-- Bug cannot be reproduced after fix
-
-## Files to Modify
-
-- `src/contexts/CartContext.tsx` - Fix initialization and sync logic
-- `src/utils/storage.ts` - Add error handling and validation
-- `tests/contexts/CartContext.test.tsx` - Add tests for persistence edge cases
-- `tests/utils/storage.test.ts` - Add error handling tests
-```
-
-#### Step 3: Generate the Plan
-
-Ask an AI assistant to create a debugging plan:
-
-```
-Please read @spec.md and generate a plan.md for investigating and fixing this shopping cart bug.
-Break it down into investigation tasks first, then fix tasks, then verification tasks.
-Include specific debugging steps and verification criteria for each task.
-```
-
-#### Step 4: Review the Generated Plan
-
-Edit `plan.md` to structure the debugging workflow:
-
-```markdown
-# Project Plan
-
-## Project Overview
-
-Investigate and fix shopping cart persistence bug where items intermittently disappear.
-
-@spec.md
-
----
-
-## Task List
-
-```json
-[
-  {
-    "category": "investigation",
-    "description": "Review current CartContext implementation and identify issues",
-    "steps": [
-      "Read src/contexts/CartContext.tsx and understand current implementation",
-      "Check useEffect dependencies and localStorage sync logic",
-      "Look for race conditions in cart state updates",
-      "Review error handling (or lack thereof) around localStorage",
-      "Document findings in activity.md with specific line numbers",
-      "Identify suspected root causes"
-    ],
-    "passes": false
-  },
-  {
-    "category": "investigation",
-    "description": "Review storage utilities and test for serialization issues",
-    "steps": [
-      "Read src/utils/storage.ts implementation",
-      "Check JSON.stringify/parse error handling",
-      "Test with complex cart objects (nested data, special characters)",
-      "Verify localStorage quota handling",
-      "Check if storage operations can fail silently",
-      "Document any issues found in activity.md"
-    ],
-    "passes": false
-  },
-  {
-    "category": "investigation",
-    "description": "Add debugging logs to track cart persistence flow",
-    "steps": [
-      "Add [debug] logs in CartContext when cart state changes",
-      "Add [debug] logs in storage.ts for read/write operations",
-      "Add [debug] logs for localStorage success/failure",
-      "Add timestamp to each log for tracking timing issues",
-      "Test manually: add items, navigate, check console logs",
-      "Analyze log output to identify when/why cart data is lost"
-    ],
-    "passes": false
-  },
-  {
-    "category": "bugfix",
-    "description": "Add error handling and validation to storage utilities",
-    "steps": [
-      "Update src/utils/storage.ts to wrap localStorage in try-catch",
-      "Add validation for data before JSON.stringify",
-      "Return error instead of throwing when localStorage fails",
-      "Add fallback behavior when localStorage is unavailable",
-      "Handle quota exceeded errors gracefully",
-      "Write unit tests in tests/utils/storage.test.ts for error cases",
-      "Run npm test and verify storage tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "bugfix",
-    "description": "Fix CartContext initialization race condition",
-    "steps": [
-      "Update CartContext to properly initialize from localStorage on mount",
-      "Use useState initializer function to read from storage synchronously",
-      "Remove useEffect that was causing initialization race condition",
-      "Ensure cart state is set before first render",
-      "Add loading state if needed for async initialization",
-      "Test manually: refresh page with items in cart, verify items appear immediately"
-    ],
-    "passes": false
-  },
-  {
-    "category": "bugfix",
-    "description": "Implement debouncing for cart localStorage updates",
-    "steps": [
-      "Add debounce utility or install lodash.debounce",
-      "Wrap localStorage write in debounced function (300ms delay)",
-      "Ensure last update always completes (use trailing edge debounce)",
-      "Add beforeunload event listener to force final write on page unload",
-      "Test: rapidly add/remove items, verify all changes persist",
-      "Run npm run build and verify no TypeScript errors"
-    ],
-    "passes": false
-  },
-  {
-    "category": "testing",
-    "description": "Write comprehensive tests for cart persistence edge cases",
-    "steps": [
-      "Update tests/contexts/CartContext.test.tsx",
-      "Add test: cart initializes from localStorage on mount",
-      "Add test: cart persists after adding items",
-      "Add test: cart handles localStorage unavailable (graceful degradation)",
-      "Add test: cart handles localStorage quota exceeded",
-      "Add test: rapid cart updates all persist (debouncing test)",
-      "Run npm test and verify all CartContext tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "verification",
-    "description": "Manual testing of all bug scenarios",
-    "steps": [
-      "Start application: npm run dev",
-      "Test scenario 1: Add items → navigate away → return",
-      "  - Add 3 items to cart, click to product page, return to cart",
-      "  - Verify: All 3 items still in cart",
-      "Test scenario 2: Add items → refresh page",
-      "  - Add 5 items to cart, refresh browser (Cmd+R)",
-      "  - Verify: All 5 items still in cart",
-      "Test scenario 3: Add items → close/reopen tab",
-      "  - Add items, close tab, open new tab to same URL",
-      "  - Verify: Items still in cart (within session)",
-      "Test scenario 4: Fill cart with many items",
-      "  - Add 20+ items, navigate away, return",
-      "  - Verify: All items persist",
-      "Test scenario 5: localStorage disabled",
-      "  - Disable localStorage in browser dev tools",
-      "  - Add items (should work but not persist)",
-      "  - Verify: No console errors, graceful degradation",
-      "Check browser console for any errors or warnings",
-      "Document test results in activity.md"
-    ],
-    "passes": false
-  },
-  {
-    "category": "verification",
-    "description": "Final verification and cleanup",
-    "steps": [
-      "Run full test suite: npm test (all tests must pass)",
-      "Run build: npm run build (no TypeScript errors)",
-      "Remove or reduce debug logging added during investigation",
-      "Update any relevant documentation about cart persistence",
-      "Try to reproduce original bug - should not be reproducible",
-      "Check git log to review all changes made",
-      "Document root cause and fix summary in activity.md"
-    ],
-    "passes": false
-  }
-]
-```
-```
-
-#### Step 5: Scaffold the Loop Files
-
-```bash
-ral scaffold -w features/cart-bug-fix
-```
-
-Copy your spec and plan into the feature directory, then customize `prompt.md` if needed:
-
-```markdown
-## Additional Instructions
-
-- When investigating, read the code carefully and document specific issues found
-- Add [debug] prefix to debug log statements during investigation
-- Preserve existing functionality - only fix the bug, don't refactor unrelated code
-- Test each fix incrementally before moving to the next task
-- Pay attention to async/timing issues - use debugger or detailed logs
-```
-
-#### Step 6: Run the Loop
-
-```bash
-# From project root
-ral run -w features/cart-bug-fix -m 15
-```
-
-#### Expected Output
-
-```
-Iteration 1/15
-[Claude reviews CartContext implementation]
-Cost this iteration: $0.053
-
-Iteration 2/15
-[Claude reviews storage utilities]
-Cost this iteration: $0.048
-
-Iteration 3/15
-[Claude adds debugging logs and identifies race condition]
-Cost this iteration: $0.071
-
-Iteration 4/15
-[Claude adds error handling to storage utilities]
-Cost this iteration: $0.082
-
-...
-
-Iteration 9/15
-[Claude completes final verification]
-Cost this iteration: $0.067
-Cumulative cost: $0.587
-
-<promise>COMPLETE</promise>
-
-✓ Ralph loop completed successfully!
-Total iterations: 9
-Total cost: $0.587
-```
-
-#### Step 7: Review the Fix
-
-After completion:
-
-```bash
-# Review what changed
-git log --oneline -9
-
-# See the specific fix
-git diff HEAD~5 HEAD -- src/contexts/CartContext.tsx
-
-# Verify tests pass
-npm test
-
-# Check activity log for root cause analysis
-cat features/cart-bug-fix/activity.md
-```
-
-Check `activity.md` for detailed investigation findings:
-- Root cause identified (e.g., "Race condition in useEffect causing cart to initialize before localStorage data loaded")
-- Specific code issues found with line numbers
-- Description of the fix applied
-- Test results for each scenario
-
-#### What This Example Demonstrates
-
-- **Structured debugging**: Investigation tasks before fix tasks
-- **Root cause analysis**: Understanding the problem before applying fixes
-- **Incremental fixes**: Small, testable changes rather than big rewrites
-- **Comprehensive testing**: Both automated tests and manual verification
-- **Activity logging**: Full debugging trail captured for future reference
-- **Debug instrumentation**: Adding temporary logging to understand behavior
-
-#### Tips for Debugging with Ralph
-
-- **Investigate first**: Don't jump to fixes - understand the root cause
-- **Add instrumentation**: Temporary debug logs help Claude understand what's happening
-- **Test hypotheses**: Each investigation task should test a specific theory about the bug
-- **Document findings**: Use activity.md to capture what you learned during investigation
-- **Small fixes**: Break the fix into small, verifiable changes
-- **Reproduce reliably**: Include steps to reproduce in spec, verify you can't reproduce after fix
-- **Check related code**: Bug fixes often reveal related issues that should also be addressed
-- **Keep debug logs**: Consider keeping some debug logs as permanent logging (with appropriate level)
 
 ## Tips and Best Practices
 
 ### Writing Effective Plans
 
-**Task Granularity**
-- Aim for tasks that represent 5-15 minutes of focused development work
-- Too large: "Implement entire authentication system" - break into smaller tasks
-- Too small: "Add one import statement" - combine with related changes
-- Just right: "Create JWT verification middleware with error handling and tests"
-
-**Task Categories**
-- Use consistent categories to organize work: `setup`, `implementation`, `refactoring`, `testing`, `verification`, `cleanup`, `documentation`
-- Categories help you understand the type of work and track progress across different phases
-
-**Clear Steps**
-- Start steps with action verbs: "Create", "Implement", "Update", "Refactor", "Test", "Verify"
-- Be specific about files: "Update src/routes/users.ts" not "Update the routes"
-- Include what to verify: "Run npm test and verify UserService tests pass"
-- Make steps sequential and logical
-
-**Verification is Critical**
-- Every task should include a verification step
-- Combine automated and manual verification:
-  - Automated: "Run npm test", "Run npm run build", "Run linter"
-  - Manual: "Test login flow in browser", "Verify error messages are user-friendly"
-- Be specific about what success looks like: "All tests pass with no warnings"
-
-**Handle Dependencies**
-- Order tasks to respect dependencies (create base classes before using them)
-- Make dependencies explicit in steps: "Uses AppError from previous task"
-- If tasks are independent, they can run in any order (but Claude processes sequentially)
-
-**Avoid These Pitfalls**
-- ❌ Vague descriptions: "Fix the bugs" → ✅ "Fix cart persistence race condition in CartContext"
-- ❌ Missing verification: Steps end with code changes → ✅ Always end with verification
-- ❌ Too ambitious: "Build entire feature" in one task → ✅ Break into setup, implementation, testing
-- ❌ Duplicate work: Multiple tasks doing similar things → ✅ Consolidate related changes
+- **Task granularity**: Aim for 5-15 minute tasks
+- **Clear steps**: Use action verbs, specify files, include verification
+- **Verification**: Every task needs a "verify it works" step
+- **Dependencies**: Order tasks properly (create before using)
+- **Categories**: Use consistent categories: setup, implementation, refactoring, testing, verification, cleanup
 
 ### Customizing prompt.md
 
-The default `prompt.md` provides a solid workflow, but you can customize it for specific needs:
+Add project-specific context, coding standards, and testing requirements. Keep it concise - the prompt is included in every iteration.
 
-**Add Project-Specific Context**
-```markdown
-## Project Context
+### Using spec.md
 
-- This is a TypeScript Node.js API using Express and PostgreSQL
-- We follow functional programming patterns - avoid classes where possible
-- Use Zod for validation, not manual checks
-- All database queries use the connection pool from src/database/pool.ts
-```
+For non-trivial features, write a spec.md and reference it with `@spec.md` in plan.md. Include:
+- Requirements and constraints
+- API contracts and data structures
+- Examples and use cases
+- Testing criteria
 
-**Add Coding Standards**
-```markdown
-## Coding Standards
+Benefits: separation of concerns, better context for Claude, easier to maintain.
 
-- Use descriptive variable names (no abbreviations except common ones like `id`, `url`)
-- Add JSDoc comments for public functions
-- Prefer async/await over .then() chains
-- Handle errors explicitly - no empty catch blocks
-- Add [debug] prefix to debug log statements
-```
+### Cost Optimization
 
-**Add Testing Requirements**
-```markdown
-## Testing Requirements
-
-- Every new function needs unit tests in tests/ directory matching src/ structure
-- Test both success and error cases
-- Use describe/it blocks with clear descriptions
-- Mock external dependencies (database, APIs)
-- Aim for >80% code coverage on new code
-```
-
-**Add Technology-Specific Guidance**
-```markdown
-## Framework Guidelines
-
-- React components: Use functional components with hooks, no class components
-- State management: Use Context API for global state, local state for component-specific
-- Styling: Use Tailwind CSS classes, avoid inline styles
-- Forms: Use react-hook-form for form handling
-```
-
-**Keep It Concise**
-- The prompt is included in every iteration, affecting token usage
-- Be specific but brief - every word counts
-- Focus on what's different from standard practices, not common knowledge
-
-### Choosing max-iterations
-
-The `-m, --max-iterations` parameter determines how many times Claude can iterate:
-
-**How to Choose the Right Number**
-
-Start with this formula:
-```
-max-iterations = number_of_tasks + buffer
-```
-
-For example:
-- 5 tasks in plan.md → use `-m 8` (5 tasks + 3 buffer)
-- 10 tasks in plan.md → use `-m 13` (10 tasks + 3 buffer)
-- 20 tasks in plan.md → use `-m 25` (20 tasks + 5 buffer)
-
-**Why Add a Buffer?**
-- Claude might need extra iterations if:
-  - Tests fail and need fixing
-  - Build errors need resolution
-  - A task is more complex than anticipated
-  - Investigation reveals additional work needed
-
-**Too Few Iterations**
-- Loop exits with code 1 (incomplete)
-- Progress is saved - you can resume by running again
-- Better to set it conservatively and run again than waste iterations
-
-**Too Many Iterations**
-- Loop completes early when Claude outputs `<promise>COMPLETE</promise>`
-- Unused iterations don't cost anything
-- No harm in setting it higher than needed
-
-**Cost Considerations**
-- Each iteration costs based on token usage (input + output)
-- Typical costs: $0.05 - $0.15 per iteration depending on context size
-- Monitor cumulative cost output to track spending
-- Example: 10 iterations ≈ $0.50 - $1.50 for a feature
-
-**Iterative Approach**
-```bash
-# Start conservative
-ral run -m 5
-
-# Check progress in activity.md
-cat activity.md
-
-# Continue if needed
-ral run -m 5  # Continues where it left off
-```
-
-**When to Use Higher Limits**
-- Complex features with many tasks: `-m 20` or higher
-- Exploratory work where scope is unclear: `-m 15`
-- Critical path work where you want it finished: `number_of_tasks * 2`
-
-### Common Pitfalls and Solutions
-
-**Pitfall: Tasks are too large**
-- Symptom: Claude makes many changes but verification fails, or takes multiple iterations per task
-- Solution: Break tasks into smaller pieces. If a task touches >3 files or >100 lines, split it
-- Example: Instead of "Implement user authentication", use separate tasks for "Create auth middleware", "Add login route", "Add registration route", "Write auth tests"
-
-**Pitfall: Missing file context**
-- Symptom: Claude makes incorrect changes because it doesn't understand existing code
-- Solution: Add a task that says "Review existing files X, Y, Z and document current patterns" before implementation tasks
-- Better: Include relevant file paths in task steps: "Review src/utils/auth.ts to understand existing auth patterns"
-
-**Pitfall: Unclear success criteria**
-- Symptom: Claude marks task complete but it doesn't work as expected
-- Solution: Make verification steps explicit and measurable
-- Bad: "Test that it works"
-- Good: "Run npm test and verify auth.test.ts passes all 5 test cases with no errors"
-
-**Pitfall: Tests don't exist**
-- Symptom: Claude tries to run tests but test files don't exist yet
-- Solution: Order tasks so test creation comes before test execution
-- Pattern: Task 1: "Implement feature X", Task 2: "Write tests for feature X", Task 3: "Run tests and verify"
-
-**Pitfall: Dependencies not installed**
-- Symptom: Code uses a library that isn't installed
-- Solution: Include dependency installation in task steps
-- Example: "Install zod package: npm install zod", then "Create validation schemas using zod"
-
-**Pitfall: Git commit messages are unclear**
-- Symptom: Hard to understand what changed from commit history
-- Solution: The default prompt already handles this, but if you customize prompt.md, ensure commit messages remain descriptive
-- Pattern: Include task description in commit: "feat: Add JWT verification middleware"
-
-**Pitfall: Task passes set to true prematurely**
-- Symptom: Tasks marked complete but code doesn't work
-- Solution: Emphasize verification in prompt.md: "Only set passes to true after verification confirms the task works"
-- Add verification reminders in task steps: "IMPORTANT: Run all tests before marking complete"
-
-**Pitfall: Context grows too large**
-- Symptom: Later iterations slow down or cost increases significantly
-- Solution: Keep plan.md focused on remaining work. Consider completed tasks "archived" mentally
-- The passes field helps - Claude focuses on `passes: false` tasks
-
-**Pitfall: Loop gets stuck**
-- Symptom: Claude repeatedly fails on the same task
-- Solution: Pause the loop, review the issue, and either:
-  - Fix the issue manually and update plan.md to skip that task
-  - Modify the task steps to provide more guidance
-  - Break the problematic task into smaller tasks
-  - Add investigative task before the problematic one
-
-**Pitfall: No spec.md for complex features**
-- Symptom: Claude implements features incorrectly because requirements weren't clear
-- Solution: Write a spec.md for any non-trivial feature and reference it with `@spec.md` in plan.md
-- Include: requirements, constraints, examples, API contracts, testing criteria
+- Monitor cumulative cost output
+- Keep context focused (smaller plan.md and prompt.md)
+- Break large features into separate loops
+- Typical feature: $0.50-$1.50 for 10 iterations
 
 ### Workflow Tips
 
-**Start Small**
-- First Ralph loop? Start with a simple 3-5 task project to learn the workflow
-- Gradually increase complexity as you understand how Claude interprets tasks
+1. **Start small**: First loop? Try 3-5 simple tasks
+2. **Review frequently**: Check activity.md after iterations
+3. **Use git effectively**: Each task = 1 commit, easy to review/revert
+4. **Leverage AI for planning**: Let AI generate task breakdown, then review
+5. **Parallel features**: Use different working directories for multiple features
+6. **Document learnings**: activity.md captures insights, root causes, patterns
 
-**Review Frequently**
-- Check `activity.md` after every few iterations to ensure Claude is on track
-- If something seems wrong, pause and adjust plan.md
+## Local Development Setup
 
-**Use Git Effectively**
-- Each task gets a commit - use this to review incremental changes
-- If a task went wrong, you can git revert that specific commit
+For contributors working on the CLI itself:
 
-**Iterate on Your Plan**
-- Your first plan won't be perfect - that's okay
-- After running a loop, review what worked and what didn't
-- Refine your task writing skills over time
+### 1. Clone and Install
 
-**Leverage AI for Planning**
-- Use Claude or ChatGPT to help generate your plan.md
-- Provide context and let AI suggest task breakdown
-- Always review and refine the generated plan before running
-
-**Monitor Costs**
-- Keep an eye on cumulative cost output
-- If costs are higher than expected, review your plan.md and prompt.md for optimization opportunities
-- Smaller context = lower costs
-
-**Parallel Features**
-- Work on multiple features in parallel using different working directories
-- Each feature has its own plan, activity log, and prompt
-- Run them sequentially or in separate terminal sessions
-
-**Document Learnings**
-- Use activity.md not just for logging, but for capturing insights
-- When debugging, document root causes found
-- When refactoring, document patterns discovered
-- This creates valuable documentation for your team
-
-## Working Directory Behavior
-
-The `-w, --working-directory` option allows you to organize multiple Ralph loops within your project:
-
-**How it works:**
-- Claude always runs from the **project root** (so it can edit source files)
-- The working directory specifies where loop files (`plan.md`, `activity.md`, `prompt.md`) are located
-- File references with `@` in your prompt (like `@plan.md`) are automatically resolved relative to the working directory
-
-**Use case - Feature development:**
 ```bash
-# Project structure:
-my-app/
-├── src/               # Source code
-├── features/
-│   ├── auth/
-│   │   ├── plan.md
-│   │   ├── activity.md
-│   │   └── prompt.md
-│   └── dashboard/
-│       ├── plan.md
-│       ├── activity.md
-│       └── prompt.md
-
-# Run from project root, but use feature-specific loop files
-cd my-app
-ral run -w features/auth -m 10
-
-# prompt.md contains: @plan.md @activity.md
-# Claude receives: @features/auth/plan.md @features/auth/activity.md
-# Claude can still edit files in src/ because it runs from project root
+git clone <repository-url>
+cd ralph-test
+pnpm install
+pnpm build
 ```
 
-This pattern lets you:
-- Keep feature-specific plans and logs organized in subdirectories
-- Run multiple Ralph loops in parallel for different features
-- Have Claude work on the entire codebase while tracking progress per-feature
+### 2. Make `ral` Command Available
+
+**Option 1: pnpm link (Recommended)**
+```bash
+pnpm link --global
+```
+Auto-updates when you rebuild. Run from project directory.
+
+**Option 2: Shell Alias**
+```bash
+# Add to .zshrc or .bashrc
+alias ral='/absolute/path/to/ralph-test/dist/index.js'
+```
+
+**Option 3: Add to PATH**
+```bash
+# Add to .zshrc or .bashrc
+export PATH="/absolute/path/to/ralph-test/dist:$PATH"
+```
+
+### 3. Development Commands
+
+```bash
+pnpm run lint                    # Lint code
+pnpm run dev scaffold            # Run in dev mode
+pnpm run dev run -m 10           # Dev mode with args
+```
+
+## Testing
+
+```bash
+pnpm test                        # Run all tests
+pnpm run test:watch              # Watch mode
+```
+
+Test coverage: 66 tests across 9 test files covering file operations, commands, and utilities.
+
+## Package Manager
+
+This project uses **pnpm** for faster installs and efficient disk space usage.
 
 ## Ralph Loop Philosophy
 
-The Ralph loop is designed for iterative, autonomous AI development:
-
-- **Structured Planning**: Tasks are broken down into clear steps with pass/fail states
-- **Activity Logging**: Every change is documented with verification results
-- **Incremental Progress**: One task at a time, with git commits for each
-- **Self-Verification**: Claude tests its own work before marking tasks complete
-- **Cost Tracking**: Token usage and costs are tracked per-iteration and cumulatively
-- **Early Exit**: Loop completes when Claude outputs the completion promise
+- **Structured Planning**: Clear tasks with pass/fail states
+- **Activity Logging**: Every change documented with verification
+- **Incremental Progress**: One task at a time, git commit per task
+- **Self-Verification**: Claude tests its own work before marking complete
+- **Cost Tracking**: Token usage tracked per-iteration and cumulatively
+- **Early Exit**: Completes when Claude outputs `<promise>COMPLETE</promise>`
 
 ## File Structure
 
 ```
 my-project/
 ├── .claude/
-│   └── settings.json       # Claude configuration (optional)
+│   └── settings.json       # Claude config (optional)
 ├── .mcp.json               # MCP server config (optional)
 ├── activity.md             # Activity log (required for run)
 ├── plan.md                 # Project plan (required for run)
-├── prompt.md               # Claude instructions (required for run)
+├── prompt.md               # Instructions (required for run)
+├── spec.md                 # Specification (optional)
 └── screenshots/            # Screenshots directory
 ```
-
-## Error Handling
-
-The CLI provides clear error messages and suggestions:
-
-- **Missing files**: If required files are missing for `ral run`, you'll get a helpful message suggesting to run `ral scaffold`
-- **Invalid directory**: Working directory validation ensures paths exist
-- **Claude CLI errors**: Errors from the Claude CLI are caught and reported clearly
-- **JSON parsing**: Invalid JSON responses from Claude are handled gracefully
-
-## Testing
-
-The project includes comprehensive unit tests using Vitest:
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:run
-```
-
-Test coverage includes:
-- File operations and utilities (21 tests)
-- create-settings command (6 tests)
-- scaffold command (7 tests)
-- run command (7 tests)
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes with tests
-4. Run `npm test` to verify all tests pass
+3. Make changes with tests
+4. Run `pnpm test` to verify
 5. Submit a pull request
 
 ## License
@@ -1875,4 +435,4 @@ MIT
 
 ## Support
 
-For issues, questions, or contributions, please visit the project repository.
+For issues or questions, visit the project repository.
