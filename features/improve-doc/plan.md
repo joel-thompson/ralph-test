@@ -54,7 +54,7 @@ Improve the README documentation by adding comprehensive example workflows that 
       "Add tips on task granularity (not too big, not too small)",
       "Place this section before the workflow examples"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",

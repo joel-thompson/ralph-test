@@ -346,6 +346,165 @@ This pattern ensures:
 - **Clearer communication**: Team members can review spec.md to understand the feature
 - **Reusability**: Same spec can inform multiple plan iterations or approaches
 
+## Setting Up Your Plan
+
+Once you have your spec (or a clear idea of what you want to build), you need to create a `plan.md` file that breaks down the work into actionable tasks. While you can write this by hand, using an AI assistant to help generate the task breakdown is highly effective.
+
+### AI-Assisted Plan Generation
+
+Rather than manually creating every task and step, leverage an AI agent (Claude, ChatGPT, or similar) to help translate your requirements into a structured plan. This approach:
+
+- Helps identify tasks you might overlook
+- Suggests logical task ordering and dependencies
+- Creates consistent task descriptions and verification steps
+- Saves time on the initial planning phase
+
+### Example Prompts for Generating Plans
+
+When asking an AI to generate your plan, provide clear context:
+
+**From a spec file:**
+```
+I have a spec.md file that describes a new feature I want to build.
+Please read @spec.md and generate a plan.md with a task list in the required JSON format.
+Break down the implementation into 5-8 tasks, each with clear steps and verification criteria.
+```
+
+**From requirements:**
+```
+I need to add user authentication to my web app with the following requirements:
+- JWT-based authentication
+- Login and registration endpoints
+- Password hashing with bcrypt
+- Protected route middleware
+- Unit tests for all components
+
+Please generate a plan.md file with tasks broken down into implementable steps.
+Each task should be verifiable and include specific steps for implementation and testing.
+```
+
+**For refactoring:**
+```
+I want to refactor the error handling in my Express API to use a centralized error handler.
+The refactoring should:
+- Create a custom error class
+- Add error handling middleware
+- Update all routes to use the new pattern
+- Ensure error responses are consistent
+
+Generate a plan.md with tasks that can be completed one at a time.
+```
+
+### Reviewing and Refining the Generated Plan
+
+IMPORTANT: Always manually review and refine the AI-generated plan before running the Ralph loop.
+
+**Check for:**
+- **Task clarity**: Each task description should be specific and unambiguous
+- **Step completeness**: Steps should cover implementation AND verification
+- **Realistic scope**: Tasks shouldn't be too large (multiple files, complex changes) or too small (single line changes)
+- **Proper ordering**: Dependencies should be respected (e.g., create function before writing tests for it)
+- **Verification criteria**: Each task should specify how to verify it works (run tests, check build, manual verification)
+
+**Good task example:**
+```json
+{
+  "category": "implementation",
+  "description": "Create JWT authentication middleware",
+  "steps": [
+    "Install jsonwebtoken and @types/jsonwebtoken dependencies",
+    "Create middleware/auth.ts file",
+    "Implement verifyToken middleware function that validates JWT from Authorization header",
+    "Add error handling for expired, invalid, or missing tokens",
+    "Export middleware for use in route protection",
+    "Write unit tests in tests/middleware/auth.test.ts",
+    "Run npm test to verify tests pass"
+  ],
+  "passes": false
+}
+```
+
+**Too vague (bad example):**
+```json
+{
+  "description": "Add authentication",
+  "steps": ["Implement auth"],
+  "passes": false
+}
+```
+
+**Too granular (bad example):**
+```json
+{
+  "description": "Import jsonwebtoken on line 1 of auth.ts",
+  "steps": ["Add import statement"],
+  "passes": false
+}
+```
+
+### Tips for Effective Plans
+
+**Task Granularity:**
+- Aim for tasks that take 5-15 minutes for an experienced developer
+- If a task feels like it would take more than 30 minutes, break it down further
+- Combine trivial changes (like adding one import) into larger, cohesive tasks
+
+**Clear Verification Steps:**
+- Always include a verification step in the task (run tests, check build, manual test)
+- Be specific: "Run npm test and verify UserService tests pass" rather than "Test the code"
+- Include both automated checks (tests, linting) and manual verification when needed
+
+**Writing Good Task Descriptions:**
+- Use action verbs: "Implement", "Create", "Refactor", "Add", "Update"
+- Be specific about what changes: "Create UserRepository class" not "Add database stuff"
+- Include context when helpful: "Update login route to use JWT middleware" clarifies the scope
+
+**Handling Dependencies:**
+- Order tasks so dependencies come first (e.g., create utility functions before using them)
+- Make dependencies explicit in task steps: "Requires auth middleware from previous task"
+- Consider creating foundational tasks first (types, interfaces, base classes)
+
+### The plan.md Format
+
+Your plan.md should follow this structure:
+
+```markdown
+# Project Plan
+
+## Project Overview
+
+Brief description of what you're building.
+
+@spec.md
+
+---
+
+## Task List
+
+```json
+[
+  {
+    "category": "setup",
+    "description": "Task description here",
+    "steps": [
+      "Step 1 with specific action",
+      "Step 2 with specific action",
+      "Verification: Run tests and check output"
+    ],
+    "passes": false
+  },
+  {
+    "category": "implementation",
+    "description": "Next task",
+    "steps": ["..."],
+    "passes": false
+  }
+]
+```
+```
+
+The `passes` field starts as `false` and Claude will change it to `true` when the task is complete.
+
 ## Working Directory Behavior
 
 The `-w, --working-directory` option allows you to organize multiple Ralph loops within your project:
