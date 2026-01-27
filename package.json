@@ -26,7 +26,6 @@
     "url": "https://github.com/joel-thompson/ralph-test/issues"
   },
   "homepage": "https://github.com/joel-thompson/ralph-test#readme",
-  "description": "",
   "dependencies": {
     "commander": "^14.0.2"
   },

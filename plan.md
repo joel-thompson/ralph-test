@@ -37,7 +37,7 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
       "Implement dependency injection pattern for testability (FileSystem interface)",
       "Write unit tests for utility functions"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
