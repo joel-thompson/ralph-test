@@ -13,7 +13,7 @@ describe('validation', () => {
         readFile: vi.fn(),
       };
 
-      await expect(validateWorkingDirectory('/test/dir', mockFs)).resolves.not.toThrow();
+      await validateWorkingDirectory('/test/dir', mockFs);
       expect(mockFs.exists).toHaveBeenCalledWith('/test/dir');
     });
 

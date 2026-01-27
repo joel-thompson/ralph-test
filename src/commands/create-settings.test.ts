@@ -98,7 +98,11 @@ describe('create-settings', () => {
     const mockFsWithNoDir: FileSystem = {
       ...mockFs,
       exists: async (filePath: string) => {
+        // Check for the specific non-existent directory first
         if (filePath === nonExistentDir) return false;
+        // Directories always exist in our mock (except the non-existent one)
+        if (!filePath.includes('.')) return true;
+        // Files exist if they've been written
         return writtenFiles.has(filePath);
       },
     };

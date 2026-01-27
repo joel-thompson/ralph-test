@@ -7,7 +7,10 @@ import * as validation from '../utils/validation.js';
 import * as path from 'path';
 
 // Mock validation module
-vi.mock('../utils/validation.js');
+vi.mock('../utils/validation.js', () => ({
+  validateWorkingDirectory: vi.fn(),
+  validateRequiredFiles: vi.fn(),
+}));
 
 // Mock process.exit to throw a predictable error
 const mockExit = vi.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {

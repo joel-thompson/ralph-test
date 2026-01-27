@@ -4,7 +4,9 @@ import { readFile } from 'fs/promises';
 import { exec } from 'child_process';
 
 // Mock fs/promises
-vi.mock('fs/promises');
+vi.mock('fs/promises', () => ({
+  readFile: vi.fn(),
+}));
 
 // Mock child_process
 vi.mock('child_process', () => ({
@@ -47,7 +49,7 @@ describe('DefaultClaudeRunner', () => {
 
       await runner.runClaude('/path/to/prompt.md', workingDirectory);
 
-      expect(readFile).toHaveBeenCalledWith('/path/to/prompt.md', 'utf-8');
+      expect(vi.mocked(readFile)).toHaveBeenCalledWith('/path/to/prompt.md', 'utf-8');
     });
 
     it('should not transform @ references when working directory is current directory (.)', async () => {

@@ -21,24 +21,43 @@ npx ral <command>
 git clone <repository-url>
 cd ralph-test
 
-# Install dependencies
+# Install dependencies (using bun for faster installs)
+bun install
+
+# Or use npm
 npm install
 
 # Build the project
-npm run build
+bun run build
 
-# Run tests
+# Run tests (uses npm/vitest - bun test compatibility is in progress)
 npm test
 
+# Lint code
+bun run lint
+
 # Run in development mode
-npm run dev -- <command>
+bun run dev -- <command>
 ```
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 18+ or Bun 1.0+
 - Claude CLI installed and configured (`npm install -g @anthropic-ai/claude`)
 - Valid Anthropic API key configured for Claude CLI
+
+## Package Manager
+
+This project uses **Bun** for package management and running scripts, which provides faster installs and script execution compared to npm. However, tests currently run with npm/vitest due to test framework compatibility.
+
+To switch back to npm:
+```bash
+# Remove bun lockfile
+rm bun.lockb
+
+# Install with npm
+npm install
+```
 
 ## Commands
 

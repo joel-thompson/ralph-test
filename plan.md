@@ -66,7 +66,7 @@ Three improvements to the Ralph loop CLI (`ral`):
       "package.json",
       "README.md"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
