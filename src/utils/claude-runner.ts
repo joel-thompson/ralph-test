@@ -17,14 +17,23 @@ export interface ClaudeResponse {
 }
 
 export interface ClaudeRunner {
-  runClaude(promptPath: string): Promise<ClaudeResponse>;
+  runClaude(promptPath: string, workingDirectory: string): Promise<ClaudeResponse>;
 }
 
 export class DefaultClaudeRunner implements ClaudeRunner {
-  async runClaude(promptPath: string): Promise<ClaudeResponse> {
+  async runClaude(promptPath: string, workingDirectory: string): Promise<ClaudeResponse> {
     try {
       // Read the prompt file
-      const promptContent = await readFile(promptPath, 'utf-8');
+      let promptContent = await readFile(promptPath, 'utf-8');
+
+      // Transform @ file references to include working directory
+      // Only transform if working directory is not current directory
+      if (workingDirectory !== '.' && workingDirectory !== './') {
+        // Normalize working directory by removing trailing slashes
+        const normalizedDir = workingDirectory.replace(/\/+$/, '');
+        // Replace @filename.md with @workingDirectory/filename.md
+        promptContent = promptContent.replace(/@(\S+\.md)/g, `@${normalizedDir}/$1`);
+      }
 
       // Execute Claude CLI with JSON output format
       const { stdout, stderr } = await execAsync(

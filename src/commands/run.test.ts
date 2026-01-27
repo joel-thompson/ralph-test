@@ -88,7 +88,8 @@ describe("run command", () => {
     // Verify Claude runner was called once
     expect(mockRunner.runClaude).toHaveBeenCalledTimes(1);
     expect(mockRunner.runClaude).toHaveBeenCalledWith(
-      path.join(testDir, "prompt.md")
+      path.join(testDir, "prompt.md"),
+      testDir
     );
   });
 

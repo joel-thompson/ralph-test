@@ -30,7 +30,7 @@ Three improvements to the Ralph loop CLI (`ral`):
       "src/commands/run.test.ts",
       "README.md"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "setup",

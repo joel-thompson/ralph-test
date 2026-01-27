@@ -143,6 +143,17 @@ ral scaffold -w ./my-project
 cd ./my-project
 # Edit plan.md and prompt.md
 ral run -m 20
+
+# Feature development workflow - run from project root, point at feature folder
+# Claude runs in project root (can edit source files), but @ references point to feature folder
+ral scaffold -w features/auth
+ral run -w features/auth -m 10
+
+# Multiple features in parallel
+ral scaffold -w features/api-v2
+ral scaffold -w features/dashboard
+ral run -w features/api-v2 -m 5
+ral run -w features/dashboard -m 5
 ```
 
 **Output:**
@@ -200,6 +211,44 @@ Iteration 2/10
    - Check `activity.md` for detailed logs of what Claude accomplished
    - Review `plan.md` to see which tasks have `passes: true`
    - Examine git commits to see incremental changes
+
+## Working Directory Behavior
+
+The `-w, --working-directory` option allows you to organize multiple Ralph loops within your project:
+
+**How it works:**
+- Claude always runs from the **project root** (so it can edit source files)
+- The working directory specifies where loop files (`plan.md`, `activity.md`, `prompt.md`) are located
+- File references with `@` in your prompt (like `@plan.md`) are automatically resolved relative to the working directory
+
+**Use case - Feature development:**
+```bash
+# Project structure:
+my-app/
+├── src/               # Source code
+├── features/
+│   ├── auth/
+│   │   ├── plan.md
+│   │   ├── activity.md
+│   │   └── prompt.md
+│   └── dashboard/
+│       ├── plan.md
+│       ├── activity.md
+│       └── prompt.md
+
+# Run from project root, but use feature-specific loop files
+cd my-app
+ral run -w features/auth -m 10
+
+# prompt.md contains: @plan.md @activity.md
+# Claude receives: @features/auth/plan.md @features/auth/activity.md
+# Claude can still edit files in src/ because it runs from project root
+```
+
+This pattern lets you:
+- Keep feature-specific plans and logs organized in subdirectories
+- Run multiple Ralph loops in parallel for different features
+- Have Claude work on the entire codebase while tracking progress per-feature
 
 ## Ralph Loop Philosophy
 

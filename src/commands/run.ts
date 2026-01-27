@@ -59,7 +59,7 @@ export async function run(
 
     try {
       // Call Claude CLI
-      const response = await runner.runClaude(promptPath);
+      const response = await runner.runClaude(promptPath, workingDirectory);
 
       // Update cumulative stats
       cumulative.totalInputTokens += response.usage.input_tokens;
