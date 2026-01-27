@@ -16,14 +16,14 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
     "steps": [
       "Initialize package.json with TypeScript support",
       "Install commander, typescript, and required dependencies",
-      "Install jest and ts-jest for unit testing",
+      "Install vitest for unit testing",
       "Configure tsconfig.json for CLI output",
       "Create project directory structure (src/commands/, src/utils/, src/templates/)",
       "Set up bin entry point for 'ral' command",
       "Create src/index.ts main entry point with Commander setup",
       "Configure build and test scripts",
       "Configure package.json for npm publishing (name, version, files, bin)",
-      "Verify CLI builds and runs (npx ts-node src/index.ts --help)"
+      "Verify CLI builds and runs (npx tsx src/index.ts --help)"
     ],
     "passes": false
   },

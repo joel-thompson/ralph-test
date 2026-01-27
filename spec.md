@@ -2,7 +2,7 @@
 cli name: ral 
 
 Typescript project, using the commander library
-Jest for unit tests
+Vitest for unit tests
 
 Must be publishable to npm and installable globally (`npm install -g ral`)
 
