@@ -61,3 +61,20 @@
 **Notes:**
 - Documentation is now fully aligned with pnpm as the package manager
 - All commands use pnpm consistently throughout the README
+
+### 2026-01-27 - Cleanup: Update .gitignore if needed
+
+**Task Description:** Update .gitignore if needed
+
+**Changes Made:**
+- Verified bun.lock is not in .gitignore (correct behavior)
+- Verified pnpm-lock.yaml is not in .gitignore (correct - lockfiles should be committed)
+- Added .pnpm-store/ to .gitignore (pnpm's local cache directory should not be committed)
+
+**Testing and Verification:**
+- Ran `git status` to verify .pnpm-store/ is now properly ignored
+- Confirmed no lockfiles are being ignored
+
+**Notes:**
+- .pnpm-store/ is a pnpm-specific cache directory that should be local only
+- No other changes needed to .gitignore for the pnpm migration

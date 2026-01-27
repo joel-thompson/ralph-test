@@ -41,7 +41,7 @@ Switch package manager from bun to pnpm. Update lockfile, documentation, and any
       "Check if bun.lock is in .gitignore (it shouldn't be)",
       "Ensure pnpm-lock.yaml is not in .gitignore (lockfiles should be committed)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "verification",
@@ -51,6 +51,14 @@ Switch package manager from bun to pnpm. Update lockfile, documentation, and any
       "Run pnpm run build to verify TypeScript compiles",
       "Run pnpm test to verify tests pass",
       "Run pnpm run lint to verify linting works"
+    ],
+    "passes": false
+  },
+  {
+    "category": "question",
+    "description": "Verify .pnpm-store folder is needed and if it can be git ignored",
+    "steps": [
+      "check the purpose of this folder, see if it is currently tracked by git",
     ],
     "passes": false
   }
