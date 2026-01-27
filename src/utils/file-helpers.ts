@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 
 export interface FileSystem {
   writeFile(filePath: string, content: string): Promise<void>;
@@ -10,11 +10,11 @@ export interface FileSystem {
 
 export class DefaultFileSystem implements FileSystem {
   async writeFile(filePath: string, content: string): Promise<void> {
-    await fs.promises.writeFile(filePath, content, 'utf-8');
+    await fs.promises.writeFile(filePath, content, "utf-8");
   }
 
   async readFile(filePath: string): Promise<string> {
-    return await fs.promises.readFile(filePath, 'utf-8');
+    return await fs.promises.readFile(filePath, "utf-8");
   }
 
   async exists(filePath: string): Promise<boolean> {
@@ -50,7 +50,7 @@ export async function writeFileIfNotExists(
   const exists = await fileSystem.exists(filePath);
 
   if (exists && !force) {
-    return { written: false, reason: 'File already exists' };
+    return { written: false, reason: "File already exists" };
   }
 
   const dir = path.dirname(filePath);

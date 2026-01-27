@@ -1,6 +1,6 @@
-import path from 'path';
-import { ACTIVITY_TEMPLATE, PLAN_TEMPLATE, PROMPT_TEMPLATE } from '../templates/index.js';
-import { FileSystem, DefaultFileSystem, ensureDirectory, writeFileIfNotExists } from '../utils/file-helpers.js';
+import path from "path";
+import { ACTIVITY_TEMPLATE, PLAN_TEMPLATE, PROMPT_TEMPLATE } from "../templates/index.js";
+import { FileSystem, DefaultFileSystem, ensureDirectory, writeFileIfNotExists } from "../utils/file-helpers.js";
 
 export interface ScaffoldOptions {
   workingDirectory?: string;
@@ -18,7 +18,7 @@ export async function scaffold(
   await ensureDirectory(workingDir, fs);
 
   // Create activity.md
-  const activityPath = path.join(workingDir, 'activity.md');
+  const activityPath = path.join(workingDir, "activity.md");
   const activityResult = await writeFileIfNotExists(activityPath, ACTIVITY_TEMPLATE, force, fs);
 
   if (activityResult.written) {
@@ -28,7 +28,7 @@ export async function scaffold(
   }
 
   // Create plan.md
-  const planPath = path.join(workingDir, 'plan.md');
+  const planPath = path.join(workingDir, "plan.md");
   const planResult = await writeFileIfNotExists(planPath, PLAN_TEMPLATE, force, fs);
 
   if (planResult.written) {
@@ -38,7 +38,7 @@ export async function scaffold(
   }
 
   // Create prompt.md
-  const promptPath = path.join(workingDir, 'prompt.md');
+  const promptPath = path.join(workingDir, "prompt.md");
   const promptResult = await writeFileIfNotExists(promptPath, PROMPT_TEMPLATE, force, fs);
 
   if (promptResult.written) {
@@ -48,7 +48,7 @@ export async function scaffold(
   }
 
   // Create screenshots/ folder
-  const screenshotsDir = path.join(workingDir, 'screenshots');
+  const screenshotsDir = path.join(workingDir, "screenshots");
   await ensureDirectory(screenshotsDir, fs);
   console.log(`Created ${screenshotsDir}`);
 }

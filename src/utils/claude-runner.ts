@@ -1,6 +1,6 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { readFile } from 'fs/promises';
+import { exec } from "child_process";
+import { promisify } from "util";
+import { readFile } from "fs/promises";
 
 const execAsync = promisify(exec);
 
@@ -24,13 +24,13 @@ export class DefaultClaudeRunner implements ClaudeRunner {
   async runClaude(promptPath: string, workingDirectory: string): Promise<ClaudeResponse> {
     try {
       // Read the prompt file
-      let promptContent = await readFile(promptPath, 'utf-8');
+      let promptContent = await readFile(promptPath, "utf-8");
 
       // Transform @ file references to include working directory
       // Only transform if working directory is not current directory
-      if (workingDirectory !== '.' && workingDirectory !== './') {
+      if (workingDirectory !== "." && workingDirectory !== "./") {
         // Normalize working directory by removing trailing slashes
-        const normalizedDir = workingDirectory.replace(/\/+$/, '');
+        const normalizedDir = workingDirectory.replace(/\/+$/, "");
         // Replace @filename.md with @workingDirectory/filename.md
         promptContent = promptContent.replace(/@(\S+\.md)/g, `@${normalizedDir}/$1`);
       }
@@ -41,15 +41,15 @@ export class DefaultClaudeRunner implements ClaudeRunner {
       );
 
       if (stderr) {
-        console.error('[debug] Claude CLI stderr:', stderr);
+        console.error("[debug] Claude CLI stderr:", stderr);
       }
 
       // Parse the JSON response
       const response = JSON.parse(stdout);
 
       // Validate the response structure
-      if (!response.result || !response.usage || typeof response.total_cost_usd !== 'number') {
-        throw new Error('Invalid Claude CLI response format');
+      if (!response.result || !response.usage || typeof response.total_cost_usd !== "number") {
+        throw new Error("Invalid Claude CLI response format");
       }
 
       return {
@@ -63,7 +63,7 @@ export class DefaultClaudeRunner implements ClaudeRunner {
       };
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new Error('Failed to parse Claude CLI response as JSON');
+        throw new Error("Failed to parse Claude CLI response as JSON");
       }
       throw error;
     }

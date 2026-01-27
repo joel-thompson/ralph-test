@@ -1,8 +1,8 @@
 export const CLAUDE_SETTINGS_TEMPLATE = {
   mcpServers: {
     filesystem: {
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()],
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-filesystem", process.cwd()],
     },
   },
 };
@@ -10,8 +10,8 @@ export const CLAUDE_SETTINGS_TEMPLATE = {
 export const MCP_SETTINGS_TEMPLATE = {
   mcpServers: {
     filesystem: {
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()],
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-filesystem", process.cwd()],
     },
   },
 };
@@ -19,7 +19,7 @@ export const MCP_SETTINGS_TEMPLATE = {
 export const ACTIVITY_TEMPLATE = `# Project Build - Activity Log
 
 ## Current Status
-**Last Updated:** ${new Date().toISOString().split('T')[0]}
+**Last Updated:** ${new Date().toISOString().split("T")[0]}
 **Tasks Completed:** 0
 **Current Task:** Ready to begin
 

@@ -1,6 +1,6 @@
-import * as path from 'path';
-import { FileSystem, DefaultFileSystem } from './file-helpers.js';
-import { ValidationError } from './errors.js';
+import * as path from "path";
+import { FileSystem, DefaultFileSystem } from "./file-helpers.js";
+import { ValidationError } from "./errors.js";
 
 export async function validateWorkingDirectory(
   workingDir: string,
