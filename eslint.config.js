@@ -44,6 +44,13 @@ export default [
   {
     // More lenient rules for test files
     files: ["**/*.test.ts"],
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+        setTimeout: "readonly",
+      },
+    },
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
     },

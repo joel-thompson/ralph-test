@@ -52,7 +52,7 @@ Switch package manager from bun to pnpm. Update lockfile, documentation, and any
       "Run pnpm test to verify tests pass",
       "Run pnpm run lint to verify linting works"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "question",
