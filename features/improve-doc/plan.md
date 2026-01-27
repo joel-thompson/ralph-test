@@ -27,7 +27,7 @@ Improve the README documentation by adding comprehensive example workflows that 
       "Use code blocks liberally - readers should be able to copy-paste and go",
       "Place this section near the top of README, after Installation"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",

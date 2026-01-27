@@ -14,7 +14,11 @@ Or use directly with `npx`:
 npx ral <command>
 ```
 
-### Development Setup
+## Local Development Setup
+
+For contributors or coworkers who want to work on the CLI itself:
+
+### 1. Clone and Install
 
 ```bash
 # Clone the repository
@@ -25,11 +29,40 @@ cd ralph-test
 pnpm install
 
 # Build the project
-pnpm run build
+pnpm build
+```
 
-# Run tests
-pnpm test
+### 2. Make `ral` Command Available
 
+After building, choose one of these options to use the `ral` command globally:
+
+**Option 1: pnpm link (Recommended)**
+```bash
+pnpm link --global
+```
+One command that auto-updates when you rebuild. Run from the project directory.
+
+**Option 2: Shell Alias**
+```bash
+# Add to your .zshrc or .bashrc
+alias ral='/absolute/path/to/ralph-test/dist/index.js'
+```
+Simple and explicit. Replace with your actual path to the project.
+
+**Option 3: Add to PATH**
+```bash
+# Add to your .zshrc or .bashrc
+export PATH="/absolute/path/to/ralph-test/dist:$PATH"
+```
+Makes the command available system-wide. Replace with your actual path.
+
+After making changes to the code, rebuild with `pnpm build` and the `ral` command will use the updated code (Option 1 handles this automatically).
+
+**Note:** Once published to npm, you can install globally with `npm install -g ral`.
+
+### Development Commands
+
+```bash
 # Lint code
 pnpm run lint
 
