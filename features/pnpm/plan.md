@@ -32,7 +32,7 @@ Switch package manager from bun to pnpm. Update lockfile, documentation, and any
       "Update Package Manager section to describe pnpm instead of bun",
       "Remove the 'switch back to npm' instructions that reference bun.lockb"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "cleanup",

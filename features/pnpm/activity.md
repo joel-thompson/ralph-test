@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-27
-**Tasks Completed:** 1
-**Current Task:** Migration task completed
+**Tasks Completed:** 2
+**Current Task:** Documentation task completed
 
 ---
 
@@ -37,3 +37,27 @@
 - pnpm moved existing node_modules installed by bun to node_modules/.ignored
 - pnpm warned about esbuild build scripts (can be approved later if needed)
 - Migration completed cleanly without issues
+
+### 2026-01-27 - Documentation: Update README.md to use pnpm instead of bun
+
+**Task Description:** Update README.md to use pnpm instead of bun
+
+**Changes Made:**
+- Updated Development Setup section: changed `bun install` to `pnpm install`
+- Updated build command from `bun run build` to `pnpm run build`
+- Updated lint command from `bun run lint` to `pnpm run lint`
+- Updated dev command from `bun run dev` to `pnpm run dev`
+- Removed npm alternative in Development Setup section
+- Removed "uses npm/vitest - bun test compatibility is in progress" note
+- Updated Prerequisites section: removed 'Bun 1.0+' reference, kept only 'Node.js 18+'
+- Updated Package Manager section to describe pnpm instead of bun
+- Removed the "switch back to npm" instructions that referenced bun.lockb
+
+**Testing and Verification:**
+- Ran `pnpm test` - all 66 tests passed successfully
+- Ran `pnpm run build` - TypeScript compilation succeeded with no errors
+- Verified README.md contains no remaining bun references in the changed sections
+
+**Notes:**
+- Documentation is now fully aligned with pnpm as the package manager
+- All commands use pnpm consistently throughout the README
