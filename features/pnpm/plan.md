@@ -18,7 +18,7 @@ Switch package manager from bun to pnpm. Update lockfile, documentation, and any
       "Run pnpm install to generate pnpm-lock.yaml",
       "Verify all dependencies install correctly"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",
