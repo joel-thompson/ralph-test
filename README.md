@@ -1,324 +1,432 @@
 # Ralph Loop CLI (`ral`)
 
-A TypeScript-based CLI tool for managing Claude-based development loops. The Ralph loop is a structured approach to AI-assisted development where Claude iteratively works on tasks following a plan until completion.
+A TypeScript CLI tool for AI-assisted development loops where Claude iteratively works through a structured plan until completion.
 
-## Installation
-
-```bash
-npm install -g ral
-```
-
-Or use directly with `npx`:
+## Quick Start
 
 ```bash
-npx ral <command>
-```
-
-### Development Setup
-
-```bash
-# Clone the repository
+# 1. Clone and set up (for contributors)
 git clone <repository-url>
 cd ralph-test
+pnpm install && pnpm build
+pnpm link --global
 
-# Install dependencies
-pnpm install
+# 2. Create a new project
+mkdir my-project && cd my-project
 
-# Build the project
-pnpm run build
+# 3. Set up Ralph loop files
+ral scaffold
 
-# Run tests
-pnpm test
+# 4. Edit your plan
+# Edit plan.md - define your tasks in JSON format
+# Edit prompt.md - customize instructions (optional)
 
-# Lint code
-pnpm run lint
+# 5. Run the loop
+ral run -m 10
 
-# Run in development mode (no -- needed with pnpm)
-pnpm run dev <command>
-
-# Examples:
-pnpm run dev scaffold -w ./features/my-feature
-pnpm run dev run -w ./features/my-feature -m 10
-pnpm run dev create-settings
+# 6. Monitor progress
+cat activity.md
+git log
 ```
 
 ## Prerequisites
 
 - Node.js 18+
-- Claude CLI installed and configured (`npm install -g @anthropic-ai/claude`)
-- Valid Anthropic API key configured for Claude CLI
+- Claude CLI: `npm install -g @anthropic-ai/claude`
+- Anthropic API key configured for Claude CLI
 
-## Package Manager
+## Core Concepts
 
-This project uses **pnpm** for package management and running scripts, which provides faster installs and efficient disk space usage with content-addressable storage.
+### The Ralph Loop
+
+Ralph automates iterative development by having Claude:
+1. Read the activity log to understand current state
+2. Find the next incomplete task in your plan
+3. Complete all steps for that task
+4. Verify the task works
+5. Update the activity log
+6. Mark the task as complete
+7. Make a git commit
+8. Repeat until all tasks are done
+
+### Key Files
+
+- **plan.md**: JSON task list with descriptions, steps, and pass/fail status
+- **activity.md**: Detailed log of what Claude accomplished each iteration
+- **prompt.md**: Instructions that guide Claude's behavior
+- **spec.md** (optional): Detailed specification/requirements document
+
+### Working Directory Pattern
+
+```bash
+# Organize features in subdirectories
+mkdir -p features/my-feature
+ral scaffold -w features/my-feature
+# Edit features/my-feature/plan.md and spec.md
+ral run -w features/my-feature -m 15
+
+# Claude runs from project root (can edit source files)
+# But reads plan/activity from features/my-feature/
+```
+
+This lets you work on multiple features in parallel with isolated plans.
 
 ## Commands
 
-### `ral create-settings`
-
-Generate configuration files for Claude and MCP (Model Context Protocol) settings.
-
-**Usage:**
-```bash
-ral create-settings [options]
-```
-
-**Options:**
-- `-w, --working-directory <path>` - Target directory for settings files (default: current directory)
-- `-f, --force` - Overwrite existing files if they exist
-
-**Created Files:**
-- `.claude/settings.json` - Claude configuration with MCP filesystem server
-- `.mcp.json` - MCP server configuration
-
-**Examples:**
-```bash
-# Create settings in current directory
-ral create-settings
-
-# Create settings in specific directory
-ral create-settings -w ./my-project
-
-# Overwrite existing settings files
-ral create-settings -f
-```
-
----
-
 ### `ral scaffold`
 
-Generate the Ralph loop file structure with starter templates.
+Generate Ralph loop file structure with starter templates.
 
-**Usage:**
 ```bash
-ral scaffold [options]
+ral scaffold                    # Create in current directory
+ral scaffold -w ./my-feature    # Create in subdirectory
+ral scaffold -f                 # Overwrite existing files
 ```
 
-**Options:**
-- `-w, --working-directory <path>` - Target directory for scaffold files (default: current directory)
-- `-f, --force` - Overwrite existing files if they exist
-
-**Created Files:**
-- `activity.md` - Activity log for tracking what the agent accomplishes each iteration
-- `plan.md` - Project plan with structured task list
-- `prompt.md` - Instructions for Claude to follow during the loop
-- `screenshots/` - Directory for storing screenshots
-
-**Examples:**
-```bash
-# Scaffold in current directory
-ral scaffold
-
-# Scaffold in new project directory
-ral scaffold -w ./my-new-project
-
-# Overwrite existing scaffold files
-ral scaffold -f
-```
-
----
+Creates: `activity.md`, `plan.md`, `prompt.md`, `screenshots/`
 
 ### `ral run`
 
-Execute the Ralph loop by repeatedly calling Claude with your prompt until completion or max iterations.
+Execute the Ralph loop.
 
-**Usage:**
 ```bash
-ral run -m <iterations> [options]
+ral run -m <max-iterations>           # Required: set iteration limit
+ral run -m 10 -w ./features/auth     # Run with specific working directory
 ```
-
-**Options:**
-- `-m, --max-iterations <number>` - Maximum number of iterations (required)
-- `-w, --working-directory <path>` - Working directory containing loop files (default: current directory)
-
-**Required Files:**
-- `plan.md` - Project plan with tasks
-- `prompt.md` - Instructions for Claude
-- `activity.md` - Activity log
 
 **Behavior:**
-- Runs Claude CLI with your prompt file for up to `max-iterations` times
-- Tracks and displays per-iteration and cumulative token usage and costs
-- Exits with code 0 if Claude outputs `<promise>COMPLETE</promise>`
+- Iterates up to max-iterations times
+- Tracks token usage and costs per iteration
+- Exits with code 0 when Claude outputs `<promise>COMPLETE</promise>`
 - Exits with code 1 if max iterations reached without completion
-
-**Examples:**
-```bash
-# Run loop for up to 10 iterations
-ral run -m 10
-
-# Run loop in specific directory
-ral run -m 5 -w ./my-project
-
-# Typical workflow
-ral scaffold -w ./my-project
-cd ./my-project
-# Edit plan.md and prompt.md
-ral run -m 20
-
-# Feature development workflow - run from project root, point at feature folder
-# Claude runs in project root (can edit source files), but @ references point to feature folder
-ral scaffold -w features/auth
-ral run -w features/auth -m 10
-
-# Multiple features in parallel
-ral scaffold -w features/api-v2
-ral scaffold -w features/dashboard
-ral run -w features/api-v2 -m 5
-ral run -w features/dashboard -m 5
-```
 
 **Output:**
 ```
 Iteration 1/10
-Input tokens: 15234
-Output tokens: 2341
-Cache read tokens: 0
+Input tokens: 15234, Output tokens: 2341
 Cost this iteration: $0.123
 Cumulative cost: $0.123
-
-Iteration 2/10
-...
 ```
 
-## Typical Workflow
+### `ral create-settings`
 
-1. **Create a new project**
-   ```bash
-   mkdir my-ai-project
-   cd my-ai-project
-   ```
+Generate Claude and MCP configuration files (optional).
 
-2. **Scaffold the Ralph loop structure**
-   ```bash
-   ral scaffold
-   ```
-
-3. **Configure Claude and MCP (optional)**
-   ```bash
-   ral create-settings
-   ```
-
-4. **Edit your project plan**
-   - Open `plan.md` and define your tasks in the JSON structure
-   - Each task should have: category, description, steps, and `passes: false`
-
-5. **Customize the prompt**
-   - Edit `prompt.md` with specific instructions for Claude
-   - The default prompt instructs Claude to:
-     - Read activity.md to understand current state
-     - Find next task with `passes: false` in plan.md
-     - Complete all steps for that task
-     - Verify the task works
-     - Update activity.md with what was done
-     - Change task's `passes` to `true` in plan.md
-     - Make a git commit
-
-6. **Run the loop**
-   ```bash
-   ral run -m 20
-   ```
-
-7. **Monitor progress**
-   - Check `activity.md` for detailed logs of what Claude accomplished
-   - Review `plan.md` to see which tasks have `passes: true`
-   - Examine git commits to see incremental changes
-
-## Working Directory Behavior
-
-The `-w, --working-directory` option allows you to organize multiple Ralph loops within your project:
-
-**How it works:**
-- Claude always runs from the **project root** (so it can edit source files)
-- The working directory specifies where loop files (`plan.md`, `activity.md`, `prompt.md`) are located
-- File references with `@` in your prompt (like `@plan.md`) are automatically resolved relative to the working directory
-
-**Use case - Feature development:**
 ```bash
-# Project structure:
-my-app/
-├── src/               # Source code
-├── features/
-│   ├── auth/
-│   │   ├── plan.md
-│   │   ├── activity.md
-│   │   └── prompt.md
-│   └── dashboard/
-│       ├── plan.md
-│       ├── activity.md
-│       └── prompt.md
-
-# Run from project root, but use feature-specific loop files
-cd my-app
-ral run -w features/auth -m 10
-
-# prompt.md contains: @plan.md @activity.md
-# Claude receives: @features/auth/plan.md @features/auth/activity.md
-# Claude can still edit files in src/ because it runs from project root
+ral create-settings              # Create in current directory
+ral create-settings -w ./project # Create in subdirectory
+ral create-settings -f           # Overwrite existing
 ```
 
-This pattern lets you:
-- Keep feature-specific plans and logs organized in subdirectories
-- Run multiple Ralph loops in parallel for different features
-- Have Claude work on the entire codebase while tracking progress per-feature
+Creates: `.claude/settings.json`, `.mcp.json`
+
+## Writing Your Plan
+
+### 1. Write a Spec (Recommended for Complex Features)
+
+Create `spec.md` with detailed requirements:
+
+```markdown
+# Feature Name
+
+## Project Overview
+What you're building and why.
+
+## Requirements
+- Functional requirement 1
+- Functional requirement 2
+- Non-functional requirements
+
+## Technical Constraints
+- Use TypeScript strict mode
+- Follow existing patterns in src/
+- Minimize dependencies
+
+## API Design
+```typescript
+interface MyFeature {
+  doSomething(input: string): Promise<Result>
+}
+```
+
+## Testing & Verification
+- Unit tests for all functions
+- Integration test for end-to-end flow
+- Manual test: do X and verify Y
+```
+
+### 2. Generate a Plan with AI
+
+Use Claude or ChatGPT to generate your task breakdown:
+
+**Example prompt:**
+```
+I have a spec.md file describing a new feature. Please read @spec.md
+and generate a plan.md with 6-10 tasks in the Ralph loop JSON format.
+Each task should have: category, description, clear steps, and verification.
+Tasks should be 5-15 minutes of work each.
+```
+
+### 3. Review and Refine the Plan
+
+Edit `plan.md` to ensure quality:
+
+```markdown
+# Project Plan
+
+## Project Overview
+Brief description of what you're building.
+
+@spec.md
+
+---
+
+## Task List
+
+```json
+[
+  {
+    "category": "setup",
+    "description": "Set up database schema and install dependencies",
+    "steps": [
+      "Install required npm packages: zod, bcrypt",
+      "Create database migration for users table",
+      "Run migration: npm run migrate",
+      "Verify table exists: psql -c '\\d users'",
+      "Run npm run build - should have no TypeScript errors"
+    ],
+    "passes": false
+  },
+  {
+    "category": "implementation",
+    "description": "Create User repository with CRUD operations",
+    "steps": [
+      "Create src/repositories/UserRepository.ts",
+      "Implement create, findById, findByEmail, update methods",
+      "Add proper TypeScript types and error handling",
+      "Write unit tests in tests/repositories/UserRepository.test.ts",
+      "Run npm test - verify UserRepository tests pass"
+    ],
+    "passes": false
+  }
+]
+```
+```
+
+**Good task characteristics:**
+- ✅ Clear, specific description
+- ✅ 5-15 minutes of focused work
+- ✅ Explicit verification step
+- ✅ Lists specific files to create/modify
+- ❌ Avoid: "Implement everything" (too vague)
+- ❌ Avoid: "Add one import" (too small)
+
+### 4. Customize the Prompt (Optional)
+
+Edit `prompt.md` to add project-specific guidance:
+
+```markdown
+## Project Context
+- TypeScript Node.js API using Express and PostgreSQL
+- Follow existing patterns in src/repositories/ and src/services/
+- Use Zod for validation
+
+## Coding Standards
+- Add [debug] prefix to debug log statements
+- Add JSDoc comments for public functions
+- Prefer async/await over .then() chains
+
+## Testing Requirements
+- Write unit tests for all new functions
+- Mock external dependencies (database, APIs)
+```
+
+## Choosing max-iterations
+
+Formula: `max-iterations = number_of_tasks + buffer`
+
+Examples:
+- 5 tasks → use `-m 8` (5 + 3 buffer)
+- 10 tasks → use `-m 13` (10 + 3 buffer)
+- 20 tasks → use `-m 25` (20 + 5 buffer)
+
+**Why a buffer?**
+- Tests might fail and need fixing
+- Build errors need resolution
+- Tasks might be more complex than anticipated
+
+**Cost:** Typically $0.05-$0.15 per iteration depending on context size.
+
+**Tip:** Start conservative and run again if needed. Progress is saved.
+
+```bash
+ral run -m 5    # Run 5 iterations
+cat activity.md # Check progress
+ral run -m 5    # Continue where you left off
+```
+
+## Common Pitfalls and Solutions
+
+| Pitfall | Solution |
+|---------|----------|
+| Tasks too large (>30 min) | Break into smaller tasks (<15 min each) |
+| Unclear success criteria | Add explicit verification: "Run tests, verify X passes" |
+| Missing dependencies | Include installation in task steps |
+| Tests don't exist yet | Order tasks: implement → write tests → run tests |
+| Context grows too large | Keep plan focused; completed tasks marked `passes: true` |
+| Loop gets stuck on a task | Pause, fix manually or refine task steps, resume |
+
+## Example Workflows
+
+For detailed, real-world examples see [EXAMPLES.md](EXAMPLES.md):
+
+1. **Building a New Feature from Scratch**: Complete workflow for implementing a notification system
+2. **Refactoring Existing Code**: Systematic refactoring of error handling across an Express API
+3. **Debugging and Fixing a Bug**: Structured investigation and fix for an intermittent cart bug
+
+Quick example - Building a feature:
+```bash
+# 1. Create feature directory and spec
+mkdir -p features/notifications
+cd features/notifications
+# Write spec.md with requirements
+
+# 2. Generate plan with AI assistant
+# "Please read @spec.md and generate a plan.md..."
+
+# 3. Scaffold and run
+cd ../..  # back to project root
+ral scaffold -w features/notifications
+ral run -w features/notifications -m 15
+
+# 4. Review results
+cat features/notifications/activity.md
+git log --oneline
+```
+
+## Tips and Best Practices
+
+### Writing Effective Plans
+
+- **Task granularity**: Aim for 5-15 minute tasks
+- **Clear steps**: Use action verbs, specify files, include verification
+- **Verification**: Every task needs a "verify it works" step
+- **Dependencies**: Order tasks properly (create before using)
+- **Categories**: Use consistent categories: setup, implementation, refactoring, testing, verification, cleanup
+
+### Customizing prompt.md
+
+Add project-specific context, coding standards, and testing requirements. Keep it concise - the prompt is included in every iteration.
+
+### Using spec.md
+
+For non-trivial features, write a spec.md and reference it with `@spec.md` in plan.md. Include:
+- Requirements and constraints
+- API contracts and data structures
+- Examples and use cases
+- Testing criteria
+
+Benefits: separation of concerns, better context for Claude, easier to maintain.
+
+### Cost Optimization
+
+- Monitor cumulative cost output
+- Keep context focused (smaller plan.md and prompt.md)
+- Break large features into separate loops
+- Typical feature: $0.50-$1.50 for 10 iterations
+
+### Workflow Tips
+
+1. **Start small**: First loop? Try 3-5 simple tasks
+2. **Review frequently**: Check activity.md after iterations
+3. **Use git effectively**: Each task = 1 commit, easy to review/revert
+4. **Leverage AI for planning**: Let AI generate task breakdown, then review
+5. **Parallel features**: Use different working directories for multiple features
+6. **Document learnings**: activity.md captures insights, root causes, patterns
+
+## Local Development Setup
+
+For contributors working on the CLI itself:
+
+### 1. Clone and Install
+
+```bash
+git clone <repository-url>
+cd ralph-test
+pnpm install
+pnpm build
+```
+
+### 2. Make `ral` Command Available
+
+**Option 1: pnpm link (Recommended)**
+```bash
+pnpm link --global
+```
+Auto-updates when you rebuild. Run from project directory.
+
+**Option 2: Shell Alias**
+```bash
+# Add to .zshrc or .bashrc
+alias ral='/absolute/path/to/ralph-test/dist/index.js'
+```
+
+**Option 3: Add to PATH**
+```bash
+# Add to .zshrc or .bashrc
+export PATH="/absolute/path/to/ralph-test/dist:$PATH"
+```
+
+### 3. Development Commands
+
+```bash
+pnpm run lint                    # Lint code
+pnpm run dev scaffold            # Run in dev mode
+pnpm run dev run -m 10           # Dev mode with args
+```
+
+## Testing
+
+```bash
+pnpm test                        # Run all tests
+pnpm run test:watch              # Watch mode
+```
+
+Test coverage: 66 tests across 9 test files covering file operations, commands, and utilities.
+
+## Package Manager
+
+This project uses **pnpm** for faster installs and efficient disk space usage.
 
 ## Ralph Loop Philosophy
 
-The Ralph loop is designed for iterative, autonomous AI development:
-
-- **Structured Planning**: Tasks are broken down into clear steps with pass/fail states
-- **Activity Logging**: Every change is documented with verification results
-- **Incremental Progress**: One task at a time, with git commits for each
-- **Self-Verification**: Claude tests its own work before marking tasks complete
-- **Cost Tracking**: Token usage and costs are tracked per-iteration and cumulatively
-- **Early Exit**: Loop completes when Claude outputs the completion promise
+- **Structured Planning**: Clear tasks with pass/fail states
+- **Activity Logging**: Every change documented with verification
+- **Incremental Progress**: One task at a time, git commit per task
+- **Self-Verification**: Claude tests its own work before marking complete
+- **Cost Tracking**: Token usage tracked per-iteration and cumulatively
+- **Early Exit**: Completes when Claude outputs `<promise>COMPLETE</promise>`
 
 ## File Structure
 
 ```
 my-project/
 ├── .claude/
-│   └── settings.json       # Claude configuration (optional)
+│   └── settings.json       # Claude config (optional)
 ├── .mcp.json               # MCP server config (optional)
 ├── activity.md             # Activity log (required for run)
 ├── plan.md                 # Project plan (required for run)
-├── prompt.md               # Claude instructions (required for run)
+├── prompt.md               # Instructions (required for run)
+├── spec.md                 # Specification (optional)
 └── screenshots/            # Screenshots directory
 ```
-
-## Error Handling
-
-The CLI provides clear error messages and suggestions:
-
-- **Missing files**: If required files are missing for `ral run`, you'll get a helpful message suggesting to run `ral scaffold`
-- **Invalid directory**: Working directory validation ensures paths exist
-- **Claude CLI errors**: Errors from the Claude CLI are caught and reported clearly
-- **JSON parsing**: Invalid JSON responses from Claude are handled gracefully
-
-## Testing
-
-The project includes comprehensive unit tests using Vitest:
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:run
-```
-
-Test coverage includes:
-- File operations and utilities (21 tests)
-- create-settings command (6 tests)
-- scaffold command (7 tests)
-- run command (7 tests)
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes with tests
-4. Run `npm test` to verify all tests pass
+3. Make changes with tests
+4. Run `pnpm test` to verify
 5. Submit a pull request
 
 ## License
@@ -327,4 +435,4 @@ MIT
 
 ## Support
 
-For issues, questions, or contributions, please visit the project repository.
+For issues or questions, visit the project repository.
