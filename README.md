@@ -33,8 +33,13 @@ pnpm test
 # Lint code
 pnpm run lint
 
-# Run in development mode
-pnpm run dev -- <command>
+# Run in development mode (no -- needed with pnpm)
+pnpm run dev <command>
+
+# Examples:
+pnpm run dev scaffold -w ./features/my-feature
+pnpm run dev run -w ./features/my-feature -m 10
+pnpm run dev create-settings
 ```
 
 ## Prerequisites
