@@ -98,7 +98,7 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
       "Register command in src/index.ts",
       "Write unit tests with mocked Claude runner"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",

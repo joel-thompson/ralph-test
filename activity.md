@@ -196,3 +196,57 @@ This file logs what the agent accomplishes during each iteration:
 - Command follows same dependency injection pattern as create-settings for testability
 - Screenshots folder is created as empty directory for future use
 
+---
+
+### 2026-01-27 - Run Command Complete
+
+**Task:** Implement run command
+
+**Changes Made:**
+- Created src/utils/claude-runner.ts with Claude CLI wrapper:
+  - ClaudeRunner interface for dependency injection (supports testability)
+  - DefaultClaudeRunner class implementing the interface
+  - runClaude() function that executes `claude -p <prompt> --output-format json`
+  - Parses JSON response for result, usage tokens, and total cost
+  - Validates response structure and handles JSON parse errors
+- Created src/commands/run.ts handler with:
+  - RunOptions interface supporting workingDirectory and maxIterations flags
+  - run() function that validates working directory and required files
+  - Aborts with helpful message if files missing (suggests running `ral scaffold`)
+  - Implements loop with iteration tracking (1 to maxIterations)
+  - Tracks cumulative stats: input tokens, output tokens, cache read tokens, and total cost
+  - Prints per-iteration and cumulative stats after each iteration
+  - Checks for `<promise>COMPLETE</promise>` in response to exit early with code 0
+  - Exits with code 1 if max iterations reached without completion
+  - Handles Claude CLI errors gracefully with CommandError
+- Registered run command in src/index.ts:
+  - Added -w/--working-directory flag (defaults to current directory)
+  - Added required -m/--max-iterations flag with parseInt parser
+  - Integrated proper error handling with try/catch and process.exit(1)
+
+**Testing:**
+- Created comprehensive unit tests in src/commands/run.test.ts (7 test cases):
+  - Verifies working directory validation
+  - Tests required files validation with helpful error message
+  - Tests early exit with code 0 when COMPLETE is found in first iteration
+  - Tests exit with code 1 when max iterations reached without completion
+  - Tests cumulative stats tracking across multiple iterations
+  - Tests Claude CLI error handling with CommandError
+  - Tests early completion when COMPLETE is found in later iteration (not first)
+- All 41 tests pass (21 infrastructure + 6 create-settings + 7 scaffold + 7 run)
+- Tests use mocked ClaudeRunner and validation functions for isolation
+
+**Verification:**
+- Built successfully with `npm run build`
+- All unit tests pass with `npm test`
+- CLI command help displays correctly: `node dist/index.js run --help`
+- Shows required -m flag and optional -w flag with descriptions
+
+**Notes:**
+- ClaudeRunner interface enables easy mocking in tests and future extensibility (e.g., switching to Anthropic SDK)
+- Command validates all required files exist before starting loop
+- Per-iteration stats show individual iteration performance
+- Cumulative stats provide overall picture of token usage and cost across all iterations
+- Early exit with COMPLETE promise allows tasks to finish before max iterations
+- Error messages are clear and actionable (suggest using `ral scaffold` when files missing)
+
