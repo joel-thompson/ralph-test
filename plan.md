@@ -109,7 +109,7 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
       "Include example usage for each command",
       "Add installation and setup instructions"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```
