@@ -16,17 +16,19 @@ This example demonstrates using Ralph to build a complete new feature: a user no
 
 **Scenario:** You want to add a notification system to your Node.js application that can send emails and in-app notifications to users.
 
-### Step 1: Create the Feature Directory
+### Step 1: Create the Feature Directory and Scaffold
 
 ```bash
 # From your project root
 mkdir -p features/notifications
-cd features/notifications
+ral scaffold -w features/notifications
 ```
+
+This creates the standard Ralph loop files: `activity.md`, `plan.md`, `prompt.md`, and `screenshots/`.
 
 ### Step 2: Write the Spec
 
-Create `spec.md` with your requirements:
+Create `spec.md` in your feature directory with your requirements:
 
 ```markdown
 # User Notification System
@@ -235,9 +237,6 @@ Implement a user notification system with email and in-app delivery.
 ### Step 5: Run the Loop
 
 ```bash
-# Scaffold the loop files
-ral scaffold -w features/notifications
-
 # From project root, run the loop
 ral run -w features/notifications -m 15
 ```
@@ -301,17 +300,19 @@ This example demonstrates using Ralph to refactor existing code with dependent t
 
 **Scenario:** You have an Express.js API with inconsistent error handling scattered across route handlers. You want to refactor it to use a centralized error handling system.
 
-### Step 1: Create the Feature Directory
+### Step 1: Create the Feature Directory and Scaffold
 
 ```bash
 # From your project root
 mkdir -p features/error-handling-refactor
-cd features/error-handling-refactor
+ral scaffold -w features/error-handling-refactor
 ```
+
+This creates the standard Ralph loop files in your feature directory.
 
 ### Step 2: Write the Spec
 
-Create `spec.md` describing the refactoring goals:
+Create `spec.md` in your feature directory describing the refactoring goals:
 
 ```markdown
 # Centralized Error Handling Refactor
@@ -378,13 +379,11 @@ interface ErrorResponse {
 - Update: src/app.ts (register middleware)
 ```
 
-### Step 3: Run the Loop
+### Step 3: Generate the Plan and Run
 
-Generate your plan using an AI assistant, then:
+Generate your plan using an AI assistant, then edit `features/error-handling-refactor/plan.md` with the generated tasks:
 
 ```bash
-ral scaffold -w features/error-handling-refactor
-# Copy spec.md and plan.md to features/error-handling-refactor/
 ral run -w features/error-handling-refactor -m 12
 ```
 
@@ -403,16 +402,18 @@ This example demonstrates using Ralph to systematically investigate, fix, and ve
 
 **Scenario:** Users are reporting that the shopping cart occasionally loses items when they navigate away and come back. The bug is intermittent and you need to investigate the root cause.
 
-### Step 1: Create the Feature Directory
+### Step 1: Create the Feature Directory and Scaffold
 
 ```bash
 mkdir -p features/cart-bug-fix
-cd features/cart-bug-fix
+ral scaffold -w features/cart-bug-fix
 ```
+
+This creates the standard Ralph loop files in your feature directory.
 
 ### Step 2: Write the Spec
 
-Create `spec.md` documenting the bug and investigation approach:
+Create `spec.md` in your feature directory documenting the bug and investigation approach:
 
 ```markdown
 # Shopping Cart Persistence Bug Fix
@@ -451,11 +452,11 @@ The shopping cart uses:
 - Test with localStorage disabled (graceful degradation)
 ```
 
-### Step 3: Run the Loop
+### Step 3: Generate the Plan and Run
+
+Generate your plan with an AI assistant (investigation tasks first, then fix tasks), edit `features/cart-bug-fix/plan.md`, then run:
 
 ```bash
-ral scaffold -w features/cart-bug-fix
-# Generate plan with investigation tasks first, then fix tasks
 ral run -w features/cart-bug-fix -m 15
 ```
 
