@@ -25,7 +25,7 @@ Ralph loop CLI (`ral`) written in TypeScript using Commander library. See @spec.
       "Configure package.json for npm publishing (name, version, files, bin)",
       "Verify CLI builds and runs (npx tsx src/index.ts --help)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "infrastructure",
