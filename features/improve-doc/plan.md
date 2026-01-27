@@ -40,7 +40,7 @@ Improve the README documentation by adding comprehensive example workflows that 
       "Explain the benefit: keeps plan.md focused on tasks while spec.md holds the detailed requirements",
       "Place this section before 'Setting Up Your Plan'"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",

@@ -257,6 +257,95 @@ Iteration 2/10
    - Review `plan.md` to see which tasks have `passes: true`
    - Examine git commits to see incremental changes
 
+## Writing a Spec (spec.md)
+
+Before creating your plan, consider writing a `spec.md` file to serve as a comprehensive specification document for your project or feature. This acts as a Product Requirements Document (PRD) that describes what you're building.
+
+### Purpose
+
+The spec.md file provides detailed context that Claude needs to complete tasks effectively, while keeping plan.md focused on the task breakdown. By referencing `@spec.md` in your plan.md or prompt.md, Claude receives the full requirements context without cluttering the task list.
+
+### What to Include in a Spec
+
+Your spec.md should contain:
+
+- **Project overview**: High-level description of what you're building
+- **Requirements**: Functional and non-functional requirements
+- **Constraints**: Technical limitations, dependencies, or standards to follow
+- **API contracts**: Expected interfaces, function signatures, or data structures
+- **Examples**: Sample inputs/outputs, use cases, or user flows
+- **Technical details**: Architecture decisions, libraries to use, coding patterns
+- **Testing criteria**: How to verify the implementation works
+
+### Example Spec Structure
+
+```markdown
+## Project Overview
+Brief description of the feature or project
+
+## Requirements
+- Must support X, Y, and Z
+- Should integrate with existing A component
+- Performance: Must handle N requests per second
+
+## Technical Constraints
+- Use TypeScript with strict mode
+- Follow existing codebase patterns
+- Dependencies: Prefer well-known libraries, minimize new dependencies
+
+## API Design
+```typescript
+interface MyFeature {
+  doSomething(input: string): Promise<Result>
+}
+```
+
+## Examples
+```typescript
+// Expected usage
+const result = await feature.doSomething("input")
+// result should be { success: true, data: ... }
+```
+
+## Testing & Verification
+- Unit tests must pass
+- Integration tests for X scenario
+- Manual verification: Run Y and check Z
+```
+
+### Using the Spec with Your Plan
+
+Reference the spec in your plan.md using the `@` syntax:
+
+```markdown
+# Project Plan
+
+## Project Overview
+
+Building a new authentication system for the application.
+
+@spec.md
+
+---
+
+## Task List
+...
+```
+
+This pattern ensures:
+- **plan.md stays focused** on task breakdown and execution steps
+- **spec.md holds the detailed requirements** that inform how tasks should be completed
+- **Claude has full context** when working on each task
+- **Requirements are centralized** and easy to update without modifying tasks
+
+### Benefits
+
+- **Separation of concerns**: Requirements (spec) vs. execution plan (tasks)
+- **Better context**: Claude understands the "why" behind each task
+- **Easier maintenance**: Update requirements once in spec.md instead of across multiple tasks
+- **Clearer communication**: Team members can review spec.md to understand the feature
+- **Reusability**: Same spec can inform multiple plan iterations or approaches
+
 ## Working Directory Behavior
 
 The `-w, --working-directory` option allows you to organize multiple Ralph loops within your project:
