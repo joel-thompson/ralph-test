@@ -38,9 +38,20 @@ export async function run(
   await validateWorkingDirectory(workingDirectory);
 
   // Load config and select runner if not provided
+  let configSource = "unknown";
+  let configPath: string | undefined;
+  let runnerType = "unknown";
+  let model: string | undefined;
+
   if (!runner) {
     const configResult = await loadConfig(workingDirectory, process.cwd());
     const config = configResult.config;
+
+    // Store config info for summary logging
+    configSource = configResult.source;
+    configPath = configResult.path;
+    runnerType = config.runner;
+    model = config.model;
 
     // Log config information
     console.log("\n--- Configuration ---");
@@ -63,6 +74,26 @@ export async function run(
       runner = new DefaultClaudeRunner();
     }
   }
+
+  // Helper function to log config summary
+  const logConfigSummary = () => {
+    // Only log summary if we have config info (runner was not provided directly)
+    if (runnerType === "unknown") {
+      return;
+    }
+    console.log("\n--- Configuration Summary ---");
+    console.log(`Runner: ${runnerType}`);
+    if (model) {
+      console.log(`Model: ${model}`);
+    }
+    if (configSource === "default") {
+      console.log("Config source: default");
+    } else if (configSource === "working-directory") {
+      console.log(`Config source: working directory (${configPath})`);
+    } else if (configSource === "root-directory") {
+      console.log(`Config source: root directory (${configPath})`);
+    }
+  };
 
   // Validate required files exist
   const requiredFiles = ["plan.md", "prompt.md", "activity.md"];
@@ -136,9 +167,11 @@ export async function run(
         console.log(
           `\n✓ Task completed successfully after ${iteration} iteration(s)!`
         );
+        logConfigSummary();
         process.exit(0);
       }
     } catch (error) {
+      logConfigSummary();
       if (error instanceof Error) {
         throw new CommandError(`Failed to run Claude CLI: ${error.message}`);
       }
@@ -150,5 +183,6 @@ export async function run(
   console.log(
     `\n✗ Maximum iterations (${maxIterations}) reached without completion.`
   );
+  logConfigSummary();
   process.exit(1);
 }

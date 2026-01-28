@@ -90,7 +90,7 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "This helps users verify what configuration was actually used for the entire run",
       "Update run.test.ts to verify end-of-run logging"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

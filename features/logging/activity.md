@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-28
-**Tasks Completed:** 3
-**Current Task:** Task 3 complete - config resolution path logging
+**Tasks Completed:** 4
+**Current Task:** Task 4 complete - summary logging at end of run command
 
 ---
 
@@ -101,3 +101,42 @@
 - User's global CLAUDE.md instructions specify that debug logging should use `[debug]` prefix
 - All four logging paths needed to be tested to ensure complete coverage
 - The two different places where default config is returned (single directory vs both directories checked) both needed logging
+
+### 2026-01-28 - Task 4: Add summary logging at end of run command showing final config used
+
+**Task Description:** Add logging at the end of the run command to show a configuration summary before exiting. This summary should include the runner type, model (if applicable), and config source. It should appear before all exit points: successful completion, max iterations reached, and errors.
+
+**Changes Made:**
+1. Modified `src/commands/run.ts` to track config information throughout execution:
+   - Added variables to store `configSource`, `configPath`, `runnerType`, and `model`
+   - Created a `logConfigSummary()` helper function that displays the config summary
+   - The helper only logs when config info is available (skips when runner is provided directly in tests)
+   - Added calls to `logConfigSummary()` before all three exit points:
+     - Before successful completion exit (process.exit(0))
+     - Before max iterations exit (process.exit(1))
+     - In the catch block before throwing errors
+2. Added three new test cases to `src/commands/run.test.ts`:
+   - Test for summary logging on successful completion
+   - Test for summary logging when max iterations reached
+   - Test for summary logging on error
+3. Updated test approach to mock the runner methods directly instead of passing a runner instance, so config loading actually happens
+
+**Testing Results:**
+- All 96 tests passing (including 17 in run.test.ts)
+- Summary logging tests verify:
+  - "--- Configuration Summary ---" header is displayed
+  - Runner type is shown correctly
+  - Model is shown when specified
+  - Config source is displayed with appropriate formatting for each source type
+  - Summary appears on all exit paths (success, max iterations, error)
+- No regressions detected
+
+**Dependencies:**
+- No new dependencies installed
+
+**Problems/Lessons Learned:**
+- Initial test implementation passed a mock runner directly to the run function, which bypassed config loading
+- This caused tests to fail because config variables remained "unknown"
+- Fixed by changing tests to mock the runner class methods instead of passing a runner instance
+- This allowed the config loading code path to execute normally while still controlling the runner behavior
+- The helper function includes a guard to skip logging when runner is "unknown" to handle edge cases
