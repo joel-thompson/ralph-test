@@ -105,7 +105,7 @@ The existing `run` / `scaffold` behavior must remain intact.
       "src/commands/run-json.ts (new)",
       "src/utils/file-helpers.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "command",

@@ -196,3 +196,58 @@ No new dependencies installed.
 - None - implementation went smoothly
 - Key insight: Creating a stub for run-json allows the command registration to compile while deferring implementation to the next tasks
 - Design decision: Used consistent flag names across all commands for better UX (-w for working directory, -m for max iterations)
+
+### 2026-01-28 - Task 6: Implemented run-json helpers
+
+**Task Description:** Implement run-json helpers (tasks.json parsing/validation, selection, prompt builder, persistence)
+
+**Changes Made:**
+1. Extended `src/commands/run-json.ts` with comprehensive helper functions:
+   - Added `Task` interface defining the task structure with required fields (category, description, steps, passes)
+   - Created `loadTasks()` function for loading and validating tasks.json:
+     - Validates JSON syntax and array structure
+     - Validates each task has required fields: category (string), description (string), steps (array), passes (boolean)
+     - Allows additional optional fields (e.g., id) for future extensions
+   - Created `selectNextTask()` function implementing selection rule:
+     - Picks first task in array order where passes !== true
+     - Returns null when all tasks are complete
+   - Created `markTaskComplete()` function implementing update rule:
+     - Marks task as complete by array index (not by description matching)
+     - Returns new array without mutating original
+     - Preserves all other task properties
+   - Created `buildPromptContent()` function for building prompt:
+     - Reads prompt.md from working directory or uses PROMPT_JSON_TEMPLATE as fallback
+     - Injects current task details (JSON, index, category, description, numbered steps list)
+     - Replaces placeholder text with formatted task section
+   - Created `saveTasks()` function for persisting tasks.json:
+     - Uses JSON.stringify with 2-space indentation
+     - Adds trailing newline for consistent git diffs
+2. Created comprehensive test suite in `src/commands/run-json.test.ts`:
+   - Created MockFileSystem class for testing file operations
+   - Added 21 tests covering all helper functions and edge cases:
+     - loadTasks: valid JSON, invalid JSON, not an array, missing fields, additional fields (7 tests)
+     - selectNextTask: first incomplete, all complete, empty array, false vs !== true (4 tests)
+     - markTaskComplete: mark by index, preserve properties, invalid index (3 tests)
+     - buildPromptContent: with prompt.md, with fallback template, numbered steps (3 tests)
+     - saveTasks: JSON formatting, trailing newline, preserve additional fields (2 tests)
+   - Fixed initial import to use "vitest" instead of "@jest/globals" (project uses vitest)
+
+**Testing and Verification:**
+- Ran `npm test -- run-json.test.ts` - all 21 new tests passed
+- Ran `npm test` - all 144 tests passed (added 21 new tests)
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Verified loadTasks properly validates tasks.json structure and required fields
+- Verified selectNextTask correctly selects first incomplete task by array order
+- Verified markTaskComplete updates by index without mutating original array
+- Verified buildPromptContent properly formats task details and injects into prompt
+- Verified saveTasks produces stable JSON formatting with trailing newline
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- Initial mistake: Used "@jest/globals" import instead of "vitest", quickly corrected after first test run failure
+- Key insight: Using array index for task updates (not description matching) prevents issues with duplicate descriptions and makes the logic simpler
+- Key insight: The Task interface uses index signature `[key: string]: unknown` to allow optional fields like `id` for future stable task identity
+- Design decision: buildPromptContent falls back to PROMPT_JSON_TEMPLATE if prompt.md doesn't exist, making the helpers more resilient
+- Design decision: markTaskComplete returns a new array rather than mutating, following functional programming best practices
