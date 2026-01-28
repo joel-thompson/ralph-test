@@ -137,7 +137,7 @@ The existing `run` / `scaffold` behavior must remain intact.
     "files": [
       "README.md"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

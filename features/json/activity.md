@@ -306,3 +306,42 @@ No new dependencies installed.
 - Key insight: Using promptContent (string) instead of promptPath (file) allows the CLI to dynamically inject task details without writing temporary files
 - Design decision: Validate all required files including tasks.json at startup to fail fast if setup is incomplete
 - Design decision: Log attempt number and task progress to give users visibility into the loop execution
+
+### 2026-01-28 - Task 8: Updated README with scaffold-json / run-json usage and workflow
+
+**Task Description:** Update README with scaffold-json / run-json usage and workflow
+
+**Changes Made:**
+1. Updated Quick Start section in `README.md`:
+   - Split into two subsections: "Markdown Workflow (Original)" and "JSON Workflow (New)"
+   - Added complete quickstart example for JSON workflow with scaffold-json and run-json commands
+   - Both quickstart examples now clearly show the difference in file structure and monitoring
+2. Added "Workflow Comparison" section under Core Concepts:
+   - Created comparison table showing differences between markdown and JSON workflows
+   - Highlighted key differences: task storage location, completion control mechanism
+   - Added recommendations on when to use each workflow
+3. Enhanced Commands section with JSON workflow documentation:
+   - Added clear header distinguishing two workflows at the top of the Commands section
+   - Documented `ral scaffold-json` command with examples and key differences from `scaffold`
+   - Documented `ral run-json` command with detailed behavior description
+   - Added complete tasks.json schema documentation with example
+   - Documented required fields (category, description, steps, passes)
+   - Explained the `<promise>success</promise>` contract in detail
+   - Clarified what files the AI can and cannot edit in JSON workflow
+
+**Testing and Verification:**
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Ran `npm test` - all 152 tests passed across entire project
+- Verified README has clear quickstart examples for both workflows
+- Verified tasks.json schema is documented with all required fields
+- Verified `<promise>success</promise>` contract is explained clearly
+- Verified distinction between markdown workflow (AI-controlled) and JSON workflow (CLI-controlled) is clear throughout
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- None - documentation updates went smoothly
+- Key insight: Adding a workflow comparison table makes it immediately clear when to use each workflow
+- Key insight: Documenting the `<promise>success</promise>` contract explicitly prevents confusion about how task completion works
+- Design decision: Placed JSON workflow documentation alongside corresponding markdown workflow commands for easy comparison

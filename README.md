@@ -4,6 +4,8 @@ A TypeScript CLI tool for AI-assisted development loops where Claude iteratively
 
 ## Quick Start
 
+### Markdown Workflow (Original)
+
 ```bash
 # 1. Clone and set up (for contributors)
 git clone <repository-url>
@@ -26,6 +28,35 @@ ral run -m 10
 
 # 6. Monitor progress
 cat activity.md
+git log
+```
+
+### JSON Workflow (New)
+
+```bash
+# 1. Clone and set up (for contributors)
+git clone <repository-url>
+cd ralph-test
+pnpm install && pnpm build
+pnpm link --global
+
+# 2. Create a new project
+mkdir my-project && cd my-project
+
+# 3. Set up Ralph loop files for JSON workflow
+ral scaffold-json
+
+# 4. Edit your plan and tasks
+# Edit plan.md - add project details and context (no tasks)
+# Edit tasks.json - define your tasks array
+# Edit prompt.md - customize instructions (optional)
+
+# 5. Run the loop
+ral run-json -m 10
+
+# 6. Monitor progress
+cat activity.md
+cat tasks.json  # See which tasks are complete
 git log
 ```
 
@@ -85,6 +116,23 @@ ral run -w features/my-feature -m 10
 
 ## Core Concepts
 
+### Workflow Comparison
+
+Ralph supports two separate workflows:
+
+| Feature | Markdown Workflow | JSON Workflow |
+|---------|-------------------|---------------|
+| **Commands** | `scaffold`, `run` | `scaffold-json`, `run-json` |
+| **Task storage** | Embedded in plan.md | Separate tasks.json file |
+| **Task completion** | AI writes `passes: true` | CLI writes `passes: true` on `<promise>success</promise>` |
+| **Use when** | AI should manage task flow | You want explicit success verification |
+| **plan.md** | Contains tasks + details | Contains only details/context |
+
+**Recommendation:** Start with markdown workflow (simpler). Use JSON workflow when you need:
+- Explicit success verification per task
+- Separation of tasks from plan details
+- CLI-controlled task progression
+
 ### The Ralph Loop
 
 Ralph automates iterative development by having an AI assistant (Claude or Cursor):
@@ -121,9 +169,13 @@ This lets you work on multiple features in parallel with isolated plans.
 
 ## Commands
 
+Ralph provides two separate workflows:
+1. **Markdown workflow** (`scaffold` + `run`): Tasks embedded in plan.md with AI-controlled task completion
+2. **JSON workflow** (`scaffold-json` + `run-json`): Tasks in tasks.json with CLI-controlled task completion
+
 ### `ral scaffold`
 
-Generate Ralph loop file structure with starter templates.
+Generate Ralph loop file structure with starter templates (markdown workflow).
 
 ```bash
 ral scaffold                    # Create in current directory
@@ -135,7 +187,7 @@ Creates: `activity.md`, `plan.md`, `prompt.md`, `screenshots/`
 
 ### `ral run`
 
-Execute the Ralph loop.
+Execute the Ralph loop (markdown workflow).
 
 ```bash
 ral run -m <max-iterations>           # Required: set iteration limit
@@ -163,6 +215,73 @@ Duration: 2525ms
 ```
 
 Note: Cursor runner does not provide token usage or cost information.
+
+### `ral scaffold-json`
+
+Generate Ralph loop file structure for JSON workflow.
+
+```bash
+ral scaffold-json                    # Create in current directory
+ral scaffold-json -w ./my-feature    # Create in subdirectory
+ral scaffold-json -f                 # Overwrite existing files
+```
+
+Creates: `activity.md`, `plan.md` (details only), `tasks.json`, `prompt.md`, `screenshots/`
+
+**Key differences from `scaffold`:**
+- Tasks are stored separately in `tasks.json` (not embedded in plan.md)
+- The CLI controls task completion (not the AI)
+- plan.md contains only project details and context
+
+### `ral run-json`
+
+Execute the Ralph loop using JSON workflow.
+
+```bash
+ral run-json -m <max-iterations>      # Required: set iteration limit
+ral run-json -m 10 -w ./features/api  # Run with specific working directory
+```
+
+**Behavior:**
+- Loads tasks from `tasks.json` (array of task objects)
+- Selects first incomplete task (where `passes !== true`) in array order
+- Injects task details into prompt dynamically
+- Only marks task complete when AI outputs `<promise>success</promise>`
+- Retries incomplete tasks automatically on next iteration
+- Exits with code 0 when all tasks complete
+- Exits with code 1 if max iterations reached with tasks remaining
+
+**tasks.json schema:**
+```json
+[
+  {
+    "category": "implementation",
+    "description": "Create user authentication module",
+    "steps": [
+      "Create src/auth/authenticate.ts",
+      "Implement JWT token validation",
+      "Add unit tests in tests/auth/authenticate.test.ts",
+      "Run npm test -- verify tests pass"
+    ],
+    "passes": false
+  }
+]
+```
+
+**Required fields:**
+- `category` (string): Task category (e.g., "setup", "implementation", "testing")
+- `description` (string): Clear description of what to accomplish
+- `steps` (array): Explicit steps to complete the task
+- `passes` (boolean): Completion status (CLI sets to true on success)
+
+**Success contract:**
+The AI must output `<promise>success</promise>` only when the task is verified complete. The CLI detects this tag and marks the task complete in tasks.json. Without this tag, the task remains incomplete and will retry on the next iteration.
+
+**What the AI can edit:**
+- ✅ Source code, tests, documentation
+- ✅ activity.md (progress logging)
+- ✅ plan.md (notes and context)
+- ❌ tasks.json (CLI owns task completion status)
 
 ### `ral create-settings`
 
