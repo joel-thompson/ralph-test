@@ -76,7 +76,7 @@ The existing `run` / `scaffold` behavior must remain intact.
       "src/utils/file-helpers.ts",
       "src/templates/index.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "command",

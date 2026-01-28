@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-28
-**Tasks Completed:** 3
-**Current Task:** Task 3 complete - scaffold-json templates added
+**Tasks Completed:** 4
+**Current Task:** Task 4 complete - scaffold-json command implemented
 
 ---
 
@@ -124,3 +124,41 @@ No new dependencies installed.
 - None - implementation went smoothly
 - Key insight: Storing TASKS_JSON_TEMPLATE as a JS object/array allows type checking and makes it easy to serialize with JSON.stringify(..., null, 2)
 - Design decision: PROMPT_JSON_TEMPLATE explicitly tells the agent not to edit tasks.json, which prevents conflicts with the CLI's task management
+
+### 2026-01-28 - Task 4: Implemented scaffold-json command
+
+**Task Description:** Implement scaffold-json command to create plan.md (details), tasks.json (tasks), prompt.md, activity.md, screenshots/, ral.json
+
+**Changes Made:**
+1. Created `src/commands/scaffold-json.ts`:
+   - Mirrored structure of existing `scaffold.ts` command
+   - Created function that writes activity.md, plan.md (details-only using PLAN_DETAILS_TEMPLATE), tasks.json, prompt.md, ral.json, and screenshots/
+   - Honored -w/--working-directory and -f/--force behaviors consistent with scaffold
+   - Used JSON.stringify with 2-space indentation and trailing newline for tasks.json
+2. Created comprehensive test suite in `src/commands/scaffold-json.test.ts`:
+   - Added 11 tests covering all scaffold-json behaviors
+   - Verified all files are created correctly (activity.md, plan.md, tasks.json, prompt.md, ral.json, screenshots/)
+   - Verified plan.md contains details-only content (no embedded tasks)
+   - Verified tasks.json is valid JSON array with required fields (category, description, steps, passes)
+   - Verified tasks.json has trailing newline for consistent formatting
+   - Verified prompt.md contains @tasks.json reference and instructions
+   - Verified force behavior (skip vs overwrite)
+   - Verified working directory behavior (explicit vs current directory)
+   - Verified partial file creation when some files already exist
+
+**Testing and Verification:**
+- Ran `npm test -- scaffold-json.test.ts` - all 11 new tests passed
+- Ran `npm test` - all 123 tests passed (added 11 new tests)
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Verified scaffold-json command structure matches existing scaffold command
+- Verified plan.md uses PLAN_DETAILS_TEMPLATE (no embedded tasks)
+- Verified tasks.json is properly formatted JSON with trailing newline
+- Verified all file creation, force, and working directory behaviors work correctly
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- None - implementation went smoothly
+- Key insight: Following the exact pattern of the existing scaffold.ts command made implementation straightforward and consistent
+- Design decision: tasks.json serialization includes trailing newline for consistent git diffs and standard formatting
