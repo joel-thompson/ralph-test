@@ -37,7 +37,7 @@ Default model for Cursor: `composer-1`
       "Add CONFIG_TEMPLATE to src/templates/index.ts for scaffold command (optional)",
       "Write unit tests in src/utils/config.test.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
