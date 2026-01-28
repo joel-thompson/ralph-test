@@ -44,7 +44,7 @@ export async function loadConfig(
       throw new CommandError("Invalid ral.json: model must be a string");
     }
 
-    console.log(`[debug] Using config from ${workingConfigPath}`);
+    console.log(`Using config from ${workingConfigPath}`);
 
     return {
       config: {
@@ -83,7 +83,7 @@ export async function loadConfig(
           throw new CommandError("Invalid ral.json: model must be a string");
         }
 
-        console.log(`[debug] Config not found in working directory, using root config from ${rootConfigPath}`);
+        console.log(`Config not found in working directory, using root config from ${rootConfigPath}`);
 
         return {
           config: {
@@ -100,7 +100,7 @@ export async function loadConfig(
           "code" in rootError &&
           rootError.code === "ENOENT"
         ) {
-          console.log(`[debug] No ral.json found, using default config (runner: claude)`);
+          console.log(`No ral.json found, using default config (runner: claude)`);
 
           return {
             config: DEFAULT_CONFIG,
@@ -125,7 +125,7 @@ export async function loadConfig(
 
     // If file doesn't exist and no rootDirectory provided, return default config
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      console.log(`[debug] No ral.json found, using default config (runner: claude)`);
+      console.log(`No ral.json found, using default config (runner: claude)`);
 
       return {
         config: DEFAULT_CONFIG,
