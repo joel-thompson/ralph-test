@@ -32,14 +32,62 @@ git log
 ## Prerequisites
 
 - Node.js 18+
-- Claude CLI: `npm install -g @anthropic-ai/claude`
-- Anthropic API key configured for Claude CLI
+- **One of the following AI CLI tools:**
+  - **Claude CLI** (default): `npm install -g @anthropic-ai/claude`
+    - Requires Anthropic API key configured for Claude CLI
+  - **Cursor CLI** (alternative): Install Cursor editor from [cursor.sh](https://cursor.sh)
+    - The `agent` command is included with Cursor
+
+## Configuration
+
+Ralph supports multiple AI backends through a `ral.json` configuration file in your working directory.
+
+### ral.json
+
+Create a `ral.json` file in your project root or feature directory to configure the AI runner:
+
+**Using Claude (default):**
+```json
+{
+  "runner": "claude"
+}
+```
+
+**Using Cursor:**
+```json
+{
+  "runner": "cursor",
+  "model": "composer-1"
+}
+```
+
+**Configuration Options:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `runner` | `"claude"` \| `"cursor"` | `"claude"` | Which AI CLI to use |
+| `model` | `string` | `"composer-1"` | Model for Cursor runner (ignored for Claude) |
+
+**Notes:**
+- If `ral.json` doesn't exist, Ralph uses Claude by default
+- The `model` field only applies to Cursor runner
+- Claude runner uses the model configured in your Claude CLI settings
+- When using Cursor, token usage and cost information are not displayed (Cursor doesn't provide this data)
+
+**Example with working directory:**
+```bash
+# Create config for a specific feature
+mkdir -p features/my-feature
+echo '{"runner": "cursor", "model": "composer-1"}' > features/my-feature/ral.json
+ral scaffold -w features/my-feature
+ral run -w features/my-feature -m 10
+```
 
 ## Core Concepts
 
 ### The Ralph Loop
 
-Ralph automates iterative development by having Claude:
+Ralph automates iterative development by having an AI assistant (Claude or Cursor):
 1. Read the activity log to understand current state
 2. Find the next incomplete task in your plan
 3. Complete all steps for that task
@@ -65,7 +113,7 @@ ral scaffold -w features/my-feature
 # Edit features/my-feature/plan.md and spec.md
 ral run -w features/my-feature -m 15
 
-# Claude runs from project root (can edit source files)
+# AI runs from project root (can edit source files)
 # But reads plan/activity from features/my-feature/
 ```
 
@@ -96,17 +144,25 @@ ral run -m 10 -w ./features/auth     # Run with specific working directory
 
 **Behavior:**
 - Iterates up to max-iterations times
-- Tracks token usage and costs per iteration
-- Exits with code 0 when Claude outputs `<promise>COMPLETE</promise>`
+- Tracks token usage and costs per iteration (Claude runner only)
+- Exits with code 0 when the AI outputs `<promise>COMPLETE</promise>`
 - Exits with code 1 if max iterations reached without completion
 
-**Output:**
+**Output (Claude runner):**
 ```
 Iteration 1/10
 Input tokens: 15234, Output tokens: 2341
 Cost this iteration: $0.123
 Cumulative cost: $0.123
 ```
+
+**Output (Cursor runner):**
+```
+Iteration 1/10
+Duration: 2525ms
+```
+
+Note: Cursor runner does not provide token usage or cost information.
 
 ### `ral create-settings`
 
@@ -316,7 +372,7 @@ git log --oneline
 
 ### Customizing prompt.md
 
-Add project-specific context, coding standards, and testing requirements. Keep it concise - the prompt is included in every iteration.
+Add project-specific context, coding standards, and testing requirements. Keep it concise - the prompt is included in every iteration. Works with both Claude and Cursor runners.
 
 ### Using spec.md
 
@@ -403,9 +459,10 @@ This project uses **pnpm** for faster installs and efficient disk space usage.
 - **Structured Planning**: Clear tasks with pass/fail states
 - **Activity Logging**: Every change documented with verification
 - **Incremental Progress**: One task at a time, git commit per task
-- **Self-Verification**: Claude tests its own work before marking complete
-- **Cost Tracking**: Token usage tracked per-iteration and cumulatively
-- **Early Exit**: Completes when Claude outputs `<promise>COMPLETE</promise>`
+- **Self-Verification**: AI tests its own work before marking complete
+- **Cost Tracking**: Token usage tracked per-iteration and cumulatively (Claude runner)
+- **Early Exit**: Completes when AI outputs `<promise>COMPLETE</promise>`
+- **Multi-Backend Support**: Works with Claude CLI or Cursor CLI via ral.json configuration
 
 ## File Structure
 
@@ -414,6 +471,7 @@ my-project/
 ├── .claude/
 │   └── settings.json       # Claude config (optional)
 ├── .mcp.json               # MCP server config (optional)
+├── ral.json                # Runner configuration (optional, defaults to Claude)
 ├── activity.md             # Activity log (required for run)
 ├── plan.md                 # Project plan (required for run)
 ├── prompt.md               # Instructions (required for run)

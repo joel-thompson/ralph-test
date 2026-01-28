@@ -4,7 +4,9 @@ import {
   validateRequiredFiles,
 } from "../utils/validation.js";
 import { CommandError } from "../utils/errors.js";
-import { ClaudeRunner, DefaultClaudeRunner } from "../utils/claude-runner.js";
+import { AgentRunner, DefaultClaudeRunner } from "../utils/claude-runner.js";
+import { CursorRunner } from "../utils/cursor-runner.js";
+import { loadConfig } from "../utils/config.js";
 
 export interface RunOptions {
   workingDirectory: string;
@@ -28,12 +30,22 @@ interface CumulativeStats {
 
 export async function run(
   options: RunOptions,
-  runner: ClaudeRunner = new DefaultClaudeRunner()
+  runner?: AgentRunner
 ): Promise<void> {
   const { workingDirectory, maxIterations } = options;
 
   // Validate working directory exists
   await validateWorkingDirectory(workingDirectory);
+
+  // Load config and select runner if not provided
+  if (!runner) {
+    const config = await loadConfig(workingDirectory, process.cwd());
+    if (config.runner === "cursor") {
+      runner = new CursorRunner(config.model);
+    } else {
+      runner = new DefaultClaudeRunner();
+    }
+  }
 
   // Validate required files exist
   const requiredFiles = ["plan.md", "prompt.md", "activity.md"];
@@ -82,17 +94,25 @@ export async function run(
         cost: response.total_cost_usd,
       };
 
-      console.log(`Tokens In: ${iterationStats.inputTokens}`);
-      console.log(`Tokens Out: ${iterationStats.outputTokens}`);
-      console.log(`Cache Read: ${iterationStats.cacheReadTokens}`);
-      console.log(`Cost: $${iterationStats.cost.toFixed(4)}`);
+      // Only show token/cost stats if they are non-zero (Claude mode)
+      const hasTokenStats = iterationStats.inputTokens > 0 || iterationStats.outputTokens > 0 || iterationStats.cost > 0;
 
-      // Print cumulative stats
-      console.log("\nCumulative Stats:");
-      console.log(`Total Tokens In: ${cumulative.totalInputTokens}`);
-      console.log(`Total Tokens Out: ${cumulative.totalOutputTokens}`);
-      console.log(`Total Cache Read: ${cumulative.totalCacheReadTokens}`);
-      console.log(`Total Cost: $${cumulative.totalCost.toFixed(4)}`);
+      if (hasTokenStats) {
+        console.log(`Tokens In: ${iterationStats.inputTokens}`);
+        console.log(`Tokens Out: ${iterationStats.outputTokens}`);
+        console.log(`Cache Read: ${iterationStats.cacheReadTokens}`);
+        console.log(`Cost: $${iterationStats.cost.toFixed(4)}`);
+
+        // Print cumulative stats
+        console.log("\nCumulative Stats:");
+        console.log(`Total Tokens In: ${cumulative.totalInputTokens}`);
+        console.log(`Total Tokens Out: ${cumulative.totalOutputTokens}`);
+        console.log(`Total Cache Read: ${cumulative.totalCacheReadTokens}`);
+        console.log(`Total Cost: $${cumulative.totalCost.toFixed(4)}`);
+      } else if (response.duration_ms !== undefined) {
+        // Show duration for Cursor mode
+        console.log(`Duration: ${response.duration_ms}ms`);
+      }
 
       // Check for completion
       if (response.result.includes("<promise>COMPLETE</promise>")) {
