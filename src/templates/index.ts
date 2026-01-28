@@ -133,7 +133,8 @@ export const PROMPT_JSON_TEMPLATE = `@plan.md @activity.md @tasks.json
 4. Work on exactly ONE task: complete all steps for that task. Important: ONLY WORK ON A SINGLE TASK.
 5. Verify the task is working by running tests and/or the CLI.
 6. Update activity.md with a dated entry describing your changes and verification results.
-7. Output <promise>success</promise> if and only if the task is fully complete and verified.
+7. Make one git commit for that task only with a clear message. Important: Do not git init, do not change remotes, do not push.
+8. Output <promise>success</promise> if and only if the task is fully complete and verified.
 
 IMPORTANT: Do NOT edit tasks.json directly. The CLI manages task completion status.
 

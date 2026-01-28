@@ -178,7 +178,7 @@ The existing `run` / `scaffold` behavior must remain intact.
       "src/templates/index.ts",
       "src/commands/scaffold-json.test.ts"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

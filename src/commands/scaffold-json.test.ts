@@ -124,6 +124,8 @@ describe("scaffold-json", () => {
     expect(promptContent).toContain("@tasks.json");
     expect(promptContent).toContain("Do NOT edit tasks.json");
     expect(promptContent).toContain("<promise>success</promise>");
+    expect(promptContent).toContain("Make one git commit");
+    expect(promptContent).toContain("Do not git init, do not change remotes, do not push");
   });
 
   it("should create ral.json with correct content", async () => {

@@ -424,3 +424,34 @@ No new dependencies installed.
 - Key insight: Moving the banner log to after task selection ensures it only appears when work will actually be done
 - Key insight: The early exit check after task completion prevents an unnecessary loop iteration that would load tasks, find none incomplete, and potentially print an extra banner
 - Design decision: The regression test counts attempt banner console.log calls to ensure the fix prevents the bug from reoccurring
+
+### 2026-01-28 - Task 10: Restored 'git commit per task' instruction in scaffold-json prompt template
+
+**Task Description:** Restore 'git commit per task' instruction in scaffold-json prompt template
+
+**Changes Made:**
+1. Updated `PROMPT_JSON_TEMPLATE` in `src/templates/index.ts`:
+   - Added instruction #7: "Make one git commit for that task only with a clear message. Important: Do not git init, do not change remotes, do not push."
+   - Renumbered the final instruction to #8 (output <promise>success</promise>)
+   - This matches the git commit instruction from the original PROMPT_TEMPLATE (markdown workflow)
+2. Extended test suite in `src/commands/scaffold-json.test.ts`:
+   - Updated existing test "should create prompt.md with @tasks.json reference"
+   - Added two new assertions to verify the git commit instruction is present:
+     - `expect(promptContent).toContain("Make one git commit")`
+     - `expect(promptContent).toContain("Do not git init, do not change remotes, do not push")`
+
+**Testing and Verification:**
+- Ran `npm test` - all 156 tests passed across entire project (no new tests added, extended existing test)
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Verified PROMPT_JSON_TEMPLATE now includes git commit instruction
+- Verified scaffold-json test verifies the git commit instruction is included in prompt.md
+- Verified the instruction matches the pattern from the original markdown workflow
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- None - implementation went smoothly
+- Key insight: The git commit instruction is important for maintaining a clean git history with one commit per task
+- Key insight: The instruction explicitly tells the agent not to git init, change remotes, or push to prevent unwanted git operations
+- Design decision: Placed the git commit instruction as #7 (before the success output) to ensure the agent commits before outputting success
