@@ -288,7 +288,6 @@ Edit `prompt.md` to add project-specific guidance:
 - Use Zod for validation
 
 ## Coding Standards
-- Add [debug] prefix to debug log statements
 - Add JSDoc comments for public functions
 - Prefer async/await over .then() chains
 
