@@ -944,5 +944,69 @@ Do not edit tasks.json`;
       expect(mockConsoleLog).toHaveBeenCalledWith("Total Cache Read: 300");
       expect(mockConsoleLog).toHaveBeenCalledWith("Total Cost: $0.0300");
     });
+
+    it("should print attempt banner exactly once per runner call (no extra banners after completion)", async () => {
+      // Regression test for: attempt banner should only print when a task is selected,
+      // not after all tasks are complete
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Task 1",
+          steps: ["Step 1"],
+          passes: false,
+        },
+        {
+          category: "implementation",
+          description: "Task 2",
+          steps: ["Step 2"],
+          passes: false,
+        },
+        {
+          category: "docs",
+          description: "Task 3",
+          steps: ["Step 3"],
+          passes: false,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+
+      const successResponse: ClaudeResponse = {
+        result: "Done! <promise>success</promise>",
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0.01,
+      };
+
+      mockRunner = {
+        runClaude: vi.fn().mockResolvedValue(successResponse),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 10 },
+        mockRunner,
+        mockFs
+      );
+
+      // Should have called runner exactly 3 times (once per task)
+      expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
+
+      // Count how many times the attempt banner was logged
+      const attemptBannerCalls = mockConsoleLog.mock.calls.filter(
+        (call) => call[0] && call[0].toString().includes("--- Attempt")
+      );
+
+      // Should have exactly 3 attempt banners (one per runner call, no extra banner after completion)
+      expect(attemptBannerCalls).toHaveLength(3);
+      expect(attemptBannerCalls[0][0]).toContain("--- Attempt 1/10 ---");
+      expect(attemptBannerCalls[1][0]).toContain("--- Attempt 2/10 ---");
+      expect(attemptBannerCalls[2][0]).toContain("--- Attempt 3/10 ---");
+
+      // Should exit 0 after all tasks complete
+      expect(mockExit).toHaveBeenCalledWith(0);
+    });
   });
 });

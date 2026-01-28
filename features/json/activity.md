@@ -387,3 +387,40 @@ No new dependencies installed.
 - Key insight: The stats logging behavior exactly matches the existing `run` command for consistency
 - Key insight: The conditional logic (hasTokenStats) ensures clean output for both Claude runner (with tokens) and Cursor runner (with duration)
 - Design decision: Cumulative stats help users track total cost across all attempts in the run-json loop, which is especially useful when tasks are retried
+
+### 2026-01-28 - Task 9: Fixed run-json loop logging to prevent extra attempt header after completion
+
+**Task Description:** Fix run-json loop logging so it never prints an extra attempt header after completion
+
+**Changes Made:**
+1. Moved attempt banner logging in `src/commands/run-json.ts`:
+   - Previously: Banner was printed at the start of each loop iteration (line 240)
+   - Now: Banner is printed after tasks.json is loaded and an incomplete task is selected (line 258)
+   - This ensures the banner only appears when we will actually attempt a task
+2. Added early exit check after successful task completion:
+   - After marking a task complete and saving tasks.json, immediately check if all tasks are now complete
+   - If no remaining incomplete tasks, exit 0 without starting another loop iteration
+   - This prevents the loop from loading tasks, finding no incomplete tasks, and printing an unnecessary attempt banner
+3. Added regression test in `src/commands/run-json.test.ts`:
+   - New test: "should print attempt banner exactly once per runner call (no extra banners after completion)"
+   - Test scenario: 3 tasks that all succeed, max iterations of 10
+   - Verifies runner is called exactly 3 times and exactly 3 attempt banners are logged
+   - Confirms no "Attempt 4/10" banner appears after all tasks complete
+   - Total test count increased from 32 to 33 tests for run-json module
+
+**Testing and Verification:**
+- Ran `npm test -- run-json.test.ts` - all 33 tests passed
+- Ran `npm test` - all 156 tests passed across entire project (added 1 new test)
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Verified attempt banner is only printed when a task will be attempted
+- Verified early exit works correctly after all tasks complete
+- Verified regression test catches the bug (banner count matches runner call count)
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- None - implementation went smoothly
+- Key insight: Moving the banner log to after task selection ensures it only appears when work will actually be done
+- Key insight: The early exit check after task completion prevents an unnecessary loop iteration that would load tasks, find none incomplete, and potentially print an extra banner
+- Design decision: The regression test counts attempt banner console.log calls to ensure the fix prevents the bug from reoccurring

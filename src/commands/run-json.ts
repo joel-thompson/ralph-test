@@ -237,8 +237,6 @@ export async function runJson(
 
   // Run the loop
   for (let attempt = 1; attempt <= maxIterations; attempt++) {
-    console.log(`\n--- Attempt ${attempt}/${maxIterations} ---`);
-
     // Load tasks and select next incomplete task
     let tasks: Task[];
     try {
@@ -255,6 +253,9 @@ export async function runJson(
       process.exit(0);
       return; // For testing - process.exit doesn't actually exit when mocked
     }
+
+    // Only print attempt banner when we have a task to work on
+    console.log(`\n--- Attempt ${attempt}/${maxIterations} ---`);
 
     const { task, index } = selected;
     console.log(`Working on task ${index + 1}/${tasks.length}: ${task.description}`);
@@ -330,6 +331,14 @@ export async function runJson(
         throw new CommandError(
           `Failed to save tasks.json: ${error instanceof Error ? error.message : String(error)}`
         );
+      }
+
+      // Check if all tasks are now complete
+      const remainingTasks = updatedTasks.filter((t) => t.passes !== true);
+      if (remainingTasks.length === 0) {
+        console.log("\n✓ All tasks completed successfully!");
+        process.exit(0);
+        return; // For testing - process.exit doesn't actually exit when mocked
       }
     } else {
       console.log(`✗ Task ${index + 1} did not complete (no <promise>success</promise> found)`);

@@ -165,7 +165,7 @@ The existing `run` / `scaffold` behavior must remain intact.
       "src/commands/run-json.ts",
       "src/commands/run-json.test.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "templates",
