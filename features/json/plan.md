@@ -124,7 +124,7 @@ The existing `run` / `scaffold` behavior must remain intact.
       "src/utils/validation.ts",
       "src/utils/config.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "docs",

@@ -1,13 +1,15 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   loadTasks,
   selectNextTask,
   markTaskComplete,
   buildPromptContent,
   saveTasks,
+  runJson,
   Task,
 } from "./run-json.js";
 import { FileSystem } from "../utils/file-helpers.js";
+import type { AgentRunner, ClaudeResponse } from "../utils/claude-runner.js";
 
 class MockFileSystem implements FileSystem {
   private files: Map<string, string> = new Map();
@@ -25,7 +27,18 @@ class MockFileSystem implements FileSystem {
   }
 
   async exists(filePath: string): Promise<boolean> {
-    return this.files.has(filePath);
+    // Check if it's an exact file match
+    if (this.files.has(filePath)) {
+      return true;
+    }
+    // Check if it's a directory (has files under it)
+    const dirPrefix = filePath.endsWith("/") ? filePath : filePath + "/";
+    for (const key of this.files.keys()) {
+      if (key.startsWith(dirPrefix)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   async mkdir(_dirPath: string, _options?: { recursive?: boolean }): Promise<void> {
@@ -439,6 +452,343 @@ Do not edit tasks.json`;
 
       expect(parsed[0]).toHaveProperty("id", "task-1");
       expect(parsed[0]).toHaveProperty("customField", "value");
+    });
+  });
+
+  describe("runJson", () => {
+    let mockFs: MockFileSystem;
+    let mockRunner: AgentRunner;
+    let mockExit: ReturnType<typeof vi.spyOn>;
+    let mockConsoleLog: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      mockFs = new MockFileSystem();
+      mockExit = vi.spyOn(process, "exit").mockImplementation((() => {}) as never);
+      mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      // Setup working directory (directory itself must exist)
+      mockFs.setFile("/test/.placeholder", "");
+
+      // Setup required files
+      mockFs.setFile("/test/plan.md", "# Plan");
+      mockFs.setFile("/test/prompt.md", "The CLI will insert the current task details here when invoking the agent.");
+      mockFs.setFile("/test/activity.md", "# Activity");
+    });
+
+    it("should exit 0 when all tasks are already complete", async () => {
+      const completeTasks: Task[] = [
+        {
+          category: "setup",
+          description: "Setup",
+          steps: ["Step 1"],
+          passes: true,
+        },
+        {
+          category: "implementation",
+          description: "Implement",
+          steps: ["Step A"],
+          passes: true,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(completeTasks, null, 2));
+
+      mockRunner = {
+        runClaude: vi.fn(),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 5 },
+        mockRunner,
+        mockFs
+      );
+
+      expect(mockExit).toHaveBeenCalledWith(0);
+      expect(mockRunner.runClaude).not.toHaveBeenCalled();
+    });
+
+    it("should mark task complete and persist when <promise>success</promise> is found", async () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Setup project",
+          steps: ["Step 1"],
+          passes: false,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+
+      const mockResponse: ClaudeResponse = {
+        result: "Task completed successfully. <promise>success</promise>",
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0.01,
+      };
+
+      mockRunner = {
+        runClaude: vi.fn().mockResolvedValue(mockResponse),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 5 },
+        mockRunner,
+        mockFs
+      );
+
+      // Should have called runner with promptContent
+      expect(mockRunner.runClaude).toHaveBeenCalledTimes(1);
+      expect(mockRunner.runClaude).toHaveBeenCalledWith({
+        promptContent: expect.stringContaining("Setup project"),
+        workingDirectory: "/test",
+      });
+
+      // Should have marked task as complete
+      const savedTasks = JSON.parse(mockFs.getFile("/test/tasks.json")!);
+      expect(savedTasks[0].passes).toBe(true);
+
+      // Should exit 0 after completing all tasks
+      expect(mockExit).toHaveBeenCalledWith(0);
+    });
+
+    it("should retry incomplete task on next attempt if no success promise found", async () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Setup project",
+          steps: ["Step 1"],
+          passes: false,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+
+      const mockResponse: ClaudeResponse = {
+        result: "Task not completed yet.",
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0.01,
+      };
+
+      mockRunner = {
+        runClaude: vi.fn().mockResolvedValue(mockResponse),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 2 },
+        mockRunner,
+        mockFs
+      );
+
+      // Should have called runner twice (retrying same task)
+      expect(mockRunner.runClaude).toHaveBeenCalledTimes(2);
+
+      // Task should still be incomplete
+      const savedTasks = JSON.parse(mockFs.getFile("/test/tasks.json")!);
+      expect(savedTasks[0].passes).toBe(false);
+
+      // Should exit 1 after max attempts
+      expect(mockExit).toHaveBeenCalledWith(1);
+    });
+
+    it("should process multiple tasks in sequence", async () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Task 1",
+          steps: ["Step 1"],
+          passes: false,
+        },
+        {
+          category: "implementation",
+          description: "Task 2",
+          steps: ["Step A"],
+          passes: false,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+
+      const successResponse: ClaudeResponse = {
+        result: "Done! <promise>success</promise>",
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0.01,
+      };
+
+      mockRunner = {
+        runClaude: vi.fn().mockResolvedValue(successResponse),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 5 },
+        mockRunner,
+        mockFs
+      );
+
+      // Should have called runner twice (once per task)
+      expect(mockRunner.runClaude).toHaveBeenCalledTimes(2);
+
+      // First call should be for task 1
+      expect(mockRunner.runClaude).toHaveBeenNthCalledWith(1, {
+        promptContent: expect.stringContaining("Task 1"),
+        workingDirectory: "/test",
+      });
+
+      // Second call should be for task 2
+      expect(mockRunner.runClaude).toHaveBeenNthCalledWith(2, {
+        promptContent: expect.stringContaining("Task 2"),
+        workingDirectory: "/test",
+      });
+
+      // Both tasks should be marked complete
+      const savedTasks = JSON.parse(mockFs.getFile("/test/tasks.json")!);
+      expect(savedTasks[0].passes).toBe(true);
+      expect(savedTasks[1].passes).toBe(true);
+
+      // Should exit 0 after completing all tasks
+      expect(mockExit).toHaveBeenCalledWith(0);
+    });
+
+    it("should exit 1 when max attempts reached with incomplete tasks", async () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Task 1",
+          steps: ["Step 1"],
+          passes: false,
+        },
+        {
+          category: "implementation",
+          description: "Task 2",
+          steps: ["Step A"],
+          passes: false,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+
+      const mockResponse: ClaudeResponse = {
+        result: "Not done yet.",
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0.01,
+      };
+
+      mockRunner = {
+        runClaude: vi.fn().mockResolvedValue(mockResponse),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 3 },
+        mockRunner,
+        mockFs
+      );
+
+      // Should have called runner 3 times (max attempts)
+      expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
+
+      // All calls should be for task 1 (never completed)
+      for (let i = 1; i <= 3; i++) {
+        expect(mockRunner.runClaude).toHaveBeenNthCalledWith(i, {
+          promptContent: expect.stringContaining("Task 1"),
+          workingDirectory: "/test",
+        });
+      }
+
+      // Tasks should still be incomplete
+      const savedTasks = JSON.parse(mockFs.getFile("/test/tasks.json")!);
+      expect(savedTasks[0].passes).toBe(false);
+      expect(savedTasks[1].passes).toBe(false);
+
+      // Should exit 1
+      expect(mockExit).toHaveBeenCalledWith(1);
+    });
+
+    it("should throw error if required files are missing", async () => {
+      // Only create plan.md, missing other required files
+      mockFs.setFile("/test/plan.md", "# Plan");
+
+      mockRunner = {
+        runClaude: vi.fn(),
+      };
+
+      await expect(
+        runJson({ workingDirectory: "/test", maxIterations: 5 }, mockRunner, mockFs)
+      ).rejects.toThrow("Missing required files");
+    });
+
+    it("should throw error if tasks.json is invalid", async () => {
+      mockFs.setFile("/test/plan.md", "# Plan");
+      mockFs.setFile("/test/prompt.md", "# Prompt");
+      mockFs.setFile("/test/activity.md", "# Activity");
+      mockFs.setFile("/test/tasks.json", "invalid json {");
+
+      mockRunner = {
+        runClaude: vi.fn(),
+      };
+
+      await expect(
+        runJson({ workingDirectory: "/test", maxIterations: 5 }, mockRunner, mockFs)
+      ).rejects.toThrow("Failed to load tasks.json");
+    });
+
+    it("should mark task complete by index, not by content matching", async () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Same description",
+          steps: ["Step 1"],
+          passes: true,
+        },
+        {
+          category: "implementation",
+          description: "Same description",
+          steps: ["Step 2"],
+          passes: false,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+
+      const successResponse: ClaudeResponse = {
+        result: "Done! <promise>success</promise>",
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0.01,
+      };
+
+      mockRunner = {
+        runClaude: vi.fn().mockResolvedValue(successResponse),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 5 },
+        mockRunner,
+        mockFs
+      );
+
+      // Should have marked the second task (index 1) as complete
+      const savedTasks = JSON.parse(mockFs.getFile("/test/tasks.json")!);
+      expect(savedTasks[0].passes).toBe(true); // Was already true
+      expect(savedTasks[1].passes).toBe(true); // Now marked true
+
+      expect(mockExit).toHaveBeenCalledWith(0);
     });
   });
 });

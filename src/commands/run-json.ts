@@ -153,7 +153,138 @@ export async function saveTasks(
   await fs.writeFile(tasksPath, content);
 }
 
-export async function runJson(options: RunJsonOptions): Promise<void> {
-  // TODO: Implement run-json command loop in next task (task 7)
-  throw new Error('run-json command not yet implemented');
+export async function runJson(
+  options: RunJsonOptions,
+  runner?: import("../utils/claude-runner.js").AgentRunner,
+  fs: FileSystem = new DefaultFileSystem()
+): Promise<void> {
+  const { workingDirectory, maxIterations } = options;
+
+  // Import validation utilities and config
+  const { validateWorkingDirectory, validateRequiredFiles } = await import("../utils/validation.js");
+  const { loadConfig } = await import("../utils/config.js");
+  const { DefaultClaudeRunner } = await import("../utils/claude-runner.js");
+  const { CursorRunner } = await import("../utils/cursor-runner.js");
+  const { CommandError } = await import("../utils/errors.js");
+
+  // Validate working directory exists
+  await validateWorkingDirectory(workingDirectory, fs);
+
+  // Load config and select runner if not provided
+  if (!runner) {
+    const configResult = await loadConfig(workingDirectory, process.cwd());
+    const config = configResult.config;
+
+    // Log config information
+    console.log("\n--- Configuration ---");
+    if (configResult.source === "default") {
+      console.log("Using default config (no ral.json found)");
+    } else if (configResult.source === "working-directory") {
+      console.log(`Config loaded from: ${configResult.path}`);
+    } else if (configResult.source === "root-directory") {
+      console.log(`Config loaded from: ${configResult.path}`);
+    }
+    console.log(`Runner: ${config.runner}`);
+    if (config.model) {
+      console.log(`Model: ${config.model}`);
+    }
+    console.log("");
+
+    if (config.runner === "cursor") {
+      runner = new CursorRunner(config.model);
+    } else {
+      runner = new DefaultClaudeRunner();
+    }
+  }
+
+  // Validate required files exist
+  const requiredFiles = ["plan.md", "prompt.md", "activity.md", "tasks.json"];
+  const validation = await validateRequiredFiles(
+    workingDirectory,
+    requiredFiles,
+    fs
+  );
+
+  if (!validation.valid) {
+    throw new CommandError(
+      `Missing required files: ${validation.missing.join(", ")}\n` +
+        `Run 'ral scaffold-json -w ${workingDirectory}' to create the necessary files.`
+    );
+  }
+
+  // Run the loop
+  for (let attempt = 1; attempt <= maxIterations; attempt++) {
+    console.log(`\n--- Attempt ${attempt}/${maxIterations} ---`);
+
+    // Load tasks and select next incomplete task
+    let tasks: Task[];
+    try {
+      tasks = await loadTasks(workingDirectory, fs);
+    } catch (error) {
+      throw new CommandError(
+        `Failed to load tasks.json: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    const selected = selectNextTask(tasks);
+    if (!selected) {
+      console.log("\n✓ All tasks completed successfully!");
+      process.exit(0);
+      return; // For testing - process.exit doesn't actually exit when mocked
+    }
+
+    const { task, index } = selected;
+    console.log(`Working on task ${index + 1}/${tasks.length}: ${task.description}`);
+
+    // Build prompt content
+    let promptContent: string;
+    try {
+      promptContent = await buildPromptContent(workingDirectory, task, index, fs);
+    } catch (error) {
+      throw new CommandError(
+        `Failed to build prompt content: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    // Call runner with prompt content
+    let response;
+    try {
+      response = await runner.runClaude({
+        promptContent,
+        workingDirectory,
+      });
+    } catch (error) {
+      throw new CommandError(
+        `Failed to run agent: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    // Check for success promise in response
+    if (response.result.includes("<promise>success</promise>")) {
+      console.log(`✓ Task ${index + 1} completed successfully!`);
+
+      // Mark task complete and persist tasks.json
+      const updatedTasks = markTaskComplete(tasks, index);
+      try {
+        await saveTasks(workingDirectory, updatedTasks, fs);
+        console.log("✓ tasks.json updated");
+      } catch (error) {
+        throw new CommandError(
+          `Failed to save tasks.json: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    } else {
+      console.log(`✗ Task ${index + 1} did not complete (no <promise>success</promise> found)`);
+      console.log("The task will be retried on the next attempt.");
+    }
+  }
+
+  // Max attempts reached without completing all tasks
+  const tasks = await loadTasks(workingDirectory, fs);
+  const remaining = tasks.filter((t) => t.passes !== true).length;
+  console.log(
+    `\n✗ Maximum attempts (${maxIterations}) reached with ${remaining} task(s) still incomplete.`
+  );
+  process.exit(1);
+  return; // For testing - process.exit doesn't actually exit when mocked
 }

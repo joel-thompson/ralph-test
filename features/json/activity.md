@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-28
-**Tasks Completed:** 4
-**Current Task:** Task 4 complete - scaffold-json command implemented
+**Tasks Completed:** 7
+**Current Task:** Task 7 complete - run-json command wiring + loop implemented
 
 ---
 
@@ -251,3 +251,58 @@ No new dependencies installed.
 - Key insight: The Task interface uses index signature `[key: string]: unknown` to allow optional fields like `id` for future stable task identity
 - Design decision: buildPromptContent falls back to PROMPT_JSON_TEMPLATE if prompt.md doesn't exist, making the helpers more resilient
 - Design decision: markTaskComplete returns a new array rather than mutating, following functional programming best practices
+
+### 2026-01-28 - Task 7: Implemented run-json command wiring + loop
+
+**Task Description:** Implement run-json command wiring + loop (max attempts; mark passes=true only on <promise>success</promise>)
+
+**Changes Made:**
+1. Implemented main `runJson` function in `src/commands/run-json.ts`:
+   - Added function signature accepting options, optional runner, and optional filesystem
+   - Integrated validation utilities (validateWorkingDirectory, validateRequiredFiles)
+   - Added config loading and runner selection (DefaultClaudeRunner vs CursorRunner)
+   - Implemented main loop up to maxIterations:
+     - Loads tasks.json and selects next incomplete task on each iteration
+     - Exits 0 immediately when all tasks complete
+     - Builds promptContent using buildPromptContent helper
+     - Calls runner.runClaude with promptContent (not promptPath)
+     - Detects <promise>success</promise> in response
+     - Marks task complete and persists tasks.json only on success
+     - Retries incomplete tasks on next iteration if no success promise
+   - Added exit 1 after max attempts reached with incomplete tasks remaining
+   - Added return statements after process.exit calls for testability
+2. Extended test suite in `src/commands/run-json.test.ts`:
+   - Updated MockFileSystem.exists() to handle directory existence checks
+   - Added 8 comprehensive tests for runJson function:
+     - Exit 0 when all tasks already complete
+     - Mark task complete and persist on success promise
+     - Retry incomplete task if no success promise
+     - Process multiple tasks in sequence
+     - Exit 1 when max attempts reached
+     - Throw error if required files missing
+     - Throw error if tasks.json invalid
+     - Mark task by index not content matching (duplicate description test)
+   - Total test count increased from 21 to 29 tests for run-json module
+
+**Testing and Verification:**
+- Ran `npm test -- run-json.test.ts` - all 29 tests passed
+- Ran `npm test` - all 152 tests passed across entire project (added 8 new tests)
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Verified runJson validates required files (plan.md, prompt.md, activity.md, tasks.json)
+- Verified loop correctly selects and retries incomplete tasks
+- Verified success detection and task completion only happens with <promise>success</promise>
+- Verified proper exit codes (0 for complete, 1 for max attempts)
+- Verified tasks are marked complete by array index, not content matching
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- Initial test failures: process.exit doesn't actually exit when mocked, so code continued executing after exit call
+  - Solution: Added explicit return statements after process.exit(0) and process.exit(1) calls
+- Initial test failures: MockFileSystem.exists() only checked for exact file matches, not directories
+  - Solution: Extended exists() to check if any files exist with the directory as a prefix
+- Key insight: The loop design allows tasks to be retried automatically - if the agent fails a task, it remains incomplete and will be selected again on the next attempt
+- Key insight: Using promptContent (string) instead of promptPath (file) allows the CLI to dynamically inject task details without writing temporary files
+- Design decision: Validate all required files including tasks.json at startup to fail fast if setup is incomplete
+- Design decision: Log attempt number and task progress to give users visibility into the loop execution
