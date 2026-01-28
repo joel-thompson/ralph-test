@@ -54,7 +54,10 @@ describe("run command", () => {
 
     // Mock config
     vi.mocked(config.loadConfig).mockResolvedValue({
-      runner: "claude",
+      config: {
+        runner: "claude",
+      },
+      source: "default",
     });
 
     await expect(
@@ -294,7 +297,10 @@ describe("run command", () => {
 
     // Mock config to return claude runner
     vi.mocked(config.loadConfig).mockResolvedValue({
-      runner: "claude",
+      config: {
+        runner: "claude",
+      },
+      source: "default",
     });
 
     // Mock runner to avoid actually calling CLI
@@ -338,8 +344,12 @@ describe("run command", () => {
 
     // Mock config to return cursor runner with custom model
     vi.mocked(config.loadConfig).mockResolvedValue({
-      runner: "cursor",
-      model: "gpt-4",
+      config: {
+        runner: "cursor",
+        model: "gpt-4",
+      },
+      source: "working-directory",
+      path: "/test/dir/ral.json",
     });
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});

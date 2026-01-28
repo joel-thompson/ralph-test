@@ -7,6 +7,14 @@ export interface RalConfig {
   model?: string;
 }
 
+export type ConfigSource = "working-directory" | "root-directory" | "default";
+
+export interface ConfigResult {
+  config: RalConfig;
+  source: ConfigSource;
+  path?: string;
+}
+
 const DEFAULT_CONFIG: RalConfig = {
   runner: "claude",
 };
@@ -14,7 +22,7 @@ const DEFAULT_CONFIG: RalConfig = {
 export async function loadConfig(
   workingDirectory: string,
   rootDirectory?: string
-): Promise<RalConfig> {
+): Promise<ConfigResult> {
   const workingConfigPath = path.join(workingDirectory, "ral.json");
 
   try {
@@ -37,8 +45,12 @@ export async function loadConfig(
     }
 
     return {
-      runner: config.runner || DEFAULT_CONFIG.runner,
-      model: config.model,
+      config: {
+        runner: config.runner || DEFAULT_CONFIG.runner,
+        model: config.model,
+      },
+      source: "working-directory",
+      path: workingConfigPath,
     };
   } catch (error) {
     // If file doesn't exist and rootDirectory is provided, try root directory
@@ -70,8 +82,12 @@ export async function loadConfig(
         }
 
         return {
-          runner: config.runner || DEFAULT_CONFIG.runner,
-          model: config.model,
+          config: {
+            runner: config.runner || DEFAULT_CONFIG.runner,
+            model: config.model,
+          },
+          source: "root-directory",
+          path: rootConfigPath,
         };
       } catch (rootError) {
         // If root directory config also doesn't exist, return default config
@@ -80,7 +96,10 @@ export async function loadConfig(
           "code" in rootError &&
           rootError.code === "ENOENT"
         ) {
-          return DEFAULT_CONFIG;
+          return {
+            config: DEFAULT_CONFIG,
+            source: "default",
+          };
         }
 
         // If it's already a CommandError, rethrow it
@@ -100,7 +119,10 @@ export async function loadConfig(
 
     // If file doesn't exist and no rootDirectory provided, return default config
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return DEFAULT_CONFIG;
+      return {
+        config: DEFAULT_CONFIG,
+        source: "default",
+      };
     }
 
     // If it's already a CommandError, rethrow it

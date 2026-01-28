@@ -18,10 +18,13 @@ describe("loadConfig", () => {
     error.code = "ENOENT";
     vi.mocked(readFile).mockRejectedValue(error);
 
-    const config = await loadConfig("/test/dir");
+    const result = await loadConfig("/test/dir");
 
-    expect(config).toEqual({
-      runner: "claude",
+    expect(result).toEqual({
+      config: {
+        runner: "claude",
+      },
+      source: "default",
     });
   });
 
@@ -31,10 +34,14 @@ describe("loadConfig", () => {
     });
     vi.mocked(readFile).mockResolvedValue(configContent);
 
-    const config = await loadConfig("/test/dir");
+    const result = await loadConfig("/test/dir");
 
-    expect(config).toEqual({
-      runner: "claude",
+    expect(result).toEqual({
+      config: {
+        runner: "claude",
+      },
+      source: "working-directory",
+      path: "/test/dir/ral.json",
     });
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/dir/ral.json", "utf-8");
   });
@@ -46,11 +53,15 @@ describe("loadConfig", () => {
     });
     vi.mocked(readFile).mockResolvedValue(configContent);
 
-    const config = await loadConfig("/test/dir");
+    const result = await loadConfig("/test/dir");
 
-    expect(config).toEqual({
-      runner: "cursor",
-      model: "composer-1",
+    expect(result).toEqual({
+      config: {
+        runner: "cursor",
+        model: "composer-1",
+      },
+      source: "working-directory",
+      path: "/test/dir/ral.json",
     });
   });
 
@@ -60,11 +71,15 @@ describe("loadConfig", () => {
     });
     vi.mocked(readFile).mockResolvedValue(configContent);
 
-    const config = await loadConfig("/test/dir");
+    const result = await loadConfig("/test/dir");
 
-    expect(config).toEqual({
-      runner: "claude",
-      model: "composer-1",
+    expect(result).toEqual({
+      config: {
+        runner: "claude",
+        model: "composer-1",
+      },
+      source: "working-directory",
+      path: "/test/dir/ral.json",
     });
   });
 
@@ -114,10 +129,14 @@ describe("loadConfig", () => {
     const configContent = JSON.stringify({});
     vi.mocked(readFile).mockResolvedValue(configContent);
 
-    const config = await loadConfig("/test/dir");
+    const result = await loadConfig("/test/dir");
 
-    expect(config).toEqual({
-      runner: "claude",
+    expect(result).toEqual({
+      config: {
+        runner: "claude",
+      },
+      source: "working-directory",
+      path: "/test/dir/ral.json",
     });
   });
 
@@ -132,11 +151,15 @@ describe("loadConfig", () => {
 
     vi.mocked(readFile).mockResolvedValue(workingConfigContent);
 
-    const config = await loadConfig("/test/working", "/test/root");
+    const result = await loadConfig("/test/working", "/test/root");
 
-    expect(config).toEqual({
-      runner: "cursor",
-      model: "composer-1",
+    expect(result).toEqual({
+      config: {
+        runner: "cursor",
+        model: "composer-1",
+      },
+      source: "working-directory",
+      path: "/test/working/ral.json",
     });
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/working/ral.json", "utf-8");
     expect(vi.mocked(readFile)).toHaveBeenCalledTimes(1);
@@ -155,11 +178,15 @@ describe("loadConfig", () => {
       .mockRejectedValueOnce(workingError)
       .mockResolvedValueOnce(rootConfigContent);
 
-    const config = await loadConfig("/test/working", "/test/root");
+    const result = await loadConfig("/test/working", "/test/root");
 
-    expect(config).toEqual({
-      runner: "cursor",
-      model: "composer-2",
+    expect(result).toEqual({
+      config: {
+        runner: "cursor",
+        model: "composer-2",
+      },
+      source: "root-directory",
+      path: "/test/root/ral.json",
     });
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/working/ral.json", "utf-8");
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/root/ral.json", "utf-8");
@@ -172,10 +199,13 @@ describe("loadConfig", () => {
 
     vi.mocked(readFile).mockRejectedValue(error);
 
-    const config = await loadConfig("/test/working", "/test/root");
+    const result = await loadConfig("/test/working", "/test/root");
 
-    expect(config).toEqual({
-      runner: "claude",
+    expect(result).toEqual({
+      config: {
+        runner: "claude",
+      },
+      source: "default",
     });
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/working/ral.json", "utf-8");
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/root/ral.json", "utf-8");
