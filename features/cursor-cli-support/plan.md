@@ -105,6 +105,16 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "Update any existing examples that reference runner configuration"
     ],
     "passes": true
+  },
+  {
+    "category": "testing",
+    "description": "Smoke test: create a poem file",
+    "steps": [
+      "Create a file called poem.md in the working directory",
+      "Write a short poem about yourself (the AI agent/model running this task)",
+      "The poem should reflect on what it's like to be an AI assistant"
+    ],
+    "passes": true
   }
 ]
 ```
