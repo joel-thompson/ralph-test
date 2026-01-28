@@ -81,7 +81,7 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "Test with invalid ral.json to verify error handling (mocked)",
       "Document the ral.json config options in README if appropriate"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

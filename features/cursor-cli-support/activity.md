@@ -124,3 +124,42 @@
 - Conditional stats display based on usage values (not runner type) makes the code more flexible and testable
 - The integration seamlessly supports both Claude and Cursor backends while maintaining backward compatibility
 - Mocking config in tests ensures tests don't depend on filesystem state
+
+### 2026-01-27 - Task 5: Unit testing with mocks
+
+**Verification Performed:**
+- Reviewed all test files (claude-runner.test.ts, config.test.ts, run.test.ts) to verify testing requirements
+- Confirmed all CursorRunner tests mock spawn - no actual 'agent' CLI calls (src/utils/claude-runner.test.ts:1-291)
+- Confirmed all config loading tests mock fs - no actual file reads (src/utils/config.test.ts:1-123)
+- Verified runner selection logic tests use mocked runners (src/commands/run.test.ts:287-457)
+- Verified Cursor CLI args are correct by inspecting mock spawn calls (src/utils/claude-runner.test.ts:145-238)
+  - Args: ["-p", "--force", "--output-format", "json", "--model", "composer-1", promptContent]
+  - Custom model support verified (line 167-186)
+  - @ file transformation verified (line 213-238)
+- Verified fallback to Claude when no ral.json exists (src/utils/config.test.ts:16-26)
+  - Returns default config { runner: "claude" } when readFile throws ENOENT error
+- Verified error handling with invalid ral.json (src/utils/config.test.ts:71-111)
+  - Invalid runner value throws CommandError
+  - Non-object config throws CommandError
+  - Invalid model type throws CommandError
+  - Invalid JSON throws CommandError
+
+**Testing and Verification:**
+- Ran full test suite with `npm test`
+- All 86 tests passed successfully
+- Test files: 10 passed (10)
+- No regressions detected
+- Test coverage includes:
+  - 12 CursorRunner tests (7 new from Task 3)
+  - 9 config loading tests (9 new from Task 2)
+  - 11 run command tests (4 new from Task 4)
+  - All tests use mocked dependencies - no actual CLI calls or file system operations
+
+**Dependencies:**
+- No new dependencies installed
+
+**Lessons Learned:**
+- All testing requirements from Task 5 were already satisfied by the implementation in Tasks 2-4
+- The test suite comprehensively covers all functionality with proper mocking
+- No actual CLI calls or file system operations occur during testing, preventing hanging or infinite loops
+- The mocking strategy ensures tests are fast, reliable, and don't depend on external state
