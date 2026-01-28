@@ -78,10 +78,33 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "Test runner selection logic with mocked runners",
       "Verify Cursor CLI args are correct by inspecting mock spawn calls",
       "Test fallback to Claude when no ral.json exists (mocked)",
-      "Test with invalid ral.json to verify error handling (mocked)",
-      "Document the ral.json config options in README if appropriate"
+      "Test with invalid ral.json to verify error handling (mocked)"
     ],
     "passes": true
+  },
+  {
+    "category": "refactor",
+    "description": "Separate runner implementations into distinct files",
+    "steps": [
+      "Create src/utils/cursor-runner.ts with CursorRunner class and transformFileReferences helper",
+      "Keep DefaultClaudeRunner in src/utils/claude-runner.ts",
+      "Export shared transformFileReferences from claude-runner.ts (or create shared utils file)",
+      "Create src/utils/cursor-runner.test.ts with CursorRunner tests (move from claude-runner.test.ts)",
+      "Update imports in run.ts to import CursorRunner from new file",
+      "Run tests to verify refactor didn't break anything"
+    ],
+    "passes": false
+  },
+  {
+    "category": "documentation",
+    "description": "Update documentation for Cursor CLI support",
+    "steps": [
+      "Document ral.json config options in README.md",
+      "Add example ral.json configurations for both Claude and Cursor runners",
+      "Document Cursor CLI requirements and model options",
+      "Update any existing examples that reference runner configuration"
+    ],
+    "passes": false
   }
 ]
 ```
@@ -196,10 +219,13 @@ Both runners need to transform `@plan.md` → `@workingDirectory/plan.md` when w
 
 | File | Changes |
 |------|---------|
-| `src/utils/claude-runner.ts` | Rename interfaces, add CursorRunner class |
-| `src/utils/claude-runner.test.ts` | Add CursorRunner tests |
+| `src/utils/claude-runner.ts` | Rename interfaces, keep DefaultClaudeRunner, export shared helpers |
+| `src/utils/claude-runner.test.ts` | Tests for DefaultClaudeRunner only |
+| `src/utils/cursor-runner.ts` | New file for CursorRunner class |
+| `src/utils/cursor-runner.test.ts` | New file for CursorRunner tests |
 | `src/utils/config.ts` | New file for config loading |
 | `src/utils/config.test.ts` | New file for config tests |
-| `src/commands/run.ts` | Load config, select runner |
+| `src/commands/run.ts` | Load config, select runner, import from both runner files |
 | `src/commands/run.test.ts` | Test runner selection |
 | `src/templates/index.ts` | Optional: add config template |
+| `README.md` | Document ral.json config options and Cursor CLI support |

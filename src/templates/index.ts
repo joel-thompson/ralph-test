@@ -18,7 +18,6 @@ export const MCP_SETTINGS_TEMPLATE = {
 
 export const CONFIG_TEMPLATE = {
   runner: "claude",
-  model: "composer-1",
 };
 
 export const ACTIVITY_TEMPLATE = `# Project Build - Activity Log
@@ -49,6 +48,8 @@ export const PLAN_TEMPLATE = `# Project Plan
 ---
 
 ## Task List
+
+IMPORTANT: Only work on one task! Exit the session after finishing a single task!
 
 \`\`\`json
 [
