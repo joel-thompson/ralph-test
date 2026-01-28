@@ -293,3 +293,32 @@
 - The haiku follows traditional 5-7-5 syllable structure while capturing themes of AI assistance
 - Including the model name provides clear attribution
 - This smoke test verifies file creation works correctly
+
+### 2026-01-27 - Task 10: Support ral.json in root directory with cascading lookup
+
+**Changes Made:**
+- Updated `loadConfig` signature in src/utils/config.ts to accept optional `rootDirectory` parameter: `loadConfig(workingDirectory: string, rootDirectory?: string)`
+- Implemented cascading lookup logic: try workingDirectory first, if ENOENT and rootDirectory provided, try rootDirectory
+- If both directories' configs don't exist, return default config
+- Updated src/commands/run.ts:42 to pass `process.cwd()` as rootDirectory when calling loadConfig
+- Added 3 new tests in src/utils/config.test.ts for cascading behavior:
+  - "should use working directory config when both working and root configs exist" - verifies working dir takes precedence
+  - "should use root directory config when working directory has no ral.json" - verifies root dir fallback
+  - "should return default config when neither directory has ral.json" - verifies default fallback
+- Updated src/commands/run.test.ts:355 to expect both parameters in loadConfig call verification
+
+**Testing and Verification:**
+- Ran full test suite with `pnpm test`
+- All 89 tests passed successfully (3 new config tests added)
+- Test files: 11 passed (11)
+- Tests cover: cascading lookup precedence, root directory fallback, default config when neither exists
+- Verified working directory config takes precedence over root directory config
+
+**Dependencies:**
+- No new dependencies installed
+
+**Lessons Learned:**
+- Cascading lookup allows project-wide defaults in root directory with per-feature overrides in working directory
+- The implementation properly handles ENOENT errors at each level before falling back to the next
+- All validation logic is duplicated for both config paths to ensure consistent error handling
+- The optional rootDirectory parameter maintains backward compatibility when not provided

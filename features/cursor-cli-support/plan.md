@@ -126,6 +126,21 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "Sign it with the model name at the bottom"
     ],
     "passes": true
+  },
+  {
+    "category": "feature",
+    "description": "Support ral.json in root directory with cascading lookup",
+    "steps": [
+      "Update loadConfig signature to accept optional rootDirectory parameter: loadConfig(workingDirectory: string, rootDirectory?: string)",
+      "Implement cascading lookup: try workingDirectory first, if ENOENT and rootDirectory provided, try rootDirectory",
+      "If both directories' configs don't exist, return default config",
+      "Update src/commands/run.ts to pass process.cwd() as rootDirectory when calling loadConfig",
+      "Add tests in config.test.ts for cascading behavior: working dir takes precedence over root",
+      "Add test: root dir config used when working dir has no ral.json",
+      "Add test: default config returned when neither directory has ral.json",
+      "Run pnpm test to verify all tests pass"
+    ],
+    "passes": true
   }
 ]
 ```
@@ -167,7 +182,11 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
 
 ## Config File Format
 
-`ral.json` in working directory:
+`ral.json` can be placed in:
+1. **Working directory (feature folder)** - takes precedence
+2. **Root directory (CLI invocation directory)** - fallback
+
+This allows project-wide defaults in the root with per-feature overrides.
 
 ```json
 {
@@ -180,6 +199,11 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
 |-------|------|---------|-------------|
 | `runner` | `"claude"` \| `"cursor"` | `"claude"` | Which CLI to use |
 | `model` | `string` | `"composer-1"` | Model for Cursor (ignored for Claude) |
+
+**Lookup order:**
+1. `{workingDirectory}/ral.json` (e.g., `./features/my-feature/ral.json`)
+2. `{rootDirectory}/ral.json` (e.g., `./ral.json` where CLI is invoked)
+3. Default config if neither exists
 
 ---
 
@@ -244,9 +268,9 @@ Both runners need to transform `@plan.md` → `@workingDirectory/plan.md` when w
 | `src/utils/claude-runner.test.ts` | Tests for DefaultClaudeRunner only |
 | `src/utils/cursor-runner.ts` | New file for CursorRunner class |
 | `src/utils/cursor-runner.test.ts` | New file for CursorRunner tests |
-| `src/utils/config.ts` | New file for config loading |
-| `src/utils/config.test.ts` | New file for config tests |
-| `src/commands/run.ts` | Load config, select runner, import from both runner files |
+| `src/utils/config.ts` | Config loading with cascading lookup (workingDir → rootDir → default) |
+| `src/utils/config.test.ts` | Tests for config loading including cascading behavior |
+| `src/commands/run.ts` | Load config, select runner, pass process.cwd() as rootDirectory |
 | `src/commands/run.test.ts` | Test runner selection |
 | `src/templates/index.ts` | Optional: add config template |
-| `README.md` | Document ral.json config options and Cursor CLI support |
+| `README.md` | Document ral.json config options, Cursor CLI support, and lookup order |

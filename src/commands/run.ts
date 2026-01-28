@@ -39,7 +39,7 @@ export async function run(
 
   // Load config and select runner if not provided
   if (!runner) {
-    const config = await loadConfig(workingDirectory);
+    const config = await loadConfig(workingDirectory, process.cwd());
     if (config.runner === "cursor") {
       runner = new CursorRunner(config.model);
     } else {

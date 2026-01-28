@@ -351,8 +351,8 @@ describe("run command", () => {
       })
     ).rejects.toThrow();
 
-    // Verify loadConfig was called
-    expect(config.loadConfig).toHaveBeenCalledWith(testDir);
+    // Verify loadConfig was called with working directory and root directory
+    expect(config.loadConfig).toHaveBeenCalledWith(testDir, expect.any(String));
 
     consoleSpy.mockRestore();
   });

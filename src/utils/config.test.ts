@@ -120,4 +120,65 @@ describe("loadConfig", () => {
       runner: "claude",
     });
   });
+
+  it("should use working directory config when both working and root configs exist", async () => {
+    const workingConfigContent = JSON.stringify({
+      runner: "cursor",
+      model: "composer-1",
+    });
+    const rootConfigContent = JSON.stringify({
+      runner: "claude",
+    });
+
+    vi.mocked(readFile).mockResolvedValue(workingConfigContent);
+
+    const config = await loadConfig("/test/working", "/test/root");
+
+    expect(config).toEqual({
+      runner: "cursor",
+      model: "composer-1",
+    });
+    expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/working/ral.json", "utf-8");
+    expect(vi.mocked(readFile)).toHaveBeenCalledTimes(1);
+  });
+
+  it("should use root directory config when working directory has no ral.json", async () => {
+    const workingError: any = new Error("File not found");
+    workingError.code = "ENOENT";
+
+    const rootConfigContent = JSON.stringify({
+      runner: "cursor",
+      model: "composer-2",
+    });
+
+    vi.mocked(readFile)
+      .mockRejectedValueOnce(workingError)
+      .mockResolvedValueOnce(rootConfigContent);
+
+    const config = await loadConfig("/test/working", "/test/root");
+
+    expect(config).toEqual({
+      runner: "cursor",
+      model: "composer-2",
+    });
+    expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/working/ral.json", "utf-8");
+    expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/root/ral.json", "utf-8");
+    expect(vi.mocked(readFile)).toHaveBeenCalledTimes(2);
+  });
+
+  it("should return default config when neither directory has ral.json", async () => {
+    const error: any = new Error("File not found");
+    error.code = "ENOENT";
+
+    vi.mocked(readFile).mockRejectedValue(error);
+
+    const config = await loadConfig("/test/working", "/test/root");
+
+    expect(config).toEqual({
+      runner: "claude",
+    });
+    expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/working/ral.json", "utf-8");
+    expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/root/ral.json", "utf-8");
+    expect(vi.mocked(readFile)).toHaveBeenCalledTimes(2);
+  });
 });
