@@ -1,5 +1,5 @@
 import path from "path";
-import { ACTIVITY_TEMPLATE, PLAN_TEMPLATE, PROMPT_TEMPLATE } from "../templates/index.js";
+import { ACTIVITY_TEMPLATE, PLAN_TEMPLATE, PROMPT_TEMPLATE, CONFIG_TEMPLATE } from "../templates/index.js";
 import { FileSystem, DefaultFileSystem, ensureDirectory, writeFileIfNotExists } from "../utils/file-helpers.js";
 
 export interface ScaffoldOptions {
@@ -45,6 +45,17 @@ export async function scaffold(
     console.log(`Created ${promptPath}`);
   } else {
     console.log(`Skipped ${promptPath} (already exists, use -f to overwrite)`);
+  }
+
+  // Create ral.json
+  const configPath = path.join(workingDir, "ral.json");
+  const configContent = JSON.stringify(CONFIG_TEMPLATE, null, 2);
+  const configResult = await writeFileIfNotExists(configPath, configContent, force, fs);
+
+  if (configResult.written) {
+    console.log(`Created ${configPath}`);
+  } else {
+    console.log(`Skipped ${configPath} (already exists, use -f to overwrite)`);
   }
 
   // Create screenshots/ folder

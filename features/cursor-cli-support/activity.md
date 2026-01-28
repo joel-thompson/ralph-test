@@ -367,3 +367,34 @@
 - The journal entry successfully captures the reflective perspective of an AI assistant working on development tasks
 - Including model attribution provides clear documentation of which AI created the content
 - This smoke test verifies file creation works correctly and completes the testing suite for the cursor-cli-support feature
+
+### 2026-01-27 - Task 13: Add ral.json creation to scaffold command
+
+**Changes Made:**
+- Imported CONFIG_TEMPLATE from ../templates/index.js in src/commands/scaffold.ts:2
+- Added ral.json file creation to scaffold function after prompt.md creation in src/commands/scaffold.ts:48-55
+- Used writeFileIfNotExists with JSON.stringify(CONFIG_TEMPLATE, null, 2) for the content
+- Followed the same pattern as other file creation (check written result, log success/skip message)
+- Verified that create-settings.ts does NOT create ral.json (it remains unchanged, only creates .claude/settings.json and .mcp.json)
+- Updated scaffold.test.ts to verify ral.json is created with correct content:
+  - Updated "should create activity.md, plan.md, prompt.md and screenshots/ folder" test to include ral.json
+  - Added new test "should create ral.json with correct content" that verifies JSON content matches CONFIG_TEMPLATE
+  - Updated "should use current working directory when no workingDirectory option provided" test to include ral.json
+  - Updated "should create all files even if some already exist" test to include ral.json
+
+**Testing and Verification:**
+- Ran full test suite with `pnpm test`
+- All 90 tests passed successfully (1 new test added for ral.json content verification)
+- Test files: 11 passed (11)
+- Verified ral.json is created with correct JSON content: { runner: "claude" }
+- Confirmed create-settings.ts does not create ral.json (only creates .claude/settings.json and .mcp.json)
+- All existing scaffold tests continue to pass with ral.json included
+
+**Dependencies:**
+- No new dependencies installed
+
+**Lessons Learned:**
+- Adding ral.json to scaffold ensures new feature directories have a default configuration file
+- Using JSON.stringify with null, 2 provides nicely formatted JSON output
+- Following the same pattern as other file creation maintains consistency in the codebase
+- The scaffold command now creates all necessary files for a new feature directory: activity.md, plan.md, prompt.md, ral.json, and screenshots/

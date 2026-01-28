@@ -163,6 +163,20 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "IMPORTANT: Include a note at the top or bottom of the file stating which model wrote this entry (e.g. claude-3.5-sonnet, composer-1, gpt-4, etc.)"
     ],
     "passes": true
+  },
+  {
+    "category": "feature",
+    "description": "Add ral.json creation to scaffold command",
+    "steps": [
+      "Import CONFIG_TEMPLATE from ../templates/index.js in src/commands/scaffold.ts",
+      "Add ral.json file creation to scaffold function after prompt.md creation",
+      "Use writeFileIfNotExists with JSON.stringify(CONFIG_TEMPLATE, null, 2) for the content",
+      "Follow the same pattern as other file creation (check written result, log success/skip message)",
+      "Verify that create-settings.ts does NOT create ral.json (it should remain unchanged)",
+      "Update scaffold.test.ts to verify ral.json is created with correct content",
+      "Run pnpm test to verify all tests pass"
+    ],
+    "passes": true
   }
 ]
 ```
