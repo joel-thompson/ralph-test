@@ -151,7 +151,7 @@ The existing `run` / `scaffold` behavior must remain intact.
       "src/commands/run-json.ts",
       "src/commands/run-json.test.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "command",
@@ -173,7 +173,6 @@ The existing `run` / `scaffold` behavior must remain intact.
     "steps": [
       "Update PROMPT_JSON_TEMPLATE to instruct the agent to make one git commit per task (do not git init, do not change remotes, do not push)",
       "Extend scaffold-json tests to assert prompt.md includes the git commit instruction",
-      "Note: existing scaffolded projects (e.g. features/json-test) will need their prompt.md updated or re-scaffolded with -f to pick up the new instruction"
     ],
     "files": [
       "src/templates/index.ts",

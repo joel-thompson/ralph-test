@@ -7,6 +7,21 @@ export interface RunJsonOptions {
   maxIterations: number;
 }
 
+interface AttemptStats {
+  attempt: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cost: number;
+}
+
+interface CumulativeStats {
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCacheReadTokens: number;
+  totalCost: number;
+}
+
 export interface Task {
   category: string;
   description: string;
@@ -212,6 +227,14 @@ export async function runJson(
     );
   }
 
+  // Initialize cumulative stats
+  const cumulative: CumulativeStats = {
+    totalInputTokens: 0,
+    totalOutputTokens: 0,
+    totalCacheReadTokens: 0,
+    totalCost: 0,
+  };
+
   // Run the loop
   for (let attempt = 1; attempt <= maxIterations; attempt++) {
     console.log(`\n--- Attempt ${attempt}/${maxIterations} ---`);
@@ -257,6 +280,41 @@ export async function runJson(
       throw new CommandError(
         `Failed to run agent: ${error instanceof Error ? error.message : String(error)}`
       );
+    }
+
+    // Update cumulative stats
+    cumulative.totalInputTokens += response.usage.input_tokens;
+    cumulative.totalOutputTokens += response.usage.output_tokens;
+    cumulative.totalCacheReadTokens += response.usage.cache_read_input_tokens;
+    cumulative.totalCost += response.total_cost_usd;
+
+    // Print per-attempt stats
+    const attemptStats: AttemptStats = {
+      attempt,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+      cacheReadTokens: response.usage.cache_read_input_tokens,
+      cost: response.total_cost_usd,
+    };
+
+    // Only show token/cost stats if they are non-zero (Claude mode)
+    const hasTokenStats = attemptStats.inputTokens > 0 || attemptStats.outputTokens > 0 || attemptStats.cost > 0;
+
+    if (hasTokenStats) {
+      console.log(`Tokens In: ${attemptStats.inputTokens}`);
+      console.log(`Tokens Out: ${attemptStats.outputTokens}`);
+      console.log(`Cache Read: ${attemptStats.cacheReadTokens}`);
+      console.log(`Cost: $${attemptStats.cost.toFixed(4)}`);
+
+      // Print cumulative stats
+      console.log("\nCumulative Stats:");
+      console.log(`Total Tokens In: ${cumulative.totalInputTokens}`);
+      console.log(`Total Tokens Out: ${cumulative.totalOutputTokens}`);
+      console.log(`Total Cache Read: ${cumulative.totalCacheReadTokens}`);
+      console.log(`Total Cost: $${cumulative.totalCost.toFixed(4)}`);
+    } else if (response.duration_ms !== undefined) {
+      // Show duration for Cursor mode
+      console.log(`Duration: ${response.duration_ms}ms`);
     }
 
     // Check for success promise in response

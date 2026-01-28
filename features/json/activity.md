@@ -345,3 +345,45 @@ No new dependencies installed.
 - Key insight: Adding a workflow comparison table makes it immediately clear when to use each workflow
 - Key insight: Documenting the `<promise>success</promise>` contract explicitly prevents confusion about how task completion works
 - Design decision: Placed JSON workflow documentation alongside corresponding markdown workflow commands for easy comparison
+
+### 2026-01-28 - Task 8: Added per-attempt token/cost logging to run-json
+
+**Task Description:** Add per-attempt token/cost logging to run-json (match run)
+
+**Changes Made:**
+1. Added stat tracking interfaces to `src/commands/run-json.ts`:
+   - Created `AttemptStats` interface with attempt number, input/output/cache tokens, and cost
+   - Created `CumulativeStats` interface with cumulative totals across all attempts
+2. Implemented cumulative stats tracking:
+   - Initialize cumulative stats (totalInputTokens, totalOutputTokens, totalCacheReadTokens, totalCost) before loop
+   - Update cumulative stats after each runner call
+3. Implemented per-attempt stats logging:
+   - After each runner call, create an AttemptStats object with the response usage data
+   - Log per-attempt token stats (Tokens In, Tokens Out, Cache Read, Cost) when non-zero (Claude runner)
+   - Log cumulative stats after per-attempt stats
+   - Log duration instead when token stats are zero (Cursor runner)
+4. Extended test suite in `src/commands/run-json.test.ts`:
+   - Added `mockConsoleLog.mockClear()` in beforeEach to prevent test pollution
+   - Added test "should log per-attempt token stats when usage is non-zero (Claude runner)"
+   - Added test "should log duration when available but no token stats (Cursor runner)"
+   - Added test "should accumulate stats across multiple attempts"
+   - Total test count increased from 29 to 32 tests for run-json module
+
+**Testing and Verification:**
+- Ran `npm test -- run-json.test.ts` - all 32 tests passed
+- Ran `npm test` - all 155 tests passed across entire project (added 3 new tests)
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Verified per-attempt token/cost stats are logged when non-zero (matching run command behavior)
+- Verified cumulative stats accumulate correctly across multiple attempts
+- Verified duration is logged for Cursor runner when token stats are zero
+- Verified stats logging only happens when hasTokenStats is true (tokens > 0 or cost > 0)
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- Initial test failure: mockConsoleLog was not cleared between tests, causing pollution from previous tests
+  - Solution: Added mockConsoleLog.mockClear() and mockExit.mockClear() in beforeEach
+- Key insight: The stats logging behavior exactly matches the existing `run` command for consistency
+- Key insight: The conditional logic (hasTokenStats) ensures clean output for both Claude runner (with tokens) and Cursor runner (with duration)
+- Design decision: Cumulative stats help users track total cost across all attempts in the run-json loop, which is especially useful when tasks are retried

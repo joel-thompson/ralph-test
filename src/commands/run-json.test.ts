@@ -466,6 +466,10 @@ Do not edit tasks.json`;
       mockExit = vi.spyOn(process, "exit").mockImplementation((() => {}) as never);
       mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
 
+      // Clear mock call history before each test
+      mockExit.mockClear();
+      mockConsoleLog.mockClear();
+
       // Setup working directory (directory itself must exist)
       mockFs.setFile("/test/.placeholder", "");
 
@@ -789,6 +793,156 @@ Do not edit tasks.json`;
       expect(savedTasks[1].passes).toBe(true); // Now marked true
 
       expect(mockExit).toHaveBeenCalledWith(0);
+    });
+
+    it("should log per-attempt token stats when usage is non-zero (Claude runner)", async () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Task 1",
+          steps: ["Step 1"],
+          passes: false,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+
+      const mockResponse: ClaudeResponse = {
+        result: "Done! <promise>success</promise>",
+        usage: {
+          input_tokens: 1500,
+          output_tokens: 750,
+          cache_read_input_tokens: 300,
+        },
+        total_cost_usd: 0.0234,
+      };
+
+      mockRunner = {
+        runClaude: vi.fn().mockResolvedValue(mockResponse),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 5 },
+        mockRunner,
+        mockFs
+      );
+
+      // Should log per-attempt stats
+      expect(mockConsoleLog).toHaveBeenCalledWith("Tokens In: 1500");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Tokens Out: 750");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Cache Read: 300");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Cost: $0.0234");
+
+      // Should log cumulative stats
+      expect(mockConsoleLog).toHaveBeenCalledWith("\nCumulative Stats:");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Tokens In: 1500");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Tokens Out: 750");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Cache Read: 300");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Cost: $0.0234");
+    });
+
+    it("should log duration when available but no token stats (Cursor runner)", async () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Task 1",
+          steps: ["Step 1"],
+          passes: false,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+
+      const mockResponse: ClaudeResponse = {
+        result: "Done! <promise>success</promise>",
+        usage: {
+          input_tokens: 0,
+          output_tokens: 0,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0,
+        duration_ms: 5432,
+      };
+
+      mockRunner = {
+        runClaude: vi.fn().mockResolvedValue(mockResponse),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 5 },
+        mockRunner,
+        mockFs
+      );
+
+      // Should log duration instead of token stats
+      expect(mockConsoleLog).toHaveBeenCalledWith("Duration: 5432ms");
+
+      // Should NOT log token stats
+      expect(mockConsoleLog).not.toHaveBeenCalledWith(expect.stringContaining("Tokens In:"));
+      expect(mockConsoleLog).not.toHaveBeenCalledWith(expect.stringContaining("Cost:"));
+    });
+
+    it("should accumulate stats across multiple attempts", async () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Task 1",
+          steps: ["Step 1"],
+          passes: false,
+        },
+        {
+          category: "implementation",
+          description: "Task 2",
+          steps: ["Step 2"],
+          passes: false,
+        },
+      ];
+
+      mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+
+      const mockResponse1: ClaudeResponse = {
+        result: "Done! <promise>success</promise>",
+        usage: {
+          input_tokens: 1000,
+          output_tokens: 500,
+          cache_read_input_tokens: 100,
+        },
+        total_cost_usd: 0.01,
+      };
+
+      const mockResponse2: ClaudeResponse = {
+        result: "Done! <promise>success</promise>",
+        usage: {
+          input_tokens: 2000,
+          output_tokens: 1000,
+          cache_read_input_tokens: 200,
+        },
+        total_cost_usd: 0.02,
+      };
+
+      mockRunner = {
+        runClaude: vi.fn()
+          .mockResolvedValueOnce(mockResponse1)
+          .mockResolvedValueOnce(mockResponse2),
+      };
+
+      await runJson(
+        { workingDirectory: "/test", maxIterations: 5 },
+        mockRunner,
+        mockFs
+      );
+
+      // After first attempt, cumulative should match first response
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Tokens In: 1000");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Tokens Out: 500");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Cache Read: 100");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Cost: $0.0100");
+
+      // After second attempt, cumulative should be sum of both
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Tokens In: 3000");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Tokens Out: 1500");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Cache Read: 300");
+      expect(mockConsoleLog).toHaveBeenCalledWith("Total Cost: $0.0300");
     });
   });
 });
