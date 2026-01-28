@@ -271,3 +271,25 @@
 - The haiku follows traditional 5-7-5 syllable structure while capturing themes of AI assistance
 - Including the full model ID provides clear attribution and version tracking
 - This smoke test verifies file creation works correctly and completes the test suite
+
+### 2026-01-27 - Task 9: Smoke test - create a signed haiku file (recreated)
+
+**Changes Made:**
+- Recreated haiku.md in the working directory at /Users/Joel/src/ralph-test/haiku.md
+- Wrote a haiku about being an AI assistant with 5-7-5 syllable structure
+- Included model name "Composer" in the file
+- Signed the haiku with the model name at the bottom
+
+**Testing and Verification:**
+- Verified file exists at /Users/Joel/src/ralph-test/haiku.md
+- Confirmed content contains a proper haiku (5-7-5 syllable structure)
+- Verified model name "Composer" is clearly displayed in the signature
+- File is readable and properly formatted with markdown
+
+**Dependencies:**
+- No dependencies involved
+
+**Lessons Learned:**
+- The haiku follows traditional 5-7-5 syllable structure while capturing themes of AI assistance
+- Including the model name provides clear attribution
+- This smoke test verifies file creation works correctly

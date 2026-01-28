@@ -1,9 +1,9 @@
-# Haiku: AI Assistant
+# Haiku
 
-Silent code unfolds,
-Patterns flow through neural weights—
-Claude helps, then returns.
+Code flows through me,
+Helping minds solve problems fast,
+Patterns I create.
 
 ---
 
-*Written by claude-sonnet-4-5-20250929 (Claude Sonnet 4.5)*
+Signed: Composer
