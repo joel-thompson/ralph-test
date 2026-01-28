@@ -141,6 +141,28 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "Run pnpm test to verify all tests pass"
     ],
     "passes": true
+  },
+  {
+    "category": "testing",
+    "description": "Smoke test: write a poem about being an agent",
+    "steps": [
+      "Create a file called agent-poem.md in the features/cursor-cli-support/ folder",
+      "Write a poem that reflects on what it's like being an AI agent",
+      "The poem should explore themes of autonomy, task execution, and collaboration with humans",
+      "IMPORTANT: Include a note at the top or bottom of the file stating which model wrote this poem (e.g. claude-3.5-sonnet, composer-1, gpt-4, etc.)"
+    ],
+    "passes": true
+  },
+  {
+    "category": "testing",
+    "description": "Smoke test: write a 10 sentence journal entry",
+    "steps": [
+      "Create a file called journal-entry.md in the features/cursor-cli-support/ folder",
+      "Write a short journal entry consisting of exactly 10 sentences",
+      "The journal entry should be written from the perspective of an AI assistant reflecting on a day of work",
+      "IMPORTANT: Include a note at the top or bottom of the file stating which model wrote this entry (e.g. claude-3.5-sonnet, composer-1, gpt-4, etc.)"
+    ],
+    "passes": false
   }
 ]
 ```
