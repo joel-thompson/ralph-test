@@ -51,7 +51,7 @@ Default model for Cursor: `composer-1`
       "Check is_error and subtype fields for error handling",
       "Write unit tests in src/utils/claude-runner.test.ts for CursorRunner"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "integration",
