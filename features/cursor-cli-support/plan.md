@@ -104,7 +104,7 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "Document Cursor CLI requirements and model options",
       "Update any existing examples that reference runner configuration"
     ],
-    "passes": false
+    "passes": true
   }
 ]
 ```

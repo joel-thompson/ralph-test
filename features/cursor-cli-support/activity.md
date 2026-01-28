@@ -190,3 +190,42 @@
 - The transformFileReferences helper is now defined in cursor-runner.ts and imported where needed
 - All imports updated correctly and tests continue to pass without modification
 - File organization now clearly separates concerns: claude-runner.ts for Claude CLI, cursor-runner.ts for Cursor CLI
+
+### 2026-01-27 - Task 7: Update documentation for Cursor CLI support
+
+**Changes Made:**
+- Updated Prerequisites section in README.md:34-39 to list both Claude CLI and Cursor CLI as alternatives
+- Added new Configuration section in README.md:41-84 with comprehensive ral.json documentation
+  - Explained ral.json purpose and location
+  - Provided examples for both Claude and Cursor configurations
+  - Documented configuration options table with field types, defaults, and descriptions
+  - Added notes about default behavior and model configuration
+  - Included example of creating ral.json in working directory
+- Updated ral run command output section in README.md:145-165
+  - Modified behavior description to clarify token tracking is Claude-only
+  - Added separate output examples for Claude runner (tokens/cost) and Cursor runner (duration)
+  - Added note about Cursor not providing token/cost information
+- Updated Core Concepts section in README.md:90 to mention "AI assistant (Claude or Cursor)" instead of just "Claude"
+- Updated Working Directory Pattern comment in README.md:116 to use generic "AI" instead of "Claude"
+- Updated prompt.md customization section in README.md:375 to mention it works with both runners
+- Updated Ralph Loop Philosophy section in README.md:457-465
+  - Changed references from "Claude" to "AI" for generic applicability
+  - Added note that cost tracking applies to Claude runner only
+  - Added new bullet point for "Multi-Backend Support" feature
+- Updated File Structure section in README.md:467-480 to include ral.json in the directory tree with comment
+
+**Testing and Verification:**
+- Ran full test suite with `npm test`
+- All 86 tests passed successfully
+- Test files: 11 passed (11)
+- No regressions detected
+- Documentation changes don't affect code functionality
+
+**Dependencies:**
+- No new dependencies installed
+
+**Lessons Learned:**
+- Comprehensive documentation helps users understand both the default behavior and alternative options
+- Clear examples for both runners make it easy to get started with either Claude or Cursor
+- Explaining differences in output (tokens/cost vs duration) sets proper expectations
+- Including ral.json in file structure diagram improves discoverability
