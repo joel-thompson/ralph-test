@@ -89,7 +89,7 @@ The existing `run` / `scaffold` behavior must remain intact.
     "files": [
       "src/index.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "command",

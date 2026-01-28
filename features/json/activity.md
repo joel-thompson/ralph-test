@@ -162,3 +162,37 @@ No new dependencies installed.
 - None - implementation went smoothly
 - Key insight: Following the exact pattern of the existing scaffold.ts command made implementation straightforward and consistent
 - Design decision: tasks.json serialization includes trailing newline for consistent git diffs and standard formatting
+
+### 2026-01-28 - Task 5: Registered new CLI commands: scaffold-json and run-json
+
+**Task Description:** Register new CLI commands: scaffold-json and run-json
+
+**Changes Made:**
+1. Updated `src/index.ts`:
+   - Added import for `scaffoldJson` from './commands/scaffold-json.js'
+   - Added import for `runJson` from './commands/run-json.js'
+   - Registered `scaffold-json` command with description, -w/--working-directory and -f/--force options
+   - Registered `run-json` command with description, -w/--working-directory and -m/--max-iterations options
+   - Both commands follow the exact same pattern as existing scaffold and run commands
+   - Error handling with try/catch and process.exit(1) matches existing patterns
+2. Created stub for `src/commands/run-json.ts`:
+   - Added `RunJsonOptions` interface with workingDirectory and maxIterations fields
+   - Added `runJson` function that throws "not yet implemented" error
+   - This stub allows the CLI to register the command and compile successfully
+   - Full implementation will be completed in tasks 6 and 7
+
+**Testing and Verification:**
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Ran `npm test` - all 123 tests passed
+- Verified scaffold-json command is registered with correct flags (-w, -f)
+- Verified run-json command is registered with correct flags (-w, -m)
+- Verified existing commands (create-settings, scaffold, run) remain unchanged
+- Command descriptions clearly differentiate between scaffold/run and scaffold-json/run-json workflows
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- None - implementation went smoothly
+- Key insight: Creating a stub for run-json allows the command registration to compile while deferring implementation to the next tasks
+- Design decision: Used consistent flag names across all commands for better UX (-w for working directory, -m for max iterations)
