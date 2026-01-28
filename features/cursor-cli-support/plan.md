@@ -24,7 +24,7 @@ Default model for Cursor: `composer-1`
       "Update all imports in run.ts and run.test.ts to use new names",
       "Run tests to verify refactor didn't break anything"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "feature",
@@ -69,12 +69,14 @@ Default model for Cursor: `composer-1`
   },
   {
     "category": "testing",
-    "description": "Manual testing and documentation",
+    "description": "Unit testing with mocks (DO NOT call run command directly)",
     "steps": [
-      "Test with ral.json containing { \"runner\": \"cursor\", \"model\": \"composer-1\" }",
-      "Verify Cursor CLI is called with correct arguments",
-      "Test fallback to Claude when no ral.json exists",
-      "Test with invalid ral.json to verify error handling",
+      "All CursorRunner tests must mock spawn - do not call actual 'agent' CLI",
+      "All config loading tests must mock fs - do not read actual files",
+      "Test runner selection logic with mocked runners",
+      "Verify Cursor CLI args are correct by inspecting mock spawn calls",
+      "Test fallback to Claude when no ral.json exists (mocked)",
+      "Test with invalid ral.json to verify error handling (mocked)",
       "Document the ral.json config options in README if appropriate"
     ],
     "passes": false
@@ -132,6 +134,17 @@ Default model for Cursor: `composer-1`
 |-------|------|---------|-------------|
 | `runner` | `"claude"` \| `"cursor"` | `"claude"` | Which CLI to use |
 | `model` | `string` | `"composer-1"` | Model for Cursor (ignored for Claude) |
+
+---
+
+## Important: Testing Approach
+
+**DO NOT test by calling the `run` command directly.** This can cause hanging or infinite loops.
+
+All testing must use unit tests with mocked dependencies:
+- Mock `spawn` for CLI calls (both Claude and Cursor)
+- Mock `fs` for config file reading
+- Mock the runner interface for run command tests
 
 ---
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { run } from "./run.js";
-import { ClaudeRunner, ClaudeResponse } from "../utils/claude-runner.js";
+import { AgentRunner, AgentResponse } from "../utils/claude-runner.js";
 import { CommandError } from "../utils/errors.js";
 import * as validation from "../utils/validation.js";
 import * as path from "path";
@@ -63,7 +63,7 @@ describe("run command", () => {
     });
 
     // Mock Claude runner
-    const mockRunner: ClaudeRunner = {
+    const mockRunner: AgentRunner = {
       runClaude: vi.fn().mockResolvedValue({
         result: "Task is done. <promise>COMPLETE</promise>",
         usage: {
@@ -72,7 +72,7 @@ describe("run command", () => {
           cache_read_input_tokens: 200,
         },
         total_cost_usd: 0.05,
-      } as ClaudeResponse),
+      } as AgentResponse),
     };
 
     // Should exit with code 0
@@ -106,7 +106,7 @@ describe("run command", () => {
     });
 
     // Mock Claude runner (never returns COMPLETE)
-    const mockRunner: ClaudeRunner = {
+    const mockRunner: AgentRunner = {
       runClaude: vi.fn().mockResolvedValue({
         result: "Still working on it...",
         usage: {
@@ -115,7 +115,7 @@ describe("run command", () => {
           cache_read_input_tokens: 200,
         },
         total_cost_usd: 0.05,
-      } as ClaudeResponse),
+      } as AgentResponse),
     };
 
     // Should exit with code 1 after max iterations
@@ -148,7 +148,7 @@ describe("run command", () => {
 
     // Mock Claude runner with different stats for each iteration
     let callCount = 0;
-    const mockRunner: ClaudeRunner = {
+    const mockRunner: AgentRunner = {
       runClaude: vi.fn().mockImplementation(async () => {
         callCount++;
         return {
@@ -159,7 +159,7 @@ describe("run command", () => {
             cache_read_input_tokens: 200 * callCount,
           },
           total_cost_usd: 0.05 * callCount,
-        } as ClaudeResponse;
+        } as AgentResponse;
       }),
     };
 
@@ -204,7 +204,7 @@ describe("run command", () => {
     });
 
     // Mock Claude runner that throws an error
-    const mockRunner: ClaudeRunner = {
+    const mockRunner: AgentRunner = {
       runClaude: vi.fn().mockRejectedValue(new Error("Claude CLI failed")),
     };
 
@@ -229,7 +229,7 @@ describe("run command", () => {
 
     // Mock Claude runner that returns COMPLETE on 3rd iteration
     let callCount = 0;
-    const mockRunner: ClaudeRunner = {
+    const mockRunner: AgentRunner = {
       runClaude: vi.fn().mockImplementation(async () => {
         callCount++;
         if (callCount === 3) {
@@ -241,7 +241,7 @@ describe("run command", () => {
               cache_read_input_tokens: 200,
             },
             total_cost_usd: 0.05,
-          } as ClaudeResponse;
+          } as AgentResponse;
         }
         return {
           result: "Still working...",
@@ -251,7 +251,7 @@ describe("run command", () => {
             cache_read_input_tokens: 200,
           },
           total_cost_usd: 0.05,
-        } as ClaudeResponse;
+        } as AgentResponse;
       }),
     };
 

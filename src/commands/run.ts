@@ -4,7 +4,7 @@ import {
   validateRequiredFiles,
 } from "../utils/validation.js";
 import { CommandError } from "../utils/errors.js";
-import { ClaudeRunner, DefaultClaudeRunner } from "../utils/claude-runner.js";
+import { AgentRunner, DefaultClaudeRunner } from "../utils/claude-runner.js";
 
 export interface RunOptions {
   workingDirectory: string;
@@ -28,7 +28,7 @@ interface CumulativeStats {
 
 export async function run(
   options: RunOptions,
-  runner: ClaudeRunner = new DefaultClaudeRunner()
+  runner: AgentRunner = new DefaultClaudeRunner()
 ): Promise<void> {
   const { workingDirectory, maxIterations } = options;
 

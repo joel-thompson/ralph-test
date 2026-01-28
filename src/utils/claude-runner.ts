@@ -1,24 +1,25 @@
 import { spawn } from "child_process";
 import { readFile } from "fs/promises";
 
-export interface ClaudeUsage {
+export interface AgentUsage {
   input_tokens: number;
   output_tokens: number;
   cache_read_input_tokens: number;
 }
 
-export interface ClaudeResponse {
+export interface AgentResponse {
   result: string;
-  usage: ClaudeUsage;
+  usage: AgentUsage;
   total_cost_usd: number;
+  duration_ms?: number;
 }
 
-export interface ClaudeRunner {
-  runClaude(promptPath: string, workingDirectory: string): Promise<ClaudeResponse>;
+export interface AgentRunner {
+  runClaude(promptPath: string, workingDirectory: string): Promise<AgentResponse>;
 }
 
-export class DefaultClaudeRunner implements ClaudeRunner {
-  async runClaude(promptPath: string, workingDirectory: string): Promise<ClaudeResponse> {
+export class DefaultClaudeRunner implements AgentRunner {
+  async runClaude(promptPath: string, workingDirectory: string): Promise<AgentResponse> {
     // Read the prompt file
     let promptContent = await readFile(promptPath, "utf-8");
 
