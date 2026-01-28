@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-28
-**Tasks Completed:** 2
-**Current Task:** Task 2 complete - @ reference rewriting now supports .json files
+**Tasks Completed:** 3
+**Current Task:** Task 3 complete - scaffold-json templates added
 
 ---
 
@@ -82,3 +82,45 @@ No new dependencies installed.
 **Problems and Lessons:**
 - None - implementation went smoothly
 - Key insight: Using non-capturing group `(?:md|json)` in regex keeps the pattern clean and avoids extra capture groups
+
+### 2026-01-28 - Task 3: Added scaffold-json templates
+
+**Task Description:** Add scaffold-json templates (plan details, tasks.json, prompt) embedded in code
+
+**Changes Made:**
+1. Added `PLAN_DETAILS_TEMPLATE` in `src/templates/index.ts`:
+   - Markdown template for details-only plan.md (no embedded tasks)
+   - Contains Project Overview and Additional Context sections
+2. Added `TASKS_JSON_TEMPLATE` in `src/templates/index.ts`:
+   - TypeScript array/object with example task structure
+   - Will be serialized to tasks.json via JSON.stringify
+   - Includes category, description, steps[], and passes boolean fields
+3. Added `PROMPT_JSON_TEMPLATE` in `src/templates/index.ts`:
+   - Markdown template for run-json workflow prompt
+   - References @plan.md @activity.md @tasks.json
+   - Explicitly instructs agent NOT to edit tasks.json (CLI owns that)
+   - Requires <promise>success</promise> output for task completion
+   - Includes placeholder for CLI to insert current task details
+4. Created comprehensive test suite in `src/templates/index.test.ts`:
+   - Tests that all templates are exported with correct types
+   - Validates TASKS_JSON_TEMPLATE structure (category, description, steps, passes)
+   - Verifies JSON serializability of TASKS_JSON_TEMPLATE
+   - Checks that PROMPT_JSON_TEMPLATE includes required @ references
+   - Confirms agent is instructed not to edit tasks.json
+   - Validates success criteria section exists
+
+**Testing and Verification:**
+- Ran `npm test` - all 112 tests passed (7 new tests added)
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Verified PLAN_DETAILS_TEMPLATE is a valid markdown string
+- Verified TASKS_JSON_TEMPLATE is a valid JS array that can be serialized to JSON
+- Verified PROMPT_JSON_TEMPLATE contains all required @ references and instructions
+- Templates follow the same embedding conventions as existing templates
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- None - implementation went smoothly
+- Key insight: Storing TASKS_JSON_TEMPLATE as a JS object/array allows type checking and makes it easy to serialize with JSON.stringify(..., null, 2)
+- Design decision: PROMPT_JSON_TEMPLATE explicitly tells the agent not to edit tasks.json, which prevents conflicts with the CLI's task management
