@@ -43,7 +43,7 @@ The existing `run` / `scaffold` behavior must remain intact.
       "src/utils/claude-runner.ts",
       "src/utils/cursor-runner.ts"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "templates",

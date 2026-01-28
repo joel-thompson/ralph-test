@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-28
-**Tasks Completed:** 1
-**Current Task:** Task 1 complete - Runner now supports both promptPath and promptContent
+**Tasks Completed:** 2
+**Current Task:** Task 2 complete - @ reference rewriting now supports .json files
 
 ---
 
@@ -47,3 +47,38 @@ No new dependencies installed.
 **Problems and Lessons:**
 - None - implementation went smoothly
 - Key insight: The validation logic (exactly one of promptPath or promptContent) prevents ambiguous cases and makes the API clear
+
+### 2026-01-28 - Task 2: Extended @ reference rewriting to support .json files
+
+**Task Description:** Extend @ reference rewriting to support .json files (in addition to .md)
+
+**Changes Made:**
+1. Updated `transformFileReferences` in `src/utils/claude-runner.ts`:
+   - Changed regex from `/@(\S+\.md)/g` to `/@(\S+\.(?:md|json))/g`
+   - Updated comment to reflect that both .md and .json files are transformed
+2. Updated `transformFileReferences` in `src/utils/cursor-runner.ts`:
+   - Applied the same regex change and comment update
+3. Updated tests in `src/utils/claude-runner.test.ts`:
+   - Modified existing test "should only transform .md file references" to "should transform .md and .json file references"
+   - Updated test to verify both @config.json and @tasks.json are transformed
+   - Added new test "should not transform @ references that are not .md or .json files"
+   - Verified that package scopes (@anthropic/sdk), emails (@user@example.com), and other @ references are NOT transformed
+4. Updated tests in `src/utils/cursor-runner.test.ts`:
+   - Added new test "should transform .md and .json file references"
+   - Added new test "should not transform @ references that are not .md or .json files"
+   - Ensured consistent coverage with claude-runner tests
+
+**Testing and Verification:**
+- Ran `npm test` - all 105 tests passed (3 new tests added)
+- Ran `npm run build` - TypeScript compilation successful with no errors
+- Verified .md files are still transformed correctly
+- Verified .json files are now transformed correctly
+- Verified other @ references (package scopes, emails) are NOT transformed
+- Regex pattern `(?:md|json)` correctly matches only .md and .json extensions
+
+**Dependencies:**
+No new dependencies installed.
+
+**Problems and Lessons:**
+- None - implementation went smoothly
+- Key insight: Using non-capturing group `(?:md|json)` in regex keeps the pattern clean and avoids extra capture groups

@@ -32,8 +32,8 @@ export function transformFileReferences(content: string, workingDirectory: strin
   if (workingDirectory !== "." && workingDirectory !== "./") {
     // Normalize working directory by removing trailing slashes
     const normalizedDir = workingDirectory.replace(/\/+$/, "");
-    // Replace @filename.md with @workingDirectory/filename.md
-    return content.replace(/@(\S+\.md)/g, `@${normalizedDir}/$1`);
+    // Replace @filename.md and @filename.json with @workingDirectory/filename.md and @workingDirectory/filename.json
+    return content.replace(/@(\S+\.(?:md|json))/g, `@${normalizedDir}/$1`);
   }
   return content;
 }

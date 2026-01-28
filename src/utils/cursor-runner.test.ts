@@ -146,6 +146,66 @@ describe("CursorRunner", () => {
     );
   });
 
+  it("should transform .md and .json file references", async () => {
+    const promptContent = "@plan.md @tasks.json @config.json @README.md";
+    const validResponse = {
+      result: "Success",
+      is_error: false,
+    };
+
+    vi.mocked(readFile).mockResolvedValue(promptContent);
+    createMockSpawn(validResponse);
+
+    await runner.runClaude({
+      promptPath: "/path/to/prompt.md",
+      workingDirectory: "features/auth",
+    });
+
+    expect(vi.mocked(spawn)).toHaveBeenCalledWith(
+      "agent",
+      [
+        "-p",
+        "--force",
+        "--output-format",
+        "json",
+        "--model",
+        "composer-1",
+        "@features/auth/plan.md @features/auth/tasks.json @features/auth/config.json @features/auth/README.md",
+      ],
+      expect.any(Object)
+    );
+  });
+
+  it("should not transform @ references that are not .md or .json files", async () => {
+    const promptContent = "@plan.md @anthropic/sdk @user@example.com @something-else @config.json";
+    const validResponse = {
+      result: "Success",
+      is_error: false,
+    };
+
+    vi.mocked(readFile).mockResolvedValue(promptContent);
+    createMockSpawn(validResponse);
+
+    await runner.runClaude({
+      promptPath: "/path/to/prompt.md",
+      workingDirectory: "features/auth",
+    });
+
+    expect(vi.mocked(spawn)).toHaveBeenCalledWith(
+      "agent",
+      [
+        "-p",
+        "--force",
+        "--output-format",
+        "json",
+        "--model",
+        "composer-1",
+        "@features/auth/plan.md @anthropic/sdk @user@example.com @something-else @features/auth/config.json",
+      ],
+      expect.any(Object)
+    );
+  });
+
   it("should reject when is_error is true", async () => {
     const promptContent = "Test prompt";
     const errorResponse = {

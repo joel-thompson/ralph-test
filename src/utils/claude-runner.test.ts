@@ -127,8 +127,8 @@ describe("DefaultClaudeRunner", () => {
       );
     });
 
-    it("should only transform .md file references", async () => {
-      const promptContent = "@plan.md @README.md @config.json";
+    it("should transform .md and .json file references", async () => {
+      const promptContent = "@plan.md @README.md @config.json @tasks.json";
       const workingDirectory = "features/auth";
 
       vi.mocked(readFile).mockResolvedValue(promptContent);
@@ -139,10 +139,30 @@ describe("DefaultClaudeRunner", () => {
         workingDirectory,
       });
 
-      // .md files transformed, .json not transformed
+      // .md and .json files transformed
       expect(vi.mocked(spawn)).toHaveBeenCalledWith(
         "claude",
-        ["-p", "@features/auth/plan.md @features/auth/README.md @config.json", "--output-format", "json"],
+        ["-p", "@features/auth/plan.md @features/auth/README.md @features/auth/config.json @features/auth/tasks.json", "--output-format", "json"],
+        expect.any(Object)
+      );
+    });
+
+    it("should not transform @ references that are not .md or .json files", async () => {
+      const promptContent = "@plan.md @anthropic/sdk @user@example.com @something-else @config.json";
+      const workingDirectory = "features/auth";
+
+      vi.mocked(readFile).mockResolvedValue(promptContent);
+      createMockSpawn(validResponse);
+
+      await runner.runClaude({
+        promptPath: "/path/to/prompt.md",
+        workingDirectory,
+      });
+
+      // Only .md and .json files transformed, other @ references left untouched
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(
+        "claude",
+        ["-p", "@features/auth/plan.md @anthropic/sdk @user@example.com @something-else @features/auth/config.json", "--output-format", "json"],
         expect.any(Object)
       );
     });
