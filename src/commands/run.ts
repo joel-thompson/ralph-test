@@ -4,7 +4,8 @@ import {
   validateRequiredFiles,
 } from "../utils/validation.js";
 import { CommandError } from "../utils/errors.js";
-import { AgentRunner, DefaultClaudeRunner, CursorRunner } from "../utils/claude-runner.js";
+import { AgentRunner, DefaultClaudeRunner } from "../utils/claude-runner.js";
+import { CursorRunner } from "../utils/cursor-runner.js";
 import { loadConfig } from "../utils/config.js";
 
 export interface RunOptions {

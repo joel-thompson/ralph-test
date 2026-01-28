@@ -163,3 +163,30 @@
 - The test suite comprehensively covers all functionality with proper mocking
 - No actual CLI calls or file system operations occur during testing, preventing hanging or infinite loops
 - The mocking strategy ensures tests are fast, reliable, and don't depend on external state
+
+### 2026-01-27 - Task 6: Separate runner implementations into distinct files
+
+**Changes Made:**
+- Created src/utils/cursor-runner.ts with CursorRunner class and transformFileReferences helper
+- Exported transformFileReferences function from src/utils/claude-runner.ts (previously private)
+- Removed CursorRunner class from src/utils/claude-runner.ts
+- Created src/utils/cursor-runner.test.ts with all 7 CursorRunner tests moved from claude-runner.test.ts
+- Removed CursorRunner tests from src/utils/claude-runner.test.ts
+- Updated imports in src/commands/run.ts:7-8 to import CursorRunner from cursor-runner.js
+- CursorRunner in cursor-runner.ts imports transformFileReferences from its own file (src/utils/cursor-runner.ts:9-17)
+
+**Testing and Verification:**
+- Ran full test suite with `npm test`
+- All 86 tests passed successfully
+- Test files: 11 passed (11)
+- Test count remains the same (7 CursorRunner tests, 5 DefaultClaudeRunner tests)
+- No regressions detected
+
+**Dependencies:**
+- No new dependencies installed
+
+**Lessons Learned:**
+- Separating runners into distinct files improves code organization and modularity
+- The transformFileReferences helper is now defined in cursor-runner.ts and imported where needed
+- All imports updated correctly and tests continue to pass without modification
+- File organization now clearly separates concerns: claude-runner.ts for Claude CLI, cursor-runner.ts for Cursor CLI

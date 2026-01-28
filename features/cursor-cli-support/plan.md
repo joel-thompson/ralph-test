@@ -93,7 +93,7 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "Update imports in run.ts to import CursorRunner from new file",
       "Run tests to verify refactor didn't break anything"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",
