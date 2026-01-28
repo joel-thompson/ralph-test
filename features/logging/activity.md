@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-28
-**Tasks Completed:** 1
-**Current Task:** Task 1 complete - config metadata tracking
+**Tasks Completed:** 2
+**Current Task:** Task 2 complete - config logging in run command
 
 ---
 
@@ -35,3 +35,35 @@
 - Initially forgot to update test mocks in run.test.ts, which caused a test failure
 - The fix was straightforward: wrap existing mock values in the new `ConfigResult` structure
 - All changes were type-safe and caught by TypeScript during development
+
+### 2026-01-28 - Task 2: Add logging in run command to display config information at startup
+
+**Task Description:** Add logging to the run command that displays which config file was used, the runner type, and the model (if specified) when the command starts up.
+
+**Changes Made:**
+1. Modified `src/commands/run.ts` to add config logging after loading config:
+   - Added a "--- Configuration ---" section header
+   - Log the config source (default, working directory, or root directory)
+   - Log the config file path if applicable
+   - Log the runner type being used
+   - Log the model if specified (for Cursor runner)
+2. Added three new test cases to `src/commands/run.test.ts`:
+   - Test for logging config from working directory with model
+   - Test for logging when using default config
+   - Test for logging config from root directory
+
+**Testing Results:**
+- All 93 tests passing (including 14 in run.test.ts)
+- Config logging tests verify:
+  - Configuration header is displayed with "\n--- Configuration ---"
+  - Correct source information is shown
+  - Runner and model information is displayed as expected
+- No regressions detected
+
+**Dependencies:**
+- No new dependencies installed
+
+**Problems/Lessons Learned:**
+- Initially wrote test expectations without the "\n" prefix that console.log adds
+- Tests failed because the actual log output includes "\n--- Configuration ---" but tests were checking for "--- Configuration ---"
+- Fixed by updating all three test cases to expect the "\n" prefix in the configuration header

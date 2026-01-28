@@ -465,4 +465,114 @@ describe("run command", () => {
 
     consoleSpy.mockRestore();
   });
+
+  it("should log config information when loading config from working directory", async () => {
+    // Mock validation
+    vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
+    vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
+      valid: true,
+      missing: [],
+    });
+
+    // Mock config to return working directory config with model
+    vi.mocked(config.loadConfig).mockResolvedValue({
+      config: {
+        runner: "cursor",
+        model: "gpt-4",
+      },
+      source: "working-directory",
+      path: "/test/dir/ral.json",
+    });
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await expect(
+      run({
+        workingDirectory: testDir,
+        maxIterations: 1,
+      })
+    ).rejects.toThrow();
+
+    const logs = consoleSpy.mock.calls.map((call) => call[0]);
+
+    // Should log config information
+    expect(logs).toContain("\n--- Configuration ---");
+    expect(logs).toContain("Config loaded from: /test/dir/ral.json");
+    expect(logs).toContain("Runner: cursor");
+    expect(logs).toContain("Model: gpt-4");
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should log config information when using default config", async () => {
+    // Mock validation
+    vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
+    vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
+      valid: true,
+      missing: [],
+    });
+
+    // Mock config to return default config
+    vi.mocked(config.loadConfig).mockResolvedValue({
+      config: {
+        runner: "claude",
+      },
+      source: "default",
+    });
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await expect(
+      run({
+        workingDirectory: testDir,
+        maxIterations: 1,
+      })
+    ).rejects.toThrow();
+
+    const logs = consoleSpy.mock.calls.map((call) => call[0]);
+
+    // Should log config information
+    expect(logs).toContain("\n--- Configuration ---");
+    expect(logs).toContain("Using default config (no ral.json found)");
+    expect(logs).toContain("Runner: claude");
+    expect(logs).not.toContain(expect.stringContaining("Model:"));
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should log config information when loading from root directory", async () => {
+    // Mock validation
+    vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
+    vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
+      valid: true,
+      missing: [],
+    });
+
+    // Mock config to return root directory config
+    vi.mocked(config.loadConfig).mockResolvedValue({
+      config: {
+        runner: "claude",
+      },
+      source: "root-directory",
+      path: "/root/ral.json",
+    });
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await expect(
+      run({
+        workingDirectory: testDir,
+        maxIterations: 1,
+      })
+    ).rejects.toThrow();
+
+    const logs = consoleSpy.mock.calls.map((call) => call[0]);
+
+    // Should log config information
+    expect(logs).toContain("\n--- Configuration ---");
+    expect(logs).toContain("Config loaded from: /root/ral.json");
+    expect(logs).toContain("Runner: claude");
+
+    consoleSpy.mockRestore();
+  });
 });

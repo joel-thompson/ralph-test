@@ -41,6 +41,22 @@ export async function run(
   if (!runner) {
     const configResult = await loadConfig(workingDirectory, process.cwd());
     const config = configResult.config;
+
+    // Log config information
+    console.log("\n--- Configuration ---");
+    if (configResult.source === "default") {
+      console.log("Using default config (no ral.json found)");
+    } else if (configResult.source === "working-directory") {
+      console.log(`Config loaded from: ${configResult.path}`);
+    } else if (configResult.source === "root-directory") {
+      console.log(`Config loaded from: ${configResult.path}`);
+    }
+    console.log(`Runner: ${config.runner}`);
+    if (config.model) {
+      console.log(`Model: ${config.model}`);
+    }
+    console.log("");
+
     if (config.runner === "cursor") {
       runner = new CursorRunner(config.model);
     } else {
