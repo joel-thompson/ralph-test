@@ -138,6 +138,48 @@ The existing `run` / `scaffold` behavior must remain intact.
       "README.md"
     ],
     "passes": true
+  },
+  {
+    "category": "command",
+    "description": "Add per-attempt token/cost logging to run-json (match run)",
+    "steps": [
+      "In run-json, track cumulative totals for input/output/cache tokens and total cost across attempts (same fields as run)",
+      "After each runner call, log per-attempt token and cost stats when non-zero (Claude runner), otherwise log duration when available (Cursor runner)",
+      "Add/adjust unit tests to assert the stats logging happens for Claude responses that include usage/total_cost_usd"
+    ],
+    "files": [
+      "src/commands/run-json.ts",
+      "src/commands/run-json.test.ts"
+    ],
+    "passes": false
+  },
+  {
+    "category": "command",
+    "description": "Fix run-json loop logging so it never prints an extra attempt header after completion",
+    "steps": [
+      "Move the '--- Attempt X/Y ---' banner to after tasks.json is loaded and an incomplete task is selected (only print when we will actually attempt a task)",
+      "After a successful task completion + tasks.json save, immediately check if any tasks remain incomplete and exit 0 without starting another loop iteration",
+      "Add a regression test verifying the attempt banner count matches runner call count (no 'Attempt 4/10' when there are only 3 tasks)"
+    ],
+    "files": [
+      "src/commands/run-json.ts",
+      "src/commands/run-json.test.ts"
+    ],
+    "passes": false
+  },
+  {
+    "category": "templates",
+    "description": "Restore 'git commit per task' instruction in scaffold-json prompt template",
+    "steps": [
+      "Update PROMPT_JSON_TEMPLATE to instruct the agent to make one git commit per task (do not git init, do not change remotes, do not push)",
+      "Extend scaffold-json tests to assert prompt.md includes the git commit instruction",
+      "Note: existing scaffolded projects (e.g. features/json-test) will need their prompt.md updated or re-scaffolded with -f to pick up the new instruction"
+    ],
+    "files": [
+      "src/templates/index.ts",
+      "src/commands/scaffold-json.test.ts"
+    ],
+    "passes": false
   }
 ]
 ```
