@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-28
-**Tasks Completed:** 2
-**Current Task:** Task 2 complete - config logging in run command
+**Tasks Completed:** 3
+**Current Task:** Task 3 complete - config resolution path logging
 
 ---
 
@@ -67,3 +67,37 @@
 - Initially wrote test expectations without the "\n" prefix that console.log adds
 - Tests failed because the actual log output includes "\n--- Configuration ---" but tests were checking for "--- Configuration ---"
 - Fixed by updating all three test cases to expect the "\n" prefix in the configuration header
+
+### 2026-01-28 - Task 3: Add logging to show config resolution path when multiple configs exist
+
+**Task Description:** Add detailed logging messages in the `loadConfig` function to show the config resolution path. When working directory config exists, log its path. When only root directory config exists, log that working directory had no config. When no config exists, log that default config is being used.
+
+**Changes Made:**
+1. Modified `src/utils/config.ts` to add [debug] logging at all config resolution points:
+   - When working directory config is loaded: `[debug] Using config from {path}`
+   - When root directory config is loaded: `[debug] Config not found in working directory, using root config from {path}`
+   - When default config is used (two locations): `[debug] No ral.json found, using default config (runner: claude)`
+2. Updated `src/utils/config.test.ts` to verify logging behavior:
+   - Added console.log spy in beforeEach to mock console.log calls
+   - Added logging assertions to four existing test cases:
+     - Test for default config (no ral.json)
+     - Test for working directory config
+     - Test for root directory config (when working dir has no config)
+     - Test for default config (when neither directory has config)
+
+**Testing Results:**
+- All 93 tests passing (including 12 in config.test.ts)
+- Logging tests verify:
+  - Correct [debug] prefix is used (per user's CLAUDE.md instructions)
+  - Working directory config logs the full path
+  - Root directory fallback logs explanation message
+  - Default config logs clear message about no ral.json found
+- No regressions detected
+
+**Dependencies:**
+- No new dependencies installed
+
+**Problems/Lessons Learned:**
+- User's global CLAUDE.md instructions specify that debug logging should use `[debug]` prefix
+- All four logging paths needed to be tested to ensure complete coverage
+- The two different places where default config is returned (single directory vs both directories checked) both needed logging

@@ -11,6 +11,7 @@ vi.mock("fs/promises", () => ({
 describe("loadConfig", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, "log").mockImplementation(() => {});
   });
 
   it("should return default config when ral.json doesn't exist", async () => {
@@ -26,6 +27,7 @@ describe("loadConfig", () => {
       },
       source: "default",
     });
+    expect(console.log).toHaveBeenCalledWith("[debug] No ral.json found, using default config (runner: claude)");
   });
 
   it("should load valid config with claude runner", async () => {
@@ -44,6 +46,7 @@ describe("loadConfig", () => {
       path: "/test/dir/ral.json",
     });
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/dir/ral.json", "utf-8");
+    expect(console.log).toHaveBeenCalledWith("[debug] Using config from /test/dir/ral.json");
   });
 
   it("should load valid config with cursor runner and model", async () => {
@@ -191,6 +194,7 @@ describe("loadConfig", () => {
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/working/ral.json", "utf-8");
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/root/ral.json", "utf-8");
     expect(vi.mocked(readFile)).toHaveBeenCalledTimes(2);
+    expect(console.log).toHaveBeenCalledWith("[debug] Config not found in working directory, using root config from /test/root/ral.json");
   });
 
   it("should return default config when neither directory has ral.json", async () => {
@@ -210,5 +214,6 @@ describe("loadConfig", () => {
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/working/ral.json", "utf-8");
     expect(vi.mocked(readFile)).toHaveBeenCalledWith("/test/root/ral.json", "utf-8");
     expect(vi.mocked(readFile)).toHaveBeenCalledTimes(2);
+    expect(console.log).toHaveBeenCalledWith("[debug] No ral.json found, using default config (runner: claude)");
   });
 });

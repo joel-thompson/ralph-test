@@ -79,7 +79,7 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "When no config exists, log: 'No ral.json found, using default config (runner: claude)'",
       "Ensure error cases (invalid config) still show clear error messages"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "config-logging",
