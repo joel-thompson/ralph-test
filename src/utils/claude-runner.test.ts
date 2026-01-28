@@ -50,14 +50,17 @@ describe("DefaultClaudeRunner", () => {
       total_cost_usd: 0.01,
     };
 
-    it("should transform @ references when working directory is not current directory", async () => {
+    it("should transform @ references when working directory is not current directory (via promptPath)", async () => {
       const promptContent = "@plan.md @activity.md\n\nSome instructions here.";
       const workingDirectory = "features/auth";
 
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude("/path/to/prompt.md", workingDirectory);
+      await runner.runClaude({
+        promptPath: "/path/to/prompt.md",
+        workingDirectory,
+      });
 
       expect(vi.mocked(readFile)).toHaveBeenCalledWith("/path/to/prompt.md", "utf-8");
       expect(vi.mocked(spawn)).toHaveBeenCalledWith(
@@ -74,7 +77,10 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude("/path/to/prompt.md", workingDirectory);
+      await runner.runClaude({
+        promptPath: "/path/to/prompt.md",
+        workingDirectory,
+      });
 
       expect(vi.mocked(spawn)).toHaveBeenCalledWith(
         "claude",
@@ -90,7 +96,10 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude("/path/to/prompt.md", workingDirectory);
+      await runner.runClaude({
+        promptPath: "/path/to/prompt.md",
+        workingDirectory,
+      });
 
       expect(vi.mocked(spawn)).toHaveBeenCalledWith(
         "claude",
@@ -106,7 +115,10 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude("/path/to/prompt.md", workingDirectory);
+      await runner.runClaude({
+        promptPath: "/path/to/prompt.md",
+        workingDirectory,
+      });
 
       expect(vi.mocked(spawn)).toHaveBeenCalledWith(
         "claude",
@@ -122,7 +134,10 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude("/path/to/prompt.md", workingDirectory);
+      await runner.runClaude({
+        promptPath: "/path/to/prompt.md",
+        workingDirectory,
+      });
 
       // .md files transformed, .json not transformed
       expect(vi.mocked(spawn)).toHaveBeenCalledWith(
@@ -130,6 +145,46 @@ describe("DefaultClaudeRunner", () => {
         ["-p", "@features/auth/plan.md @features/auth/README.md @config.json", "--output-format", "json"],
         expect.any(Object)
       );
+    });
+
+    it("should accept promptContent instead of promptPath", async () => {
+      const promptContent = "@plan.md\n\nWork on this task.";
+      const workingDirectory = "features/auth";
+
+      createMockSpawn(validResponse);
+
+      await runner.runClaude({
+        promptContent,
+        workingDirectory,
+      });
+
+      // Should not call readFile when promptContent is provided
+      expect(vi.mocked(readFile)).not.toHaveBeenCalled();
+
+      // Should transform @ references in the provided content
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(
+        "claude",
+        ["-p", "@features/auth/plan.md\n\nWork on this task.", "--output-format", "json"],
+        expect.any(Object)
+      );
+    });
+
+    it("should throw error when both promptPath and promptContent are provided", async () => {
+      await expect(
+        runner.runClaude({
+          promptPath: "/path/to/prompt.md",
+          promptContent: "Some content",
+          workingDirectory: ".",
+        })
+      ).rejects.toThrow("Exactly one of promptPath or promptContent must be provided");
+    });
+
+    it("should throw error when neither promptPath nor promptContent are provided", async () => {
+      await expect(
+        runner.runClaude({
+          workingDirectory: ".",
+        })
+      ).rejects.toThrow("Exactly one of promptPath or promptContent must be provided");
     });
   });
 });

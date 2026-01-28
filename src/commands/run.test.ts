@@ -105,10 +105,10 @@ describe("run command", () => {
 
     // Verify Claude runner was called once
     expect(mockRunner.runClaude).toHaveBeenCalledTimes(1);
-    expect(mockRunner.runClaude).toHaveBeenCalledWith(
-      path.join(testDir, "prompt.md"),
-      testDir
-    );
+    expect(mockRunner.runClaude).toHaveBeenCalledWith({
+      promptPath: path.join(testDir, "prompt.md"),
+      workingDirectory: testDir,
+    });
   });
 
   it("should run loop and exit with code 1 when max iterations reached", async () => {
