@@ -14,8 +14,14 @@ export interface AgentResponse {
   duration_ms?: number;
 }
 
+export interface RunClaudeOptions {
+  promptPath?: string;
+  promptContent?: string;
+  workingDirectory: string;
+}
+
 export interface AgentRunner {
-  runClaude(promptPath: string, workingDirectory: string): Promise<AgentResponse>;
+  runClaude(options: RunClaudeOptions): Promise<AgentResponse>;
 }
 
 /**
@@ -26,16 +32,28 @@ export function transformFileReferences(content: string, workingDirectory: strin
   if (workingDirectory !== "." && workingDirectory !== "./") {
     // Normalize working directory by removing trailing slashes
     const normalizedDir = workingDirectory.replace(/\/+$/, "");
-    // Replace @filename.md with @workingDirectory/filename.md
-    return content.replace(/@(\S+\.md)/g, `@${normalizedDir}/$1`);
+    // Replace @filename.md and @filename.json with @workingDirectory/filename.md and @workingDirectory/filename.json
+    return content.replace(/@(\S+\.(?:md|json))/g, `@${normalizedDir}/$1`);
   }
   return content;
 }
 
 export class DefaultClaudeRunner implements AgentRunner {
-  async runClaude(promptPath: string, workingDirectory: string): Promise<AgentResponse> {
-    // Read the prompt file
-    let promptContent = await readFile(promptPath, "utf-8");
+  async runClaude(options: RunClaudeOptions): Promise<AgentResponse> {
+    const { promptPath, promptContent: providedContent, workingDirectory } = options;
+
+    // Exactly one of promptPath or promptContent must be provided
+    if ((promptPath && providedContent) || (!promptPath && !providedContent)) {
+      throw new Error("Exactly one of promptPath or promptContent must be provided");
+    }
+
+    // Get the prompt content either from file or directly
+    let promptContent: string;
+    if (promptPath) {
+      promptContent = await readFile(promptPath, "utf-8");
+    } else {
+      promptContent = providedContent!;
+    }
 
     // Transform @ file references to include working directory
     promptContent = transformFileReferences(promptContent, workingDirectory);

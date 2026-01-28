@@ -1,0 +1,32 @@
+[
+  {
+    "category": "poetry",
+    "description": "Write poem 1 and save it to features/json-test/poem-1.md",
+    "steps": [
+      "Create a new file at features/json-test/poem-1.md",
+      "Write one complete poem (distinct theme/voice/imagery)",
+      "Confirm the poem is only in poem-1.md (do not overwrite other poems)"
+    ],
+    "passes": true
+  },
+  {
+    "category": "poetry",
+    "description": "Write poem 2 and save it to features/json-test/poem-2.md",
+    "steps": [
+      "Create a new file at features/json-test/poem-2.md",
+      "Write one complete poem that is clearly different from poem 1 (change theme/structure)",
+      "Confirm the poem is only in poem-2.md (do not overwrite other poems)"
+    ],
+    "passes": true
+  },
+  {
+    "category": "poetry",
+    "description": "Write poem 3 and save it to features/json-test/poem-3.md",
+    "steps": [
+      "Create a new file at features/json-test/poem-3.md",
+      "Write one complete poem that is clearly different from poems 1 and 2",
+      "Confirm the poem is only in poem-3.md (do not overwrite other poems)"
+    ],
+    "passes": true
+  }
+]
