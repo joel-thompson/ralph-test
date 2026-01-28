@@ -67,7 +67,7 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "Optionally show duration_ms for Cursor runs instead",
       "Update run.test.ts with tests for runner selection based on config"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "testing",

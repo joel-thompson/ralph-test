@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-01-27
-**Tasks Completed:** 3
-**Current Task:** Task 3 - CursorRunner complete
+**Tasks Completed:** 4
+**Current Task:** Task 4 - Integration complete
 
 ---
 
@@ -87,3 +87,40 @@
 - CursorRunner properly handles the different JSON response format from Cursor CLI
 - Error handling uses is_error and subtype fields specific to Cursor's response structure
 - Setting usage/cost to 0 allows the same interface while acknowledging Cursor doesn't provide these metrics
+
+### 2026-01-27 - Task 4: Update run command to support config-based runner selection
+
+**Changes Made:**
+- Imported `loadConfig` and `CursorRunner` in src/commands/run.ts:7-8
+- Modified run function signature to make runner parameter optional: `runner?: AgentRunner` in src/commands/run.ts:32
+- Added config loading and runner selection logic at the start of run function after directory validation in src/commands/run.ts:40-47
+  - Loads config from working directory using `loadConfig(workingDirectory)`
+  - Selects `CursorRunner` with config.model when `config.runner === "cursor"`
+  - Defaults to `DefaultClaudeRunner` when `config.runner === "claude"`
+- Updated stats display logic to conditionally show token/cost stats in src/commands/run.ts:96-114
+  - Checks if usage values are non-zero using `hasTokenStats` flag
+  - Shows token/cost stats only when `hasTokenStats` is true (Claude mode)
+  - Shows duration_ms when token stats are zero but duration is available (Cursor mode)
+- Added config module mock to src/commands/run.test.ts:6,15-18
+- Fixed "should validate required files exist" test to mock loadConfig in src/commands/run.test.ts:55-58
+- Added 4 new integration tests in src/commands/run.test.ts:287-440
+  - "should use DefaultClaudeRunner when config specifies claude runner" - verifies config doesn't interfere when explicit runner provided
+  - "should use CursorRunner when config specifies cursor runner" - verifies config loading is called
+  - "should skip token/cost display when usage is zero (Cursor mode)" - verifies zero usage hides token/cost stats and shows duration
+  - "should show token/cost stats when usage is non-zero (Claude mode)" - verifies non-zero usage shows token/cost stats and hides duration
+
+**Testing and Verification:**
+- Ran full test suite with `npm test`
+- All 86 tests passed successfully (4 new integration tests added)
+- Test files: 10 passed (10)
+- Tests cover: config loading, runner selection, conditional stats display for both Claude and Cursor modes
+- Verified backward compatibility: when runner is explicitly provided, config loading is skipped
+
+**Dependencies:**
+- No new dependencies installed
+
+**Lessons Learned:**
+- Making runner parameter optional allows for both explicit runner injection (for testing) and automatic runner selection (for production)
+- Conditional stats display based on usage values (not runner type) makes the code more flexible and testable
+- The integration seamlessly supports both Claude and Cursor backends while maintaining backward compatibility
+- Mocking config in tests ensures tests don't depend on filesystem state

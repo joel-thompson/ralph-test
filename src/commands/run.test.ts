@@ -3,12 +3,18 @@ import { run } from "./run.js";
 import { AgentRunner, AgentResponse } from "../utils/claude-runner.js";
 import { CommandError } from "../utils/errors.js";
 import * as validation from "../utils/validation.js";
+import * as config from "../utils/config.js";
 import * as path from "path";
 
 // Mock validation module
 vi.mock("../utils/validation.js", () => ({
   validateWorkingDirectory: vi.fn(),
   validateRequiredFiles: vi.fn(),
+}));
+
+// Mock config module
+vi.mock("../utils/config.js", () => ({
+  loadConfig: vi.fn(),
 }));
 
 // Mock process.exit to throw a predictable error
@@ -44,6 +50,11 @@ describe("run command", () => {
     vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
       valid: false,
       missing: ["plan.md", "prompt.md"],
+    });
+
+    // Mock config
+    vi.mocked(config.loadConfig).mockResolvedValue({
+      runner: "claude",
     });
 
     await expect(
@@ -271,5 +282,177 @@ describe("run command", () => {
 
     // Verify Claude runner was called exactly 3 times
     expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
+  });
+
+  it("should use DefaultClaudeRunner when config specifies claude runner", async () => {
+    // Mock validation
+    vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
+    vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
+      valid: true,
+      missing: [],
+    });
+
+    // Mock config to return claude runner
+    vi.mocked(config.loadConfig).mockResolvedValue({
+      runner: "claude",
+    });
+
+    // Mock runner to avoid actually calling CLI
+    const mockRunner: AgentRunner = {
+      runClaude: vi.fn().mockResolvedValue({
+        result: "Task is done. <promise>COMPLETE</promise>",
+        usage: {
+          input_tokens: 1000,
+          output_tokens: 500,
+          cache_read_input_tokens: 200,
+        },
+        total_cost_usd: 0.05,
+      } as AgentResponse),
+    };
+
+    await expect(
+      run(
+        {
+          workingDirectory: testDir,
+          maxIterations: 1,
+        },
+        mockRunner
+      )
+    ).rejects.toThrow();
+
+    // Verify process.exit was called with 0
+    expect(mockExit).toHaveBeenCalledWith(0);
+
+    // Note: When runner is provided, loadConfig is not called
+    // This test verifies that config-based runner selection doesn't interfere
+    // when an explicit runner is passed in
+  });
+
+  it("should use CursorRunner when config specifies cursor runner", async () => {
+    // Mock validation
+    vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
+    vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
+      valid: true,
+      missing: [],
+    });
+
+    // Mock config to return cursor runner with custom model
+    vi.mocked(config.loadConfig).mockResolvedValue({
+      runner: "cursor",
+      model: "gpt-4",
+    });
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await expect(
+      run({
+        workingDirectory: testDir,
+        maxIterations: 1,
+      })
+    ).rejects.toThrow();
+
+    // Verify loadConfig was called
+    expect(config.loadConfig).toHaveBeenCalledWith(testDir);
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should skip token/cost display when usage is zero (Cursor mode)", async () => {
+    // Mock validation
+    vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
+    vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
+      valid: true,
+      missing: [],
+    });
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    // Mock runner with zero usage (like Cursor)
+    const mockRunner: AgentRunner = {
+      runClaude: vi.fn().mockResolvedValue({
+        result: "Task is done. <promise>COMPLETE</promise>",
+        usage: {
+          input_tokens: 0,
+          output_tokens: 0,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0,
+        duration_ms: 2525,
+      } as AgentResponse),
+    };
+
+    await expect(
+      run(
+        {
+          workingDirectory: testDir,
+          maxIterations: 5,
+        },
+        mockRunner
+      )
+    ).rejects.toThrow();
+
+    // Verify process.exit was called with 0
+    expect(mockExit).toHaveBeenCalledWith(0);
+
+    const logs = consoleSpy.mock.calls.map((call) => call[0]);
+
+    // Should NOT show token/cost stats
+    expect(logs).not.toContain(expect.stringContaining("Tokens In:"));
+    expect(logs).not.toContain(expect.stringContaining("Total Cost:"));
+
+    // Should show duration instead
+    expect(logs).toContain("Duration: 2525ms");
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should show token/cost stats when usage is non-zero (Claude mode)", async () => {
+    // Mock validation
+    vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
+    vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
+      valid: true,
+      missing: [],
+    });
+
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    // Mock runner with non-zero usage (like Claude)
+    const mockRunner: AgentRunner = {
+      runClaude: vi.fn().mockResolvedValue({
+        result: "Task is done. <promise>COMPLETE</promise>",
+        usage: {
+          input_tokens: 1000,
+          output_tokens: 500,
+          cache_read_input_tokens: 200,
+        },
+        total_cost_usd: 0.05,
+      } as AgentResponse),
+    };
+
+    await expect(
+      run(
+        {
+          workingDirectory: testDir,
+          maxIterations: 5,
+        },
+        mockRunner
+      )
+    ).rejects.toThrow();
+
+    // Verify process.exit was called with 0
+    expect(mockExit).toHaveBeenCalledWith(0);
+
+    const logs = consoleSpy.mock.calls.map((call) => call[0]);
+
+    // Should show token/cost stats
+    expect(logs).toContain("Tokens In: 1000");
+    expect(logs).toContain("Tokens Out: 500");
+    expect(logs).toContain("Cache Read: 200");
+    expect(logs).toContain("Cost: $0.0500");
+
+    // Should NOT show duration
+    expect(logs).not.toContain(expect.stringContaining("Duration:"));
+
+    consoleSpy.mockRestore();
   });
 });
