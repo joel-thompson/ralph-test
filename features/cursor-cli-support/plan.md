@@ -10,6 +10,8 @@ Default model for Cursor: `composer-1`
 
 ## Task List
 
+IMPORTANT: Only work on one task! Exit the session after finishing a single task!
+
 ```json
 [
   {
