@@ -115,6 +115,17 @@ IMPORTANT: Only work on one task! Exit the session after finishing a single task
       "The poem should reflect on what it's like to be an AI assistant"
     ],
     "passes": true
+  },
+  {
+    "category": "testing",
+    "description": "Smoke test: create a signed haiku file",
+    "steps": [
+      "Create a file called haiku.md in the working directory",
+      "Write a haiku about being an AI assistant",
+      "IMPORTANT: Include your model name (e.g. claude-3.5-sonnet, composer-1, etc.) somewhere in the file",
+      "Sign it with the model name at the bottom"
+    ],
+    "passes": true
   }
 ]
 ```

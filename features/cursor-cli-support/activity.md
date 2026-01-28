@@ -249,3 +249,25 @@
 **Lessons Learned:**
 - Simple file creation tasks provide a good smoke test to verify basic file system operations work correctly
 - The poem serves as a creative checkpoint in the development process
+
+### 2026-01-27 - Task 9: Smoke test - create a signed haiku file
+
+**Changes Made:**
+- Created haiku.md in the working directory at /Users/Joel/src/ralph-test/haiku.md
+- Wrote a haiku about being an AI assistant
+- Included model name "claude-sonnet-4-5-20250929 (Claude Sonnet 4.5)" in the file
+- Signed the haiku with the model name at the bottom
+
+**Testing and Verification:**
+- Verified file exists at /Users/Joel/src/ralph-test/haiku.md
+- Confirmed content contains a proper haiku (5-7-5 syllable structure)
+- Verified model name is clearly displayed in the signature
+- File is readable and properly formatted with markdown
+
+**Dependencies:**
+- No dependencies involved
+
+**Lessons Learned:**
+- The haiku follows traditional 5-7-5 syllable structure while capturing themes of AI assistance
+- Including the full model ID provides clear attribution and version tracking
+- This smoke test verifies file creation works correctly and completes the test suite
