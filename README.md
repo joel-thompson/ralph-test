@@ -531,25 +531,51 @@ pnpm install
 pnpm build
 ```
 
-### 2. Make `ral` Command Available
+### 2. Make `ral` Command Available Globally
 
-**Option 1: pnpm link (Recommended)**
+**Option 1: pnpm link (Recommended for Development)**
+
+This creates a global symlink so `ral` works from anywhere and automatically picks up your local changes:
+
 ```bash
-pnpm link --global
+# From the project directory
+cd /Users/Joel/src/ralph-test
+pnpm build                    # Build first
+pnpm link --global           # Create global symlink
 ```
-Auto-updates when you rebuild. Run from project directory.
+
+**Verify it works:**
+```bash
+# Test from anywhere
+cd ~/some-other-project
+ral --version                # Should show version
+ral scaffold                 # Should work!
+```
+
+**Development Workflow:**
+When you make changes to the CLI:
+1. Edit source files in `src/`
+2. Run `pnpm build` to rebuild
+3. Changes are immediately available (symlink points to updated `dist/index.js`)
+
+**Unlink when done:**
+```bash
+pnpm unlink --global
+```
 
 **Option 2: Shell Alias**
 ```bash
 # Add to .zshrc or .bashrc
 alias ral='/absolute/path/to/ralph-test/dist/index.js'
 ```
+Note: Requires manual rebuild after changes.
 
 **Option 3: Add to PATH**
 ```bash
 # Add to .zshrc or .bashrc
 export PATH="/absolute/path/to/ralph-test/dist:$PATH"
 ```
+Note: Requires manual rebuild after changes.
 
 ### 3. Development Commands
 
