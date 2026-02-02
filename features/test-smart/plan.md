@@ -23,4 +23,25 @@ ral run-json -m 1 -w ./features/test-smart
 
 ## Quick control (optional)
 
-To confirm the difference versus non-smart behavior, temporarily change `features/test-smart/ral.json` to omit `taskSelection` (or set it to `"first-incomplete"`). Then `ral run-json` should select task **1/3** (the documentation task) because it falls back to “first incomplete”.
+To confirm the difference versus non-smart behavior, temporarily change `features/test-smart/ral.json` to omit `taskSelection` (or set it to `"first-incomplete"`). Then `ral run-json` should select task **1/3** (the documentation task) because it falls back to "first incomplete".
+
+## Running the demo script
+
+Once all tasks are complete, you can run the demo script directly:
+
+```bash
+node features/test-smart/demo.mjs
+```
+
+Expected output:
+
+```
+=== Demo Script Summary ===
+Total lines: 9
+Min line length filter: 3
+Lines passing filter: 9
+Average length of filtered lines: 40 characters
+===========================
+```
+
+The script reads `demo-input.txt` and `demo-config.json`, filters lines based on the minimum length configuration, and prints deterministic summary statistics.

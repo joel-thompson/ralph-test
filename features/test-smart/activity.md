@@ -47,3 +47,17 @@ Average length of filtered lines: 40 characters
 
 **Verification:**
 Script runs successfully with deterministic output. All 9 lines in demo-input.txt pass the minimum length filter of 3 characters.
+
+---
+
+### 2026-02-02 - Documentation Task Completed
+
+**Task:** Write a short 'How to run' note for this demo (after setup + implementation)
+
+**Changes Made:**
+- Added "Running the demo script" section to `features/test-smart/plan.md` with usage instructions
+- Included expected output example showing the demo script's deterministic summary
+- Documented that the script reads demo-input.txt and demo-config.json to produce statistics
+
+**Verification:**
+Ran `node features/test-smart/demo.mjs` to confirm the documented output matches actual script behavior. The script successfully processes 9 lines with a minimum length filter of 3 characters and outputs deterministic statistics.
