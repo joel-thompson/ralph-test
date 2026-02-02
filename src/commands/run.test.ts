@@ -78,7 +78,7 @@ describe("run command", () => {
 
     // Mock Claude runner
     const mockRunner: AgentRunner = {
-      runClaude: vi.fn().mockResolvedValue({
+      runAgent: vi.fn().mockResolvedValue({
         result: "Task is done. <promise>COMPLETE</promise>",
         usage: {
           input_tokens: 1000,
@@ -104,8 +104,8 @@ describe("run command", () => {
     expect(mockExit).toHaveBeenCalledWith(0);
 
     // Verify Claude runner was called once
-    expect(mockRunner.runClaude).toHaveBeenCalledTimes(1);
-    expect(mockRunner.runClaude).toHaveBeenCalledWith({
+    expect(mockRunner.runAgent).toHaveBeenCalledTimes(1);
+    expect(mockRunner.runAgent).toHaveBeenCalledWith({
       promptPath: path.join(testDir, "prompt.md"),
       workingDirectory: testDir,
     });
@@ -121,7 +121,7 @@ describe("run command", () => {
 
     // Mock Claude runner (never returns COMPLETE)
     const mockRunner: AgentRunner = {
-      runClaude: vi.fn().mockResolvedValue({
+      runAgent: vi.fn().mockResolvedValue({
         result: "Still working on it...",
         usage: {
           input_tokens: 1000,
@@ -147,7 +147,7 @@ describe("run command", () => {
     expect(mockExit).toHaveBeenCalledWith(1);
 
     // Verify Claude runner was called 3 times
-    expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
+    expect(mockRunner.runAgent).toHaveBeenCalledTimes(3);
   });
 
   it("should track cumulative stats across iterations", async () => {
@@ -163,7 +163,7 @@ describe("run command", () => {
     // Mock Claude runner with different stats for each iteration
     let callCount = 0;
     const mockRunner: AgentRunner = {
-      runClaude: vi.fn().mockImplementation(async () => {
+      runAgent: vi.fn().mockImplementation(async () => {
         callCount++;
         return {
           result: "Working...",
@@ -219,7 +219,7 @@ describe("run command", () => {
 
     // Mock Claude runner that throws an error
     const mockRunner: AgentRunner = {
-      runClaude: vi.fn().mockRejectedValue(new Error("Claude CLI failed")),
+      runAgent: vi.fn().mockRejectedValue(new Error("Claude CLI failed")),
     };
 
     await expect(
@@ -244,7 +244,7 @@ describe("run command", () => {
     // Mock Claude runner that returns COMPLETE on 3rd iteration
     let callCount = 0;
     const mockRunner: AgentRunner = {
-      runClaude: vi.fn().mockImplementation(async () => {
+      runAgent: vi.fn().mockImplementation(async () => {
         callCount++;
         if (callCount === 3) {
           return {
@@ -284,7 +284,7 @@ describe("run command", () => {
     expect(mockExit).toHaveBeenCalledWith(0);
 
     // Verify Claude runner was called exactly 3 times
-    expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
+    expect(mockRunner.runAgent).toHaveBeenCalledTimes(3);
   });
 
   it("should use DefaultClaudeRunner when config specifies claude runner", async () => {
@@ -305,7 +305,7 @@ describe("run command", () => {
 
     // Mock runner to avoid actually calling CLI
     const mockRunner: AgentRunner = {
-      runClaude: vi.fn().mockResolvedValue({
+      runAgent: vi.fn().mockResolvedValue({
         result: "Task is done. <promise>COMPLETE</promise>",
         usage: {
           input_tokens: 1000,
@@ -379,7 +379,7 @@ describe("run command", () => {
 
     // Mock runner with zero usage (like Cursor)
     const mockRunner: AgentRunner = {
-      runClaude: vi.fn().mockResolvedValue({
+      runAgent: vi.fn().mockResolvedValue({
         result: "Task is done. <promise>COMPLETE</promise>",
         usage: {
           input_tokens: 0,
@@ -428,7 +428,7 @@ describe("run command", () => {
 
     // Mock runner with non-zero usage (like Claude)
     const mockRunner: AgentRunner = {
-      runClaude: vi.fn().mockResolvedValue({
+      runAgent: vi.fn().mockResolvedValue({
         result: "Task is done. <promise>COMPLETE</promise>",
         usage: {
           input_tokens: 1000,
@@ -596,10 +596,10 @@ describe("run command", () => {
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    // Mock CursorRunner.runClaude to return completion
+    // Mock CursorRunner.runAgent to return completion
     const CursorRunner = await import("../utils/cursor-runner.js");
-    const runClaudeSpy = vi
-      .spyOn(CursorRunner.CursorRunner.prototype, "runClaude")
+    const runAgentSpy = vi
+      .spyOn(CursorRunner.CursorRunner.prototype, "runAgent")
       .mockResolvedValue({
         result: "Task is done. <promise>COMPLETE</promise>",
         usage: {
@@ -627,7 +627,7 @@ describe("run command", () => {
       "Config source: working directory (/test/dir/ral.json)"
     );
 
-    runClaudeSpy.mockRestore();
+    runAgentSpy.mockRestore();
     consoleSpy.mockRestore();
   });
 
@@ -649,10 +649,10 @@ describe("run command", () => {
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    // Mock DefaultClaudeRunner.runClaude to never complete
+    // Mock DefaultClaudeRunner.runAgent to never complete
     const ClaudeRunner = await import("../utils/claude-runner.js");
-    const runClaudeSpy = vi
-      .spyOn(ClaudeRunner.DefaultClaudeRunner.prototype, "runClaude")
+    const runAgentSpy = vi
+      .spyOn(ClaudeRunner.DefaultClaudeRunner.prototype, "runAgent")
       .mockResolvedValue({
         result: "Still working...",
         usage: {
@@ -677,7 +677,7 @@ describe("run command", () => {
     expect(logs).toContain("Runner: claude");
     expect(logs).toContain("Config source: default");
 
-    runClaudeSpy.mockRestore();
+    runAgentSpy.mockRestore();
     consoleSpy.mockRestore();
   });
 
@@ -700,10 +700,10 @@ describe("run command", () => {
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-    // Mock DefaultClaudeRunner.runClaude to throw an error
+    // Mock DefaultClaudeRunner.runAgent to throw an error
     const ClaudeRunner = await import("../utils/claude-runner.js");
-    const runClaudeSpy = vi
-      .spyOn(ClaudeRunner.DefaultClaudeRunner.prototype, "runClaude")
+    const runAgentSpy = vi
+      .spyOn(ClaudeRunner.DefaultClaudeRunner.prototype, "runAgent")
       .mockRejectedValue(new Error("Claude CLI failed"));
 
     await expect(
@@ -720,7 +720,7 @@ describe("run command", () => {
     expect(logs).toContain("Runner: claude");
     expect(logs).toContain("Config source: root directory (/root/ral.json)");
 
-    runClaudeSpy.mockRestore();
+    runAgentSpy.mockRestore();
     consoleSpy.mockRestore();
   });
 });

@@ -273,7 +273,7 @@ export async function runJson(
     // Call runner with prompt content
     let response;
     try {
-      response = await runner.runClaude({
+      response = await runner.runAgent({
         promptContent,
         workingDirectory,
       });

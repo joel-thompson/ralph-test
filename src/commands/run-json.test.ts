@@ -9,7 +9,7 @@ import {
   Task,
 } from "./run-json.js";
 import { FileSystem } from "../utils/file-helpers.js";
-import type { AgentRunner, ClaudeResponse } from "../utils/claude-runner.js";
+import type { AgentRunner, AgentResponse } from "../utils/claude-runner.js";
 
 class MockFileSystem implements FileSystem {
   private files: Map<string, string> = new Map();
@@ -498,7 +498,7 @@ Do not edit tasks.json`;
       mockFs.setFile("/test/tasks.json", JSON.stringify(completeTasks, null, 2));
 
       mockRunner = {
-        runClaude: vi.fn(),
+        runAgent: vi.fn(),
       };
 
       await runJson(
@@ -508,7 +508,7 @@ Do not edit tasks.json`;
       );
 
       expect(mockExit).toHaveBeenCalledWith(0);
-      expect(mockRunner.runClaude).not.toHaveBeenCalled();
+      expect(mockRunner.runAgent).not.toHaveBeenCalled();
     });
 
     it("should mark task complete and persist when <promise>success</promise> is found", async () => {
@@ -523,7 +523,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Task completed successfully. <promise>success</promise>",
         usage: {
           input_tokens: 100,
@@ -534,7 +534,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -544,8 +544,8 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner with promptContent
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(1);
-      expect(mockRunner.runClaude).toHaveBeenCalledWith({
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(1);
+      expect(mockRunner.runAgent).toHaveBeenCalledWith({
         promptContent: expect.stringContaining("Setup project"),
         workingDirectory: "/test",
       });
@@ -570,7 +570,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Task not completed yet.",
         usage: {
           input_tokens: 100,
@@ -581,7 +581,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -591,7 +591,7 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner twice (retrying same task)
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(2);
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(2);
 
       // Task should still be incomplete
       const savedTasks = JSON.parse(mockFs.getFile("/test/tasks.json")!);
@@ -619,7 +619,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const successResponse: ClaudeResponse = {
+      const successResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 100,
@@ -630,7 +630,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(successResponse),
+        runAgent: vi.fn().mockResolvedValue(successResponse),
       };
 
       await runJson(
@@ -640,16 +640,16 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner twice (once per task)
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(2);
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(2);
 
       // First call should be for task 1
-      expect(mockRunner.runClaude).toHaveBeenNthCalledWith(1, {
+      expect(mockRunner.runAgent).toHaveBeenNthCalledWith(1, {
         promptContent: expect.stringContaining("Task 1"),
         workingDirectory: "/test",
       });
 
       // Second call should be for task 2
-      expect(mockRunner.runClaude).toHaveBeenNthCalledWith(2, {
+      expect(mockRunner.runAgent).toHaveBeenNthCalledWith(2, {
         promptContent: expect.stringContaining("Task 2"),
         workingDirectory: "/test",
       });
@@ -681,7 +681,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Not done yet.",
         usage: {
           input_tokens: 100,
@@ -692,7 +692,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -702,11 +702,11 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner 3 times (max attempts)
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(3);
 
       // All calls should be for task 1 (never completed)
       for (let i = 1; i <= 3; i++) {
-        expect(mockRunner.runClaude).toHaveBeenNthCalledWith(i, {
+        expect(mockRunner.runAgent).toHaveBeenNthCalledWith(i, {
           promptContent: expect.stringContaining("Task 1"),
           workingDirectory: "/test",
         });
@@ -726,7 +726,7 @@ Do not edit tasks.json`;
       mockFs.setFile("/test/plan.md", "# Plan");
 
       mockRunner = {
-        runClaude: vi.fn(),
+        runAgent: vi.fn(),
       };
 
       await expect(
@@ -741,7 +741,7 @@ Do not edit tasks.json`;
       mockFs.setFile("/test/tasks.json", "invalid json {");
 
       mockRunner = {
-        runClaude: vi.fn(),
+        runAgent: vi.fn(),
       };
 
       await expect(
@@ -767,7 +767,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const successResponse: ClaudeResponse = {
+      const successResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 100,
@@ -778,7 +778,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(successResponse),
+        runAgent: vi.fn().mockResolvedValue(successResponse),
       };
 
       await runJson(
@@ -807,7 +807,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 1500,
@@ -818,7 +818,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -853,7 +853,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 0,
@@ -865,7 +865,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -900,7 +900,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse1: ClaudeResponse = {
+      const mockResponse1: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 1000,
@@ -910,7 +910,7 @@ Do not edit tasks.json`;
         total_cost_usd: 0.01,
       };
 
-      const mockResponse2: ClaudeResponse = {
+      const mockResponse2: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 2000,
@@ -921,7 +921,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn()
+        runAgent: vi.fn()
           .mockResolvedValueOnce(mockResponse1)
           .mockResolvedValueOnce(mockResponse2),
       };
@@ -971,7 +971,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const successResponse: ClaudeResponse = {
+      const successResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 100,
@@ -982,7 +982,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(successResponse),
+        runAgent: vi.fn().mockResolvedValue(successResponse),
       };
 
       await runJson(
@@ -992,7 +992,7 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner exactly 3 times (once per task)
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(3);
 
       // Count how many times the attempt banner was logged
       const attemptBannerCalls = mockConsoleLog.mock.calls.filter(

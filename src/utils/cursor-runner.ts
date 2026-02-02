@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import { readFile } from "fs/promises";
-import { AgentRunner, AgentResponse, RunClaudeOptions } from "./claude-runner";
+import { AgentRunner, AgentResponse, RunAgentOptions } from "./claude-runner";
 
 /**
  * Transform @ file references to include working directory path.
@@ -23,7 +23,7 @@ export class CursorRunner implements AgentRunner {
     this.model = model;
   }
 
-  async runClaude(options: RunClaudeOptions): Promise<AgentResponse> {
+  async runAgent(options: RunAgentOptions): Promise<AgentResponse> {
     const { promptPath, promptContent: providedContent, workingDirectory } = options;
 
     // Exactly one of promptPath or promptContent must be provided

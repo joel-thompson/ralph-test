@@ -14,14 +14,14 @@ export interface AgentResponse {
   duration_ms?: number;
 }
 
-export interface RunClaudeOptions {
+export interface RunAgentOptions {
   promptPath?: string;
   promptContent?: string;
   workingDirectory: string;
 }
 
 export interface AgentRunner {
-  runClaude(options: RunClaudeOptions): Promise<AgentResponse>;
+  runAgent(options: RunAgentOptions): Promise<AgentResponse>;
 }
 
 /**
@@ -39,7 +39,7 @@ export function transformFileReferences(content: string, workingDirectory: strin
 }
 
 export class DefaultClaudeRunner implements AgentRunner {
-  async runClaude(options: RunClaudeOptions): Promise<AgentResponse> {
+  async runAgent(options: RunAgentOptions): Promise<AgentResponse> {
     const { promptPath, promptContent: providedContent, workingDirectory } = options;
 
     // Exactly one of promptPath or promptContent must be provided

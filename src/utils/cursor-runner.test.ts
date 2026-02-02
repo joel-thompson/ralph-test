@@ -52,7 +52,7 @@ describe("CursorRunner", () => {
     vi.mocked(readFile).mockResolvedValue(promptContent);
     createMockSpawn(validResponse);
 
-    await runner.runClaude({
+    await runner.runAgent({
       promptPath: "/path/to/prompt.md",
       workingDirectory: ".",
     });
@@ -76,7 +76,7 @@ describe("CursorRunner", () => {
     vi.mocked(readFile).mockResolvedValue(promptContent);
     createMockSpawn(validResponse);
 
-    await customRunner.runClaude({
+    await customRunner.runAgent({
       promptPath: "/path/to/prompt.md",
       workingDirectory: ".",
     });
@@ -99,7 +99,7 @@ describe("CursorRunner", () => {
     vi.mocked(readFile).mockResolvedValue(promptContent);
     createMockSpawn(validResponse);
 
-    const response = await runner.runClaude({
+    const response = await runner.runAgent({
       promptPath: "/path/to/prompt.md",
       workingDirectory: ".",
     });
@@ -126,7 +126,7 @@ describe("CursorRunner", () => {
     vi.mocked(readFile).mockResolvedValue(promptContent);
     createMockSpawn(validResponse);
 
-    await runner.runClaude({
+    await runner.runAgent({
       promptPath: "/path/to/prompt.md",
       workingDirectory: "features/auth",
     });
@@ -156,7 +156,7 @@ describe("CursorRunner", () => {
     vi.mocked(readFile).mockResolvedValue(promptContent);
     createMockSpawn(validResponse);
 
-    await runner.runClaude({
+    await runner.runAgent({
       promptPath: "/path/to/prompt.md",
       workingDirectory: "features/auth",
     });
@@ -186,7 +186,7 @@ describe("CursorRunner", () => {
     vi.mocked(readFile).mockResolvedValue(promptContent);
     createMockSpawn(validResponse);
 
-    await runner.runClaude({
+    await runner.runAgent({
       promptPath: "/path/to/prompt.md",
       workingDirectory: "features/auth",
     });
@@ -218,7 +218,7 @@ describe("CursorRunner", () => {
     createMockSpawn(errorResponse);
 
     await expect(
-      runner.runClaude({
+      runner.runAgent({
         promptPath: "/path/to/prompt.md",
         workingDirectory: ".",
       })
@@ -235,7 +235,7 @@ describe("CursorRunner", () => {
     createMockSpawn(invalidResponse);
 
     await expect(
-      runner.runClaude({
+      runner.runAgent({
         promptPath: "/path/to/prompt.md",
         workingDirectory: ".",
       })
@@ -260,7 +260,7 @@ describe("CursorRunner", () => {
     });
 
     await expect(
-      runner.runClaude({
+      runner.runAgent({
         promptPath: "/path/to/prompt.md",
         workingDirectory: ".",
       })
@@ -276,7 +276,7 @@ describe("CursorRunner", () => {
 
     createMockSpawn(validResponse);
 
-    await runner.runClaude({
+    await runner.runAgent({
       promptContent,
       workingDirectory: "features/auth",
     });
@@ -302,7 +302,7 @@ describe("CursorRunner", () => {
 
   it("should throw error when both promptPath and promptContent are provided", async () => {
     await expect(
-      runner.runClaude({
+      runner.runAgent({
         promptPath: "/path/to/prompt.md",
         promptContent: "Some content",
         workingDirectory: ".",
@@ -312,7 +312,7 @@ describe("CursorRunner", () => {
 
   it("should throw error when neither promptPath nor promptContent are provided", async () => {
     await expect(
-      runner.runClaude({
+      runner.runAgent({
         workingDirectory: ".",
       })
     ).rejects.toThrow("Exactly one of promptPath or promptContent must be provided");
