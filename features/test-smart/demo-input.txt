@@ -1,0 +1,9 @@
+Welcome to the smart task selection demo
+This file contains sample text for testing
+Each line represents a different data point
+Some lines are short
+Others are considerably longer and more detailed
+The demo script will analyze this content
+It will filter lines based on the minimum length configuration
+Finally it will produce a deterministic summary
+End of sample data
