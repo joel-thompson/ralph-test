@@ -1,0 +1,32 @@
+[
+  {
+    "category": "documentation",
+    "description": "Write a short 'How to run' note for this demo (after setup + implementation)",
+    "steps": [
+      "Update features/test-smart/plan.md with a short 'How to run' section and an example of expected output",
+      "Add a brief entry to features/test-smart/activity.md describing what you documented",
+      "Run the demo script (created in the implementation task) to confirm the docs match reality"
+    ],
+    "passes": false
+  },
+  {
+    "category": "setup",
+    "description": "Create the demo input artifacts required by later tasks",
+    "steps": [
+      "Create features/test-smart/demo-input.txt with 5-10 lines of sample text",
+      "Create features/test-smart/demo-config.json with a small JSON config (e.g. {\"minLineLength\": 3})",
+      "Record in features/test-smart/activity.md that the setup artifacts were created"
+    ],
+    "passes": false
+  },
+  {
+    "category": "the real work",
+    "description": "Implement a tiny demo script that reads demo-input.txt and prints a deterministic summary",
+    "steps": [
+      "Create features/test-smart/demo.mjs that reads demo-input.txt and demo-config.json and prints a small summary (line count, min line length filter, etc.)",
+      "Ensure the script exits 0 and prints deterministic output",
+      "Run `node features/test-smart/demo.mjs` and paste the output into features/test-smart/activity.md"
+    ],
+    "passes": false
+  }
+]

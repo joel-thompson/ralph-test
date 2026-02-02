@@ -36,7 +36,11 @@ export async function loadConfig(
       throw new CommandError("Invalid ral.json: config must be an object");
     }
 
-    if (config.runner && config.runner !== "claude" && config.runner !== "cursor") {
+    if (
+      config.runner &&
+      config.runner !== "claude" &&
+      config.runner !== "cursor"
+    ) {
       throw new CommandError(
         `Invalid ral.json: runner must be "claude" or "cursor", got "${config.runner}"`
       );
@@ -86,7 +90,11 @@ export async function loadConfig(
           throw new CommandError("Invalid ral.json: config must be an object");
         }
 
-        if (config.runner && config.runner !== "claude" && config.runner !== "cursor") {
+        if (
+          config.runner &&
+          config.runner !== "claude" &&
+          config.runner !== "cursor"
+        ) {
           throw new CommandError(
             `Invalid ral.json: runner must be "claude" or "cursor", got "${config.runner}"`
           );
@@ -106,7 +114,9 @@ export async function loadConfig(
           );
         }
 
-        console.log(`Config not found in working directory, using root config from ${rootConfigPath}`);
+        console.log(
+          `Config not found in working directory, using root config from ${rootConfigPath}`
+        );
 
         return {
           config: {
@@ -124,7 +134,9 @@ export async function loadConfig(
           "code" in rootError &&
           rootError.code === "ENOENT"
         ) {
-          console.log(`No ral.json found, using default config (runner: claude)`);
+          console.log(
+            "No ral.json found, using default config (runner: claude)"
+          );
 
           return {
             config: DEFAULT_CONFIG,
@@ -149,7 +161,7 @@ export async function loadConfig(
 
     // If file doesn't exist and no rootDirectory provided, return default config
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      console.log(`No ral.json found, using default config (runner: claude)`);
+      console.log("No ral.json found, using default config (runner: claude)");
 
       return {
         config: DEFAULT_CONFIG,

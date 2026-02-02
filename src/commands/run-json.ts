@@ -45,7 +45,11 @@ export async function loadTasks(
   try {
     tasks = JSON.parse(content);
   } catch (error) {
-    throw new Error(`tasks.json is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `tasks.json is not valid JSON: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
 
   if (!Array.isArray(tasks)) {
@@ -60,19 +64,27 @@ export async function loadTasks(
     }
 
     if (typeof task.category !== "string") {
-      throw new Error(`Task at index ${i} missing required field: category (string)`);
+      throw new Error(
+        `Task at index ${i} missing required field: category (string)`
+      );
     }
 
     if (typeof task.description !== "string") {
-      throw new Error(`Task at index ${i} missing required field: description (string)`);
+      throw new Error(
+        `Task at index ${i} missing required field: description (string)`
+      );
     }
 
     if (!Array.isArray(task.steps)) {
-      throw new Error(`Task at index ${i} missing required field: steps (array)`);
+      throw new Error(
+        `Task at index ${i} missing required field: steps (array)`
+      );
     }
 
     if (typeof task.passes !== "boolean") {
-      throw new Error(`Task at index ${i} missing required field: passes (boolean)`);
+      throw new Error(
+        `Task at index ${i} missing required field: passes (boolean)`
+      );
     }
   }
 
@@ -83,7 +95,9 @@ export async function loadTasks(
  * Select the next incomplete task (first task where passes !== true).
  * @returns The task and its index, or null if all tasks are complete
  */
-export function selectNextTask(tasks: Task[]): { task: Task; index: number } | null {
+export function selectNextTask(
+  tasks: Task[]
+): { task: Task; index: number } | null {
   for (let i = 0; i < tasks.length; i++) {
     if (tasks[i].passes !== true) {
       return { task: tasks[i], index: i };
@@ -284,7 +298,9 @@ export async function runJson(
   const { workingDirectory, maxIterations } = options;
 
   // Import validation utilities and config
-  const { validateWorkingDirectory, validateRequiredFiles } = await import("../utils/validation.js");
+  const { validateWorkingDirectory, validateRequiredFiles } = await import(
+    "../utils/validation.js"
+  );
   const { loadConfig } = await import("../utils/config.js");
   const { DefaultClaudeRunner } = await import("../utils/claude-runner.js");
   const { CursorRunner } = await import("../utils/cursor-runner.js");
@@ -337,7 +353,9 @@ export async function runJson(
 
   // Log task selection mode
   if (config.taskSelection === "smart") {
-    console.log("Task selection mode: smart (with fallback to first-incomplete)");
+    console.log(
+      "Task selection mode: smart (with fallback to first-incomplete)"
+    );
   }
 
   // Initialize cumulative stats
@@ -356,7 +374,9 @@ export async function runJson(
       tasks = await loadTasks(workingDirectory, fs);
     } catch (error) {
       throw new CommandError(
-        `Failed to load tasks.json: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to load tasks.json: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
 
@@ -367,10 +387,14 @@ export async function runJson(
       try {
         selected = await selectTaskSmart(tasks, workingDirectory, runner);
         if (selected === null) {
-          console.warn("⚠ Smart task selection failed, falling back to first incomplete task");
+          console.warn(
+            "⚠ Smart task selection failed, falling back to first incomplete task"
+          );
         }
-      } catch (error) {
-        console.warn("⚠ Smart task selection error, falling back to first incomplete task");
+      } catch {
+        console.warn(
+          "⚠ Smart task selection error, falling back to first incomplete task"
+        );
       }
     }
 
@@ -389,15 +413,24 @@ export async function runJson(
     console.log(`\n--- Attempt ${attempt}/${maxIterations} ---`);
 
     const { task, index } = selected;
-    console.log(`Working on task ${index + 1}/${tasks.length}: ${task.description}`);
+    console.log(
+      `Working on task ${index + 1}/${tasks.length}: ${task.description}`
+    );
 
     // Build prompt content
     let promptContent: string;
     try {
-      promptContent = await buildPromptContent(workingDirectory, task, index, fs);
+      promptContent = await buildPromptContent(
+        workingDirectory,
+        task,
+        index,
+        fs
+      );
     } catch (error) {
       throw new CommandError(
-        `Failed to build prompt content: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to build prompt content: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
 
@@ -410,7 +443,9 @@ export async function runJson(
       });
     } catch (error) {
       throw new CommandError(
-        `Failed to run agent: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to run agent: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
 
@@ -430,7 +465,10 @@ export async function runJson(
     };
 
     // Only show token/cost stats if they are non-zero (Claude mode)
-    const hasTokenStats = attemptStats.inputTokens > 0 || attemptStats.outputTokens > 0 || attemptStats.cost > 0;
+    const hasTokenStats =
+      attemptStats.inputTokens > 0 ||
+      attemptStats.outputTokens > 0 ||
+      attemptStats.cost > 0;
 
     if (hasTokenStats) {
       console.log(`Tokens In: ${attemptStats.inputTokens}`);
@@ -460,7 +498,9 @@ export async function runJson(
         console.log("✓ tasks.json updated");
       } catch (error) {
         throw new CommandError(
-          `Failed to save tasks.json: ${error instanceof Error ? error.message : String(error)}`
+          `Failed to save tasks.json: ${
+            error instanceof Error ? error.message : String(error)
+          }`
         );
       }
 
@@ -472,7 +512,11 @@ export async function runJson(
         return; // For testing - process.exit doesn't actually exit when mocked
       }
     } else {
-      console.log(`✗ Task ${index + 1} did not complete (no <promise>success</promise> found)`);
+      console.log(
+        `✗ Task ${
+          index + 1
+        } did not complete (no <promise>success</promise> found)`
+      );
       console.log("The task will be retried on the next attempt.");
     }
   }

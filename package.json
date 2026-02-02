@@ -16,6 +16,7 @@
     "test:run": "vitest run",
     "dev": "tsx src/index.ts",
     "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit",
     "lint:fix": "eslint src/**/*.ts --fix"
   },
   "repository": {

@@ -44,7 +44,10 @@ class MockFileSystem implements FileSystem {
     return false;
   }
 
-  async mkdir(_dirPath: string, _options?: { recursive?: boolean }): Promise<void> {
+  async mkdir(
+    _dirPath: string,
+    _options?: { recursive?: boolean }
+  ): Promise<void> {
     // No-op for tests
   }
 
@@ -92,13 +95,17 @@ describe("run-json helpers", () => {
     it("should throw error if tasks.json is not valid JSON", async () => {
       mockFs.setFile("/test/tasks.json", "not valid json {");
 
-      await expect(loadTasks("/test", mockFs)).rejects.toThrow("tasks.json is not valid JSON");
+      await expect(loadTasks("/test", mockFs)).rejects.toThrow(
+        "tasks.json is not valid JSON"
+      );
     });
 
     it("should throw error if tasks.json is not an array", async () => {
       mockFs.setFile("/test/tasks.json", JSON.stringify({ foo: "bar" }));
 
-      await expect(loadTasks("/test", mockFs)).rejects.toThrow("tasks.json must be a JSON array");
+      await expect(loadTasks("/test", mockFs)).rejects.toThrow(
+        "tasks.json must be a JSON array"
+      );
     });
 
     it("should throw error if task is missing category field", async () => {
@@ -318,7 +325,9 @@ describe("run-json helpers", () => {
         },
       ];
 
-      expect(() => markTaskComplete(tasks, -1)).toThrow("Invalid task index: -1");
+      expect(() => markTaskComplete(tasks, -1)).toThrow(
+        "Invalid task index: -1"
+      );
     });
 
     it("should throw error for invalid index (out of bounds)", () => {
@@ -364,7 +373,9 @@ Do not edit tasks.json`;
       expect(result).toContain("2. Step 2");
       expect(result).toContain("3. Step 3");
       expect(result).toContain(JSON.stringify(task, null, 2));
-      expect(result).not.toContain("The CLI will insert the current task details here when invoking the agent.");
+      expect(result).not.toContain(
+        "The CLI will insert the current task details here when invoking the agent."
+      );
     });
 
     it("should use default template if prompt.md does not exist", async () => {
@@ -385,7 +396,10 @@ Do not edit tasks.json`;
     });
 
     it("should format steps as numbered list", async () => {
-      mockFs.setFile("/test/prompt.md", "The CLI will insert the current task details here when invoking the agent.");
+      mockFs.setFile(
+        "/test/prompt.md",
+        "The CLI will insert the current task details here when invoking the agent."
+      );
 
       const task: Task = {
         category: "test",
@@ -467,7 +481,9 @@ Do not edit tasks.json`;
 
     beforeEach(() => {
       mockFs = new MockFileSystem();
-      mockExit = vi.spyOn(process, "exit").mockImplementation((() => {}) as never);
+      mockExit = vi
+        .spyOn(process, "exit")
+        .mockImplementation((() => {}) as never);
       mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
       mockConsoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -481,7 +497,10 @@ Do not edit tasks.json`;
 
       // Setup required files
       mockFs.setFile("/test/plan.md", "# Plan");
-      mockFs.setFile("/test/prompt.md", "The CLI will insert the current task details here when invoking the agent.");
+      mockFs.setFile(
+        "/test/prompt.md",
+        "The CLI will insert the current task details here when invoking the agent."
+      );
       mockFs.setFile("/test/activity.md", "# Activity");
     });
 
@@ -501,7 +520,10 @@ Do not edit tasks.json`;
         },
       ];
 
-      mockFs.setFile("/test/tasks.json", JSON.stringify(completeTasks, null, 2));
+      mockFs.setFile(
+        "/test/tasks.json",
+        JSON.stringify(completeTasks, null, 2)
+      );
 
       mockRunner = {
         runAgent: vi.fn(),
@@ -736,7 +758,11 @@ Do not edit tasks.json`;
       };
 
       await expect(
-        runJson({ workingDirectory: "/test", maxIterations: 5 }, mockRunner, mockFs)
+        runJson(
+          { workingDirectory: "/test", maxIterations: 5 },
+          mockRunner,
+          mockFs
+        )
       ).rejects.toThrow("Missing required files");
     });
 
@@ -751,7 +777,11 @@ Do not edit tasks.json`;
       };
 
       await expect(
-        runJson({ workingDirectory: "/test", maxIterations: 5 }, mockRunner, mockFs)
+        runJson(
+          { workingDirectory: "/test", maxIterations: 5 },
+          mockRunner,
+          mockFs
+        )
       ).rejects.toThrow("Failed to load tasks.json");
     });
 
@@ -884,8 +914,12 @@ Do not edit tasks.json`;
       expect(mockConsoleLog).toHaveBeenCalledWith("Duration: 5432ms");
 
       // Should NOT log token stats
-      expect(mockConsoleLog).not.toHaveBeenCalledWith(expect.stringContaining("Tokens In:"));
-      expect(mockConsoleLog).not.toHaveBeenCalledWith(expect.stringContaining("Cost:"));
+      expect(mockConsoleLog).not.toHaveBeenCalledWith(
+        expect.stringContaining("Tokens In:")
+      );
+      expect(mockConsoleLog).not.toHaveBeenCalledWith(
+        expect.stringContaining("Cost:")
+      );
     });
 
     it("should accumulate stats across multiple attempts", async () => {
@@ -927,7 +961,8 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runAgent: vi.fn()
+        runAgent: vi
+          .fn()
           .mockResolvedValueOnce(mockResponse1)
           .mockResolvedValueOnce(mockResponse2),
       };
@@ -1035,12 +1070,22 @@ Do not edit tasks.json`;
         ];
 
         mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
-        mockFs.setFile("/test/ral.json", JSON.stringify({ runner: "claude", taskSelection: "first-incomplete" }));
+        mockFs.setFile(
+          "/test/ral.json",
+          JSON.stringify({
+            runner: "claude",
+            taskSelection: "first-incomplete",
+          })
+        );
 
         mockRunner = {
           runAgent: vi.fn().mockResolvedValue({
             result: "Done! <promise>success</promise>",
-            usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 0 },
+            usage: {
+              input_tokens: 100,
+              output_tokens: 50,
+              cache_read_input_tokens: 0,
+            },
             total_cost_usd: 0.01,
           }),
         };
@@ -1151,7 +1196,7 @@ Do not edit tasks.json`;
     });
 
     it("should return null for invalid JSON", () => {
-      const result = validateSmartSelection('not json', tasks);
+      const result = validateSmartSelection("not json", tasks);
       expect(result).toBeNull();
     });
 
@@ -1212,7 +1257,11 @@ Do not edit tasks.json`;
       const mockRunner: AgentRunner = {
         runAgent: vi.fn().mockResolvedValue({
           result: '{"index": 2}',
-          usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0 },
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
           total_cost_usd: 0,
         }),
       };
@@ -1234,7 +1283,11 @@ Do not edit tasks.json`;
       const mockRunner: AgentRunner = {
         runAgent: vi.fn().mockResolvedValue({
           result: "invalid json",
-          usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0 },
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
           total_cost_usd: 0,
         }),
       };
@@ -1248,7 +1301,11 @@ Do not edit tasks.json`;
       const mockRunner: AgentRunner = {
         runAgent: vi.fn().mockResolvedValue({
           result: '{"index": 10}',
-          usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0 },
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
           total_cost_usd: 0,
         }),
       };
@@ -1262,7 +1319,11 @@ Do not edit tasks.json`;
       const mockRunner: AgentRunner = {
         runAgent: vi.fn().mockResolvedValue({
           result: '{"index": 0}',
-          usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0 },
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
           total_cost_usd: 0,
         }),
       };

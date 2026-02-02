@@ -160,9 +160,6 @@ describe("loadConfig", () => {
       runner: "cursor",
       model: "composer-1",
     });
-    const rootConfigContent = JSON.stringify({
-      runner: "claude",
-    });
 
     vi.mocked(readFile).mockResolvedValue(workingConfigContent);
 
