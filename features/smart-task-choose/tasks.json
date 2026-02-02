@@ -9,7 +9,7 @@
       "Update all call sites to use runner.runAgent(...) (run, run-json, and any tests/mocks)",
       "Run pnpm test to ensure no regressions"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "configuration",
@@ -20,7 +20,7 @@
       "Default taskSelection to 'first-incomplete' when missing",
       "Add/adjust unit tests in src/utils/config.test.ts for taskSelection"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "implementation",
@@ -31,7 +31,7 @@
       "Require the runner to return strict JSON only: {\"index\": number}",
       "Parse and validate the selected index (in range, integer, points to an incomplete task); return null when invalid"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "implementation",
@@ -42,7 +42,7 @@
       "Keep behavior unchanged when taskSelection is missing or 'first-incomplete'",
       "Add minimal logging: one info log when smart selection is enabled, and a warning only when falling back"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "testing",
@@ -53,7 +53,7 @@
       "Add tests for out-of-range / non-integer / completed-task indices and verify fallback",
       "Run pnpm test"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",
@@ -63,6 +63,6 @@
       "Clearly note that taskSelection is planned / not yet implemented until the code lands",
       "Keep examples consistent with the configuration table"
     ],
-    "passes": false
+    "passes": true
   }
 ]
