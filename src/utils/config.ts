@@ -5,6 +5,7 @@ import { CommandError } from "./errors.js";
 export interface RalConfig {
   runner: "claude" | "cursor";
   model?: string;
+  taskSelection?: "first-incomplete" | "smart";
 }
 
 export type ConfigSource = "working-directory" | "root-directory" | "default";
@@ -17,6 +18,7 @@ export interface ConfigResult {
 
 const DEFAULT_CONFIG: RalConfig = {
   runner: "claude",
+  taskSelection: "first-incomplete",
 };
 
 export async function loadConfig(
@@ -44,12 +46,23 @@ export async function loadConfig(
       throw new CommandError("Invalid ral.json: model must be a string");
     }
 
+    if (
+      config.taskSelection !== undefined &&
+      config.taskSelection !== "first-incomplete" &&
+      config.taskSelection !== "smart"
+    ) {
+      throw new CommandError(
+        `Invalid ral.json: taskSelection must be "first-incomplete" or "smart", got "${config.taskSelection}"`
+      );
+    }
+
     console.log(`Using config from ${workingConfigPath}`);
 
     return {
       config: {
         runner: config.runner || DEFAULT_CONFIG.runner,
         model: config.model,
+        taskSelection: config.taskSelection || DEFAULT_CONFIG.taskSelection,
       },
       source: "working-directory",
       path: workingConfigPath,
@@ -83,12 +96,23 @@ export async function loadConfig(
           throw new CommandError("Invalid ral.json: model must be a string");
         }
 
+        if (
+          config.taskSelection !== undefined &&
+          config.taskSelection !== "first-incomplete" &&
+          config.taskSelection !== "smart"
+        ) {
+          throw new CommandError(
+            `Invalid ral.json: taskSelection must be "first-incomplete" or "smart", got "${config.taskSelection}"`
+          );
+        }
+
         console.log(`Config not found in working directory, using root config from ${rootConfigPath}`);
 
         return {
           config: {
             runner: config.runner || DEFAULT_CONFIG.runner,
             model: config.model,
+            taskSelection: config.taskSelection || DEFAULT_CONFIG.taskSelection,
           },
           source: "root-directory",
           path: rootConfigPath,
