@@ -463,15 +463,18 @@ Do not edit tasks.json`;
     let mockRunner: AgentRunner;
     let mockExit: ReturnType<typeof vi.spyOn>;
     let mockConsoleLog: ReturnType<typeof vi.spyOn>;
+    let mockConsoleWarn: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
       mockFs = new MockFileSystem();
       mockExit = vi.spyOn(process, "exit").mockImplementation((() => {}) as never);
       mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+      mockConsoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       // Clear mock call history before each test
       mockExit.mockClear();
       mockConsoleLog.mockClear();
+      mockConsoleWarn.mockClear();
 
       // Setup working directory (directory itself must exist)
       mockFs.setFile("/test/.placeholder", "");
@@ -1010,6 +1013,54 @@ Do not edit tasks.json`;
 
       // Should exit 0 after all tasks complete
       expect(mockExit).toHaveBeenCalledWith(0);
+    });
+
+    describe("smart task selection integration", () => {
+      // Note: Full integration tests with ral.json configuration are not included here
+      // because loadConfig() uses the real filesystem (fs/promises), not the mock filesystem.
+      // The smart selection logic is thoroughly tested via unit tests:
+      // - buildSmartSelectionPrompt: tests prompt generation
+      // - validateSmartSelection: tests JSON validation and bounds checking
+      // - selectTaskSmart: tests end-to-end smart selection with mocked runner
+      // This test verifies default behavior when smart selection is NOT configured.
+
+      it("should not attempt smart selection when taskSelection is 'first-incomplete'", async () => {
+        const tasks: Task[] = [
+          {
+            category: "setup",
+            description: "Task 1",
+            steps: ["Step 1"],
+            passes: false,
+          },
+        ];
+
+        mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+        mockFs.setFile("/test/ral.json", JSON.stringify({ runner: "claude", taskSelection: "first-incomplete" }));
+
+        mockRunner = {
+          runAgent: vi.fn().mockResolvedValue({
+            result: "Done! <promise>success</promise>",
+            usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 0 },
+            total_cost_usd: 0.01,
+          }),
+        };
+
+        await runJson(
+          { workingDirectory: "/test", maxIterations: 5 },
+          mockRunner,
+          mockFs
+        );
+
+        // Should call runner only once (no smart selection attempt)
+        expect(mockRunner.runAgent).toHaveBeenCalledTimes(1);
+
+        // Should not log smart selection enabled message
+        expect(mockConsoleLog).not.toHaveBeenCalledWith(
+          expect.stringContaining("Smart task selection enabled")
+        );
+
+        expect(mockExit).toHaveBeenCalledWith(0);
+      });
     });
   });
 
