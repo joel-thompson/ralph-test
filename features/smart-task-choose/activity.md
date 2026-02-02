@@ -96,3 +96,33 @@
 - The prompt instructs the runner to consider task dependencies and logical ordering (configuration → implementation → testing → documentation)
 - Validation is comprehensive: checks JSON format, type, range, and task completion status
 - All edge cases are covered by tests including whitespace handling, non-integer floats, and error conditions
+
+### 2026-02-02 - Task 4: Integrate smart selection into runJson() with safe fallback
+
+**Changes Made:**
+- Modified `runJson()` in src/commands/run-json.ts to integrate smart selection with safe fallback behavior
+- Moved config loading outside the `if (!runner)` block (src/commands/run-json.ts:296-298) to access `config.taskSelection` even when runner is provided
+- Added info log when smart selection is enabled (src/commands/run-json.ts:339-341)
+- Added smart selection attempt before the main loop's task selection (src/commands/run-json.ts:363-380):
+  - When `config.taskSelection === "smart"`, attempts to call `selectTaskSmart(tasks, workingDirectory, runner)`
+  - Wrapped in try-catch to handle both null returns and thrown errors
+  - Logs warning "⚠ Smart task selection failed, falling back to first incomplete task" when selection returns null
+  - Logs warning "⚠ Smart task selection error, falling back to first incomplete task" when exception occurs
+- Falls back to `selectNextTask(tasks)` when smart selection is not configured, returns null, or throws an error
+- Behavior is unchanged when `taskSelection` is missing or set to "first-incomplete"
+
+**Testing and Verification:**
+- Ran `pnpm test src/commands/run-json.test.ts` - all 50 tests passed (no new tests needed for this integration task)
+- Ran `pnpm test` - all 157 tests passed across 12 test files
+- No regressions detected
+- The integration properly uses existing tests for `selectTaskSmart()` which cover all edge cases
+- Smart selection is attempted once per iteration, with safe fallback on any failure
+
+**Dependencies:**
+- No new dependencies installed
+
+**Problems/Lessons:**
+- Config loading had to be moved outside the `if (!runner)` block to ensure `config` variable is available for checking `taskSelection` setting
+- The implementation follows the defensive pattern established in Task 3: any error or null return from smart selection safely falls back to first-incomplete behavior
+- Two different warning messages help distinguish between validation failure (returns null) vs exception (thrown error)
+- The logging is minimal as specified in the plan: one info log when enabled, warnings only on fallback

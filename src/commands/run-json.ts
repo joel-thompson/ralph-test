@@ -294,10 +294,10 @@ export async function runJson(
   await validateWorkingDirectory(workingDirectory, fs);
 
   // Load config and select runner if not provided
-  if (!runner) {
-    const configResult = await loadConfig(workingDirectory, process.cwd());
-    const config = configResult.config;
+  const configResult = await loadConfig(workingDirectory, process.cwd());
+  const config = configResult.config;
 
+  if (!runner) {
     // Log config information
     console.log("\n--- Configuration ---");
     if (configResult.source === "default") {
@@ -335,6 +335,11 @@ export async function runJson(
     );
   }
 
+  // Log task selection mode
+  if (config.taskSelection === "smart") {
+    console.log("Task selection mode: smart (with fallback to first-incomplete)");
+  }
+
   // Initialize cumulative stats
   const cumulative: CumulativeStats = {
     totalInputTokens: 0,
@@ -355,7 +360,25 @@ export async function runJson(
       );
     }
 
-    const selected = selectNextTask(tasks);
+    // Attempt smart selection if configured
+    let selected: { task: Task; index: number } | null = null;
+
+    if (config.taskSelection === "smart") {
+      try {
+        selected = await selectTaskSmart(tasks, workingDirectory, runner);
+        if (selected === null) {
+          console.warn("⚠ Smart task selection failed, falling back to first incomplete task");
+        }
+      } catch (error) {
+        console.warn("⚠ Smart task selection error, falling back to first incomplete task");
+      }
+    }
+
+    // Fall back to first incomplete task if smart selection didn't work
+    if (selected === null) {
+      selected = selectNextTask(tasks);
+    }
+
     if (!selected) {
       console.log("\n✓ All tasks completed successfully!");
       process.exit(0);
