@@ -5,6 +5,7 @@ import { PROMPT_JSON_TEMPLATE } from "../templates/index.js";
 export interface RunJsonOptions {
   workingDirectory: string;
   maxIterations: number;
+  verbose?: boolean;
 }
 
 interface AttemptStats {
@@ -148,16 +149,62 @@ export function validateSmartSelection(
   responseText: string,
   tasks: Task[]
 ): number | null {
-  try {
-    // Try to parse as JSON
-    const parsed = JSON.parse(responseText.trim());
+  const tryParse = (text: string): unknown => JSON.parse(text);
+  const candidates: string[] = [];
 
-    // Check if it has an index field
-    if (typeof parsed.index !== "number") {
+  const trimmed = responseText.trim();
+  if (trimmed.length > 0) {
+    candidates.push(trimmed);
+  }
+
+  // Handle common "```json ... ```" / "``` ... ```" wrappers.
+  // This keeps validation strict while being tolerant of formatting.
+  const fenceMatch = trimmed.match(/^```(?:json)?\s*\n([\s\S]*?)\n```$/i);
+  if (fenceMatch?.[1]) {
+    const fenced = fenceMatch[1].trim();
+    if (fenced.length > 0) {
+      candidates.push(fenced);
+    }
+  }
+
+  // As a last resort, try extracting the first {...} block.
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    const braceSlice = trimmed.slice(firstBrace, lastBrace + 1).trim();
+    if (braceSlice.length > 0) {
+      candidates.push(braceSlice);
+    }
+  }
+
+  let parsed: unknown = null;
+  for (const candidate of candidates) {
+    try {
+      parsed = tryParse(candidate);
+      break;
+    } catch {
+      // keep trying candidates
+    }
+  }
+
+  try {
+    if (parsed === null) {
       return null;
     }
 
-    const index = parsed.index;
+    // Check if it has an index field
+    if (typeof parsed !== "object" || parsed === null) {
+      return null;
+    }
+
+    if (
+      !("index" in parsed) ||
+      typeof (parsed as { index?: unknown }).index !== "number"
+    ) {
+      return null;
+    }
+
+    const index = (parsed as { index: number }).index;
 
     // Check if index is an integer
     if (!Number.isInteger(index)) {
@@ -188,7 +235,8 @@ export function validateSmartSelection(
 export async function selectTaskSmart(
   tasks: Task[],
   workingDirectory: string,
-  runner: import("../utils/claude-runner.js").AgentRunner
+  runner: import("../utils/claude-runner.js").AgentRunner,
+  verbose: boolean = false
 ): Promise<{ task: Task; index: number } | null> {
   try {
     const promptContent = buildSmartSelectionPrompt(tasks);
@@ -201,6 +249,27 @@ export async function selectTaskSmart(
     const validatedIndex = validateSmartSelection(response.result, tasks);
 
     if (validatedIndex === null) {
+      if (verbose) {
+        console.warn(
+          "\n--- Smart task selection debug (validation failed) ---"
+        );
+        console.warn("Prompt sent to runner:");
+        console.warn(promptContent);
+        console.warn("\nRunner response:");
+        const trimmedResponse = response.result.trim();
+        const previewLength = 500;
+        if (trimmedResponse.length > previewLength) {
+          console.warn(
+            `${trimmedResponse.substring(
+              0,
+              previewLength
+            )}...\n[truncated, full length: ${trimmedResponse.length} chars]`
+          );
+        } else {
+          console.warn(trimmedResponse);
+        }
+        console.warn("--- End debug ---\n");
+      }
       return null;
     }
 
@@ -208,7 +277,23 @@ export async function selectTaskSmart(
       task: tasks[validatedIndex],
       index: validatedIndex,
     };
-  } catch {
+  } catch (error) {
+    if (verbose) {
+      console.warn("\n--- Smart task selection debug (runner error) ---");
+      const promptContent = buildSmartSelectionPrompt(tasks);
+      console.warn("Prompt sent to runner:");
+      console.warn(promptContent);
+      console.warn("\nRunner error:");
+      if (error instanceof Error) {
+        console.warn(`Message: ${error.message}`);
+        if (error.stack) {
+          console.warn(`Stack: ${error.stack}`);
+        }
+      } else {
+        console.warn(String(error));
+      }
+      console.warn("--- End debug ---\n");
+    }
     // Any error during smart selection returns null
     return null;
   }
@@ -295,7 +380,7 @@ export async function runJson(
   runner?: import("../utils/claude-runner.js").AgentRunner,
   fs: FileSystem = new DefaultFileSystem()
 ): Promise<void> {
-  const { workingDirectory, maxIterations } = options;
+  const { workingDirectory, maxIterations, verbose = false } = options;
 
   // Import validation utilities and config
   const { validateWorkingDirectory, validateRequiredFiles } = await import(
@@ -385,13 +470,32 @@ export async function runJson(
 
     if (config.taskSelection === "smart") {
       try {
-        selected = await selectTaskSmart(tasks, workingDirectory, runner);
+        selected = await selectTaskSmart(
+          tasks,
+          workingDirectory,
+          runner,
+          verbose
+        );
         if (selected === null) {
           console.warn(
             "⚠ Smart task selection failed, falling back to first incomplete task"
           );
         }
-      } catch {
+      } catch (error) {
+        if (verbose) {
+          console.warn(
+            "\n--- Smart task selection debug (unexpected error) ---"
+          );
+          if (error instanceof Error) {
+            console.warn(`Message: ${error.message}`);
+            if (error.stack) {
+              console.warn(`Stack: ${error.stack}`);
+            }
+          } else {
+            console.warn(String(error));
+          }
+          console.warn("--- End debug ---\n");
+        }
         console.warn(
           "⚠ Smart task selection error, falling back to first incomplete task"
         );

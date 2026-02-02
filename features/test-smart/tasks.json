@@ -7,7 +7,7 @@
       "Add a brief entry to features/test-smart/activity.md describing what you documented",
       "Run the demo script (created in the implementation task) to confirm the docs match reality"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "setup",
@@ -17,7 +17,7 @@
       "Create features/test-smart/demo-config.json with a small JSON config (e.g. {\"minLineLength\": 3})",
       "Record in features/test-smart/activity.md that the setup artifacts were created"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "the real work",
@@ -27,6 +27,6 @@
       "Ensure the script exits 0 and prints deterministic output",
       "Run `node features/test-smart/demo.mjs` and paste the output into features/test-smart/activity.md"
     ],
-    "passes": false
+    "passes": true
   }
 ]

@@ -1195,6 +1195,14 @@ Do not edit tasks.json`;
       expect(result).toBe(1);
     });
 
+    it("should handle JSON wrapped in a markdown code fence", () => {
+      const result = validateSmartSelection(
+        '```json\n{"index": 1}\n```',
+        tasks
+      );
+      expect(result).toBe(1);
+    });
+
     it("should return null for invalid JSON", () => {
       const result = validateSmartSelection("not json", tasks);
       expect(result).toBeNull();
@@ -1276,6 +1284,27 @@ Do not edit tasks.json`;
       expect(mockRunner.runAgent).toHaveBeenCalledWith({
         promptContent: expect.stringContaining("Index 1"),
         workingDirectory: "/test",
+      });
+    });
+
+    it("should return selected task when runner returns fenced JSON", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '```json\n{"index": 2}\n```',
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
+          total_cost_usd: 0,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toEqual({
+        task: tasks[2],
+        index: 2,
       });
     });
 
