@@ -229,15 +229,25 @@ export function validateSmartSelection(
 }
 
 /**
+ * Result of smart task selection, including selection and usage data.
+ */
+export interface SmartSelectionResult {
+  selection: { task: Task; index: number } | null;
+  usage: import("../utils/claude-runner.js").AgentUsage | null;
+  totalCostUsd: number;
+  durationMs?: number;
+}
+
+/**
  * Attempt smart task selection using the runner.
- * @returns The selected task and index, or null if selection fails
+ * @returns Selection result (task + index or null), plus usage/cost data from the runner
  */
 export async function selectTaskSmart(
   tasks: Task[],
   workingDirectory: string,
   runner: import("../utils/claude-runner.js").AgentRunner,
   verbose: boolean = false
-): Promise<{ task: Task; index: number } | null> {
+): Promise<SmartSelectionResult> {
   try {
     const promptContent = buildSmartSelectionPrompt(tasks);
 
@@ -270,12 +280,23 @@ export async function selectTaskSmart(
         }
         console.warn("--- End debug ---\n");
       }
-      return null;
+      // Selection failed validation, but return usage/cost data
+      return {
+        selection: null,
+        usage: response.usage,
+        totalCostUsd: response.total_cost_usd,
+        durationMs: response.duration_ms,
+      };
     }
 
     return {
-      task: tasks[validatedIndex],
-      index: validatedIndex,
+      selection: {
+        task: tasks[validatedIndex],
+        index: validatedIndex,
+      },
+      usage: response.usage,
+      totalCostUsd: response.total_cost_usd,
+      durationMs: response.duration_ms,
     };
   } catch (error) {
     if (verbose) {
@@ -294,8 +315,12 @@ export async function selectTaskSmart(
       }
       console.warn("--- End debug ---\n");
     }
-    // Any error during smart selection returns null
-    return null;
+    // Any error during smart selection returns null (no usage/cost available)
+    return {
+      selection: null,
+      usage: null,
+      totalCostUsd: 0,
+    };
   }
 }
 
@@ -469,35 +494,16 @@ export async function runJson(
     let selected: { task: Task; index: number } | null = null;
 
     if (config.taskSelection === "smart") {
-      try {
-        selected = await selectTaskSmart(
-          tasks,
-          workingDirectory,
-          runner,
-          verbose
-        );
-        if (selected === null) {
-          console.warn(
-            "⚠ Smart task selection failed, falling back to first incomplete task"
-          );
-        }
-      } catch (error) {
-        if (verbose) {
-          console.warn(
-            "\n--- Smart task selection debug (unexpected error) ---"
-          );
-          if (error instanceof Error) {
-            console.warn(`Message: ${error.message}`);
-            if (error.stack) {
-              console.warn(`Stack: ${error.stack}`);
-            }
-          } else {
-            console.warn(String(error));
-          }
-          console.warn("--- End debug ---\n");
-        }
+      const smartResult = await selectTaskSmart(
+        tasks,
+        workingDirectory,
+        runner,
+        verbose
+      );
+      selected = smartResult.selection;
+      if (selected === null) {
         console.warn(
-          "⚠ Smart task selection error, falling back to first incomplete task"
+          "⚠ Smart task selection failed, falling back to first incomplete task"
         );
       }
     }

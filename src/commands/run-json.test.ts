@@ -1266,19 +1266,28 @@ Do not edit tasks.json`;
         runAgent: vi.fn().mockResolvedValue({
           result: '{"index": 2}',
           usage: {
-            input_tokens: 0,
-            output_tokens: 0,
-            cache_read_input_tokens: 0,
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
           },
-          total_cost_usd: 0,
+          total_cost_usd: 0.01,
         }),
       };
 
       const result = await selectTaskSmart(tasks, "/test", mockRunner);
 
       expect(result).toEqual({
-        task: tasks[2],
-        index: 2,
+        selection: {
+          task: tasks[2],
+          index: 2,
+        },
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
       });
 
       expect(mockRunner.runAgent).toHaveBeenCalledWith({
@@ -1292,84 +1301,125 @@ Do not edit tasks.json`;
         runAgent: vi.fn().mockResolvedValue({
           result: '```json\n{"index": 2}\n```',
           usage: {
-            input_tokens: 0,
-            output_tokens: 0,
-            cache_read_input_tokens: 0,
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
           },
-          total_cost_usd: 0,
+          total_cost_usd: 0.01,
         }),
       };
 
       const result = await selectTaskSmart(tasks, "/test", mockRunner);
 
       expect(result).toEqual({
-        task: tasks[2],
-        index: 2,
+        selection: {
+          task: tasks[2],
+          index: 2,
+        },
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
       });
     });
 
-    it("should return null when runner returns invalid JSON", async () => {
+    it("should return null selection when runner returns invalid JSON", async () => {
       const mockRunner: AgentRunner = {
         runAgent: vi.fn().mockResolvedValue({
           result: "invalid json",
           usage: {
-            input_tokens: 0,
-            output_tokens: 0,
-            cache_read_input_tokens: 0,
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
           },
-          total_cost_usd: 0,
+          total_cost_usd: 0.01,
         }),
       };
 
       const result = await selectTaskSmart(tasks, "/test", mockRunner);
 
-      expect(result).toBeNull();
+      expect(result).toEqual({
+        selection: null,
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
+      });
     });
 
-    it("should return null when runner returns out-of-range index", async () => {
+    it("should return null selection when runner returns out-of-range index", async () => {
       const mockRunner: AgentRunner = {
         runAgent: vi.fn().mockResolvedValue({
           result: '{"index": 10}',
           usage: {
-            input_tokens: 0,
-            output_tokens: 0,
-            cache_read_input_tokens: 0,
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
           },
-          total_cost_usd: 0,
+          total_cost_usd: 0.01,
         }),
       };
 
       const result = await selectTaskSmart(tasks, "/test", mockRunner);
 
-      expect(result).toBeNull();
+      expect(result).toEqual({
+        selection: null,
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
+      });
     });
 
-    it("should return null when runner returns index for completed task", async () => {
+    it("should return null selection when runner returns index for completed task", async () => {
       const mockRunner: AgentRunner = {
         runAgent: vi.fn().mockResolvedValue({
           result: '{"index": 0}',
           usage: {
-            input_tokens: 0,
-            output_tokens: 0,
-            cache_read_input_tokens: 0,
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
           },
-          total_cost_usd: 0,
+          total_cost_usd: 0.01,
         }),
       };
 
       const result = await selectTaskSmart(tasks, "/test", mockRunner);
 
-      expect(result).toBeNull();
+      expect(result).toEqual({
+        selection: null,
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
+      });
     });
 
-    it("should return null when runner throws an error", async () => {
+    it("should return null selection and zero usage when runner throws an error", async () => {
       const mockRunner: AgentRunner = {
         runAgent: vi.fn().mockRejectedValue(new Error("Runner failed")),
       };
 
       const result = await selectTaskSmart(tasks, "/test", mockRunner);
 
-      expect(result).toBeNull();
+      expect(result).toEqual({
+        selection: null,
+        usage: null,
+        totalCostUsd: 0,
+        durationMs: undefined,
+      });
     });
   });
 });
