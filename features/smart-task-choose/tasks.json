@@ -1,233 +1,67 @@
 [
   {
-    "category": "dependencies",
-    "description": "Install Vercel AI SDK v6 and provider packages",
+    "category": "refactor",
+    "description": "Make runner interface backend-agnostic (rename runClaude to runAgent)",
     "steps": [
-      "Add 'ai' package to package.json dependencies (check latest v6 version)",
-      "Add '@ai-sdk/openai' package to package.json dependencies",
-      "Add '@ai-sdk/anthropic' package to package.json dependencies",
-      "Use MCP server (context7) to fetch Vercel AI SDK v6 API documentation for exact import paths and generateText() signature during implementation",
-      "Run 'pnpm install' to install dependencies",
-      "Verify packages are installed correctly"
+      "Update AgentRunner interface in src/utils/claude-runner.ts: rename runClaude(...) to runAgent(...)",
+      "Update DefaultClaudeRunner implementation to implement runAgent(...) (keep behavior identical)",
+      "Update CursorRunner implementation to implement runAgent(...) (keep behavior identical)",
+      "Update all call sites to use runner.runAgent(...) (run, run-json, and any tests/mocks)",
+      "Run pnpm test to ensure no regressions"
     ],
     "passes": false
   },
   {
     "category": "configuration",
-    "description": "Extend RalConfig interface and validation for smartTaskSelection",
+    "description": "Add ral.json support for taskSelection",
     "steps": [
-      "Update RalConfig interface in src/utils/config.ts to include optional smartTaskSelection field",
-      "Define SmartTaskSelectionConfig type with enabled (boolean) and provider ('openai' | 'anthropic') fields",
-      "Add validation in loadConfig() for smartTaskSelection.enabled (must be boolean if present)",
-      "Add validation in loadConfig() for smartTaskSelection.provider (must be 'openai' or 'anthropic' if present)",
-      "Ensure backward compatibility - config without smartTaskSelection should work unchanged",
-      "Update DEFAULT_CONFIG if needed (should not include smartTaskSelection by default)",
-      "Test config loading with various combinations of smartTaskSelection fields"
+      "Extend RalConfig in src/utils/config.ts with optional taskSelection field",
+      "Validate taskSelection is either 'first-incomplete' or 'smart' when present",
+      "Default taskSelection to 'first-incomplete' when missing",
+      "Add/adjust unit tests in src/utils/config.test.ts for taskSelection"
+    ],
+    "passes": false
+  },
+  {
+    "category": "implementation",
+    "description": "Implement smart task selection using the existing runner abstraction",
+    "steps": [
+      "In src/commands/run-json.ts, add a helper that builds a compact prompt from tasks.json listing incomplete tasks with their original indices",
+      "Call runner.runClaude({ promptContent, workingDirectory }) to ask for a selection",
+      "Require the runner to return strict JSON only: {\"index\": number}",
+      "Parse and validate the selected index (in range, integer, points to an incomplete task); return null when invalid"
+    ],
+    "passes": false
+  },
+  {
+    "category": "implementation",
+    "description": "Integrate smart selection into runJson() with safe fallback",
+    "steps": [
+      "In runJson(), if config.taskSelection === 'smart', attempt smart selection once per attempt",
+      "If smart selection returns null or throws, fall back to selectNextTask(tasks)",
+      "Keep behavior unchanged when taskSelection is missing or 'first-incomplete'",
+      "Add minimal logging: one info log when smart selection is enabled, and a warning only when falling back"
     ],
     "passes": false
   },
   {
     "category": "testing",
-    "description": "Add unit tests for extended config loading",
+    "description": "Add focused tests for smart selection and fallback",
     "steps": [
-      "Add test cases to src/utils/config.test.ts for smartTaskSelection.enabled validation",
-      "Add test cases for smartTaskSelection.provider validation",
-      "Add test cases for backward compatibility (config without smartTaskSelection)",
-      "Add test cases for invalid provider values",
-      "Add test cases for invalid enabled values",
-      "Add test cases for partial smartTaskSelection objects",
-      "Verify all existing config tests still pass",
-      "Run 'pnpm test -- config.test.ts' to verify tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Create AI model constants file",
-    "steps": [
-      "Create src/utils/ai-constants.ts file",
-      "Export constant OPENAI_MODEL = 'gpt-4o-mini'",
-      "Export constant ANTHROPIC_MODEL = 'claude-3-5-haiku-20241022'",
-      "Add comment explaining these can be edited to change models",
-      "Export constant MAX_CONTENT_LENGTH = 2000 for truncation logic"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Create buildTaskSelectionPrompt helper function",
-    "steps": [
-      "Create buildTaskSelectionPrompt() function in src/commands/run-json.ts",
-      "Function signature: buildTaskSelectionPrompt(planContent: string, activityContent: string, incompleteTasks: Array<{task: Task, originalIndex: number}>): string",
-      "Import MAX_CONTENT_LENGTH from ai-constants.ts",
-      "Implement truncatePlan() helper: truncate to last MAX_CONTENT_LENGTH characters if longer, add '[Content truncated - showing last portion]' note",
-      "Check if activityContent.length <= MAX_CONTENT_LENGTH (shouldIncludeActivity flag)",
-      "Truncate planContent to max MAX_CONTENT_LENGTH using truncatePlan() if needed",
-      "If activityContent > MAX_CONTENT_LENGTH, set finalActivity to empty string (drop it)",
-      "If activityContent <= MAX_CONTENT_LENGTH, use activityContent as-is",
-      "Format incomplete tasks list: 'Task {index} (Original Index: {originalIndex}): Category: {category}, Description: {description}, Steps: {numbered list}'",
-      "Construct prompt with Project Context section (always included)",
-      "Conditionally include Recent Activity section only if shouldIncludeActivity is true",
-      "Include Available Tasks section (always included)",
-      "Include instructions: 'Return ONLY the task index (0-based) as a single number'",
-      "Include selection criteria: dependencies, logical progression, current state, complexity",
-      "Return formatted prompt string"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Create parseTaskIndex and mapIncompleteIndexToOriginal helper functions",
-    "steps": [
-      "Create parseTaskIndex() function: parseTaskIndex(response: string, maxIndex: number): number | null",
-      "Extract all numbers from response using match(/\\d+/g)",
-      "Iterate through numbers, return first valid index (>= 0 and < maxIndex)",
-      "Return null if no valid index found",
-      "Create mapIncompleteIndexToOriginal() function: mapIncompleteIndexToOriginal(incompleteIndex: number, incompleteTasks: Array<{task: Task, originalIndex: number}>): number | null",
-      "Validate incompleteIndex is within bounds (0 to incompleteTasks.length - 1)",
-      "Return originalIndex from incompleteTasks[incompleteIndex]",
-      "Return null if invalid index"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Create readFileOrEmpty helper function for graceful file reading",
-    "steps": [
-      "Create readFileOrEmpty() function: readFileOrEmpty(filePath: string, fs: FileSystem, fileName: string): Promise<string>",
-      "Wrap fs.readFile() in try/catch",
-      "If error.code === 'ENOENT', log warning with console.warn() and return empty string",
-      "Re-throw other errors (permission errors, etc.)",
-      "Return file content on success"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Create selectSmartTask function with Vercel AI SDK integration",
-    "steps": [
-      "Create selectSmartTask() function in src/commands/run-json.ts",
-      "Function signature: selectSmartTask(tasks: Task[], config: RalConfig, workingDirectory: string, fs: FileSystem): Promise<{ task: Task; index: number } | null>",
-      "Filter tasks to incomplete ones: incompleteTasks = tasks.map((t, i) => ({task: t, originalIndex: i})).filter(item => item.task.passes !== true)",
-      "If incompleteTasks.length === 0, return null",
-      "Read plan.md using readFileOrEmpty() helper",
-      "Read activity.md using readFileOrEmpty() helper",
-      "Build prompt using buildTaskSelectionPrompt() helper",
-      "Get API key from environment: provider === 'openai' ? process.env.OPENAI_API_KEY : process.env.ANTHROPIC_API_KEY",
-      "Validate API key exists and is non-empty, throw error if missing with clear message",
-      "Import OPENAI_MODEL and ANTHROPIC_MODEL from ai-constants.ts",
-      "Create model: provider === 'openai' ? openai(OPENAI_MODEL, {apiKey}) : anthropic(ANTHROPIC_MODEL, {apiKey})",
-      "Create AbortController with 30-second timeout",
-      "Call generateText() with model, prompt, temperature: 0.3, maxRetries: 2, signal: abortController.signal",
-      "Parse response.text using parseTaskIndex(response.text, incompleteTasks.length)",
-      "If parseTaskIndex returns null, return null (triggers fallback)",
-      "Map incomplete index to original index using mapIncompleteIndexToOriginal()",
-      "Return { task: incompleteTasks[parsedIndex].task, index: originalIndex }",
-      "Handle all errors: re-throw with original error message (don't swallow errors)"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Integrate smart task selection into runJson() with fallback",
-    "steps": [
-      "Modify runJson() function in src/commands/run-json.ts",
-      "After loading config, check if smartTaskSelection.enabled === true",
-      "If enabled, wrap selectSmartTask() call in try/catch block",
-      "On success, use selected task from selectSmartTask()",
-      "On any error (network, API, parsing, etc.), fall back to selectNextTask()",
-      "Log which selection method was used (smart vs. simple) for debugging",
-      "If smartTaskSelection.enabled is false or not present, use selectNextTask() as before",
-      "Ensure all existing runJson() behavior remains unchanged when feature is disabled"
-    ],
-    "passes": false
-  },
-  {
-    "category": "testing",
-    "description": "Create comprehensive unit tests for selectSmartTask function",
-    "steps": [
-      "Create test file src/commands/run-json-smart-select.test.ts",
-      "Mock Vercel AI SDK generateText function using vi.mock()",
-      "Test selectSmartTask with OpenAI provider and valid response (verify correct model 'gpt-4o-mini' is used)",
-      "Test selectSmartTask with Anthropic provider and valid response (verify correct model 'claude-3-5-haiku-20241022' is used)",
-      "Test selectSmartTask with no incomplete tasks (returns null)",
-      "Test selectSmartTask with network error (should throw, caught by caller)",
-      "Test selectSmartTask with API error (should throw, caught by caller)",
-      "Test selectSmartTask with invalid response: non-numeric ('abc'), out of bounds (index >= length), multiple numbers (first valid used), negative numbers (rejected)",
-      "Test selectSmartTask with missing API key (should throw appropriate error)",
-      "Test prompt construction: verify includes Project Context, Recent Activity, Available Tasks sections",
-      "Test prompt truncation: verify activity.md dropped completely if > 2000 chars (not included in prompt)",
-      "Test prompt truncation: verify plan.md truncated to last 2000 chars if > 2000 chars",
-      "Test prompt construction: verify Recent Activity section only included when activity.md <= 2000 chars",
-      "Test prompt formatting: verify task list includes category, description, steps, and original indices",
-      "Test that correct provider is called based on config (verify model name matches provider)",
-      "Test index mapping: verify incomplete index maps correctly to original index",
-      "Verify FileSystem is used correctly for reading files via readFileOrEmpty()",
-      "Test timeout handling: verify AbortController timeout triggers after 30 seconds",
-      "Run 'pnpm test -- run-json-smart-select.test.ts' to verify tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "testing",
-    "description": "Add integration tests for runJson() with smart task selection",
-    "steps": [
-      "Add test cases to src/commands/run-json.test.ts for smart task selection",
-      "Test runJson() with smartTaskSelection.enabled=true and successful AI selection",
-      "Test runJson() with smartTaskSelection.enabled=true and successful AI selection: verify console.log called with 'Using smart task selection (provider: anthropic)'",
-      "Test runJson() with smartTaskSelection.enabled=true and AI failure (fallback to selectNextTask)",
-      "Test runJson() with smartTaskSelection.enabled=true and AI failure: verify console.warn called with message containing 'Smart task selection failed, falling back'",
-      "Test runJson() with smartTaskSelection.enabled=false (uses selectNextTask)",
-      "Test runJson() without smartTaskSelection config (uses selectNextTask)",
-      "Test that selected task from AI is actually used in the loop",
-      "Test that fallback works correctly when AI throws error",
-      "Verify logging indicates which selection method was used: assert console.log called with 'Using smart task selection' or console.warn called with fallback message",
-      "Ensure all existing runJson() tests still pass",
-      "Run 'pnpm test -- run-json.test.ts' to verify all tests pass"
-    ],
-    "passes": false
-  },
-  {
-    "category": "error-handling",
-    "description": "Implement robust error handling and fallback logic",
-    "steps": [
-      "Ensure selectSmartTask catches and re-throws all errors (don't swallow them)",
-      "In runJson(), catch all errors from selectSmartTask and fall back gracefully",
-      "Log warnings when falling back (use console.warn, not console.log)",
-      "Handle specific error types: network errors, API errors, parsing errors, missing keys",
-      "Ensure fallback always works - never fail the command due to smart selection errors",
-      "Test specific error scenarios: network timeout (30s), invalid API key (401), rate limit (429), server error (500), malformed JSON response, missing plan.md (should use empty string), missing activity.md (should use empty string)",
-      "Verify error messages are helpful for debugging"
-    ],
-    "passes": false
-  },
-  {
-    "category": "scaffold",
-    "description": "Verify and test scaffold commands generate ral.json with smart task selection",
-    "steps": [
-      "Verify CONFIG_TEMPLATE in src/templates/index.ts includes smartTaskSelection with enabled: true and provider: 'anthropic'",
-      "Verify scaffold command generates ral.json with smartTaskSelection enabled",
-      "Verify scaffold-json command generates ral.json with smartTaskSelection enabled",
-      "Update scaffold.test.ts to verify ral.json includes smartTaskSelection in generated config",
-      "Update scaffold-json.test.ts to verify ral.json includes smartTaskSelection in generated config",
-      "Run 'pnpm test -- scaffold.test.ts' to verify tests pass",
-      "Run 'pnpm test -- scaffold-json.test.ts' to verify tests pass"
+      "Add tests that mock the runner to return valid JSON {\"index\": N} and verify the chosen task index is used",
+      "Add tests that return invalid JSON and verify fallback to first incomplete task",
+      "Add tests for out-of-range / non-integer / completed-task indices and verify fallback",
+      "Run pnpm test"
     ],
     "passes": false
   },
   {
     "category": "documentation",
-    "description": "Update README.md with smart task selection documentation",
+    "description": "Document ral.json options near the top of the README",
     "steps": [
-      "Add section to README.md explaining smart task selection feature",
-      "Document smartTaskSelection configuration options in ral.json",
-      "Add example ral.json configurations with smart task selection enabled",
-      "Document required environment variables (OPENAI_API_KEY, ANTHROPIC_API_KEY)",
-      "Explain fallback behavior when AI selection fails",
-      "Add usage examples showing how to enable/disable the feature",
-      "Update configuration table to include new fields",
-      "Note that scaffold commands generate ral.json with smart task selection enabled by default (provider: 'anthropic')",
-      "Verify documentation examples match actual implementation"
+      "Update README.md to include a near-top section listing all supported ral.json fields (runner, model) plus planned taskSelection",
+      "Clearly note that taskSelection is planned / not yet implemented until the code lands",
+      "Keep examples consistent with the configuration table"
     ],
     "passes": false
   }
