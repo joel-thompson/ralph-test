@@ -98,12 +98,30 @@ Create a `ral.json` file in your project root or feature directory to configure 
 |-------|------|---------|-------------|
 | `runner` | `"claude"` \| `"cursor"` | `"claude"` | Which AI CLI to use |
 | `model` | `string` | `"composer-1"` | Model for Cursor runner (ignored for Claude) |
+| `taskSelection` | `"first-incomplete"` \| `"smart"` | `"first-incomplete"` | Task selection strategy for `run-json` command |
+
+**Task Selection Strategies (`run-json` only):**
+
+The `taskSelection` field controls how Ralph chooses the next task to work on:
+
+- **`"first-incomplete"`** (default): Selects the first task in `tasks.json` where `passes !== true`. Simple, predictable, follows the order you defined.
+
+- **`"smart"`**: Asks the AI runner to analyze all incomplete tasks and choose the best next task based on dependencies, logical ordering, and current context. Falls back to `"first-incomplete"` if the AI returns invalid output or an error occurs.
+
+Example with smart task selection:
+```json
+{
+  "runner": "claude",
+  "taskSelection": "smart"
+}
+```
 
 **Notes:**
 - If `ral.json` doesn't exist, Ralph uses Claude by default
 - The `model` field only applies to Cursor runner
 - Claude runner uses the model configured in your Claude CLI settings
 - When using Cursor, token usage and cost information are not displayed (Cursor doesn't provide this data)
+- The `taskSelection` field only applies to the `run-json` command (ignored by `run`)
 
 **Example with working directory:**
 ```bash

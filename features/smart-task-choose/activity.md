@@ -158,3 +158,32 @@
 - The integration into runJson() is straightforward (lines 366-375 in run-json.ts) and follows a simple pattern: try smart selection, fall back on null/error
 - Added clear documentation explaining this testing approach to help future maintainers understand why full integration tests aren't present
 - This pragmatic approach provides excellent test coverage while avoiding architectural changes or complex test infrastructure
+
+### 2026-02-02 - Task 6: Document ral.json options near the top of the README
+
+**Changes Made:**
+- Updated README.md Configuration section to document the taskSelection field
+- Added taskSelection to the Configuration Options table (line 101): `"first-incomplete" | "smart"` with default `"first-incomplete"` and description "Task selection strategy for `run-json` command"
+- Added new "Task Selection Strategies (`run-json` only)" subsection (lines 103-117) with:
+  - Detailed explanation of `"first-incomplete"` mode: selects first incomplete task in order
+  - Detailed explanation of `"smart"` mode: AI analyzes all incomplete tasks and chooses based on dependencies, logical ordering, and context; falls back to first-incomplete on error
+  - Example JSON configuration showing smart task selection enabled
+- Added note in the Notes section that taskSelection only applies to `run-json` command (line 125)
+- Updated documentation to reflect that taskSelection is fully implemented (not "planned" as the original task description suggested)
+
+**Testing and Verification:**
+- Ran `pnpm test` - all 158 tests passed across 12 test files
+- No regressions detected
+- Documentation changes are consistent with the existing README structure and formatting
+- Configuration table now comprehensively documents all three ral.json fields: runner, model, and taskSelection
+- Examples use valid JSON format matching the configuration options
+
+**Dependencies:**
+- No new dependencies installed (documentation-only change)
+
+**Problems/Lessons:**
+- The original task description stated to "clearly note that taskSelection is planned / not yet implemented until the code lands"
+- However, based on the activity log, tasks 2-5 have already fully implemented the taskSelection feature
+- Updated the documentation to accurately reflect the current implementation status (fully implemented and working)
+- The taskSelection feature is only applicable to the `run-json` command, not the original `run` command - made this clear in the documentation
+- Placed the taskSelection documentation in the Configuration section near the top of the README as requested, keeping it close to other ral.json field documentation
