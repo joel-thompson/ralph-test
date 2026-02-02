@@ -93,6 +93,114 @@ export function selectNextTask(tasks: Task[]): { task: Task; index: number } | n
 }
 
 /**
+ * Build a compact prompt for smart task selection.
+ * Lists all incomplete tasks with their original indices.
+ */
+export function buildSmartSelectionPrompt(tasks: Task[]): string {
+  const incompleteTasks: Array<{ index: number; task: Task }> = [];
+
+  for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].passes !== true) {
+      incompleteTasks.push({ index: i, task: tasks[i] });
+    }
+  }
+
+  const taskList = incompleteTasks
+    .map(({ index, task }) => {
+      return `Index ${index}: [${task.category}] ${task.description}`;
+    })
+    .join("\n");
+
+  return `You are a task selection assistant. Choose the best next task to work on from the following incomplete tasks:
+
+${taskList}
+
+Consider:
+- Task dependencies (some tasks may need to be done before others)
+- Logical ordering (configuration before implementation, implementation before testing, testing before documentation)
+- Current project state and what makes the most sense to tackle next
+
+Respond with ONLY valid JSON in this exact format:
+{"index": N}
+
+Where N is the index number of the task you select. No explanation, no additional text, just the JSON object.`;
+}
+
+/**
+ * Validate a smart selection response.
+ * @returns The validated index, or null if invalid
+ */
+export function validateSmartSelection(
+  responseText: string,
+  tasks: Task[]
+): number | null {
+  try {
+    // Try to parse as JSON
+    const parsed = JSON.parse(responseText.trim());
+
+    // Check if it has an index field
+    if (typeof parsed.index !== "number") {
+      return null;
+    }
+
+    const index = parsed.index;
+
+    // Check if index is an integer
+    if (!Number.isInteger(index)) {
+      return null;
+    }
+
+    // Check if index is in valid range
+    if (index < 0 || index >= tasks.length) {
+      return null;
+    }
+
+    // Check if task at index is incomplete
+    if (tasks[index].passes === true) {
+      return null;
+    }
+
+    return index;
+  } catch {
+    // JSON parse error or any other error
+    return null;
+  }
+}
+
+/**
+ * Attempt smart task selection using the runner.
+ * @returns The selected task and index, or null if selection fails
+ */
+export async function selectTaskSmart(
+  tasks: Task[],
+  workingDirectory: string,
+  runner: import("../utils/claude-runner.js").AgentRunner
+): Promise<{ task: Task; index: number } | null> {
+  try {
+    const promptContent = buildSmartSelectionPrompt(tasks);
+
+    const response = await runner.runAgent({
+      promptContent,
+      workingDirectory,
+    });
+
+    const validatedIndex = validateSmartSelection(response.result, tasks);
+
+    if (validatedIndex === null) {
+      return null;
+    }
+
+    return {
+      task: tasks[validatedIndex],
+      index: validatedIndex,
+    };
+  } catch {
+    // Any error during smart selection returns null
+    return null;
+  }
+}
+
+/**
  * Mark a task as complete by setting passes=true at the given index.
  * @returns A new array with the task at the given index marked complete
  */

@@ -7,6 +7,9 @@ import {
   saveTasks,
   runJson,
   Task,
+  buildSmartSelectionPrompt,
+  validateSmartSelection,
+  selectTaskSmart,
 } from "./run-json.js";
 import { FileSystem } from "../utils/file-helpers.js";
 import type { AgentRunner, AgentResponse } from "../utils/claude-runner.js";
@@ -1007,6 +1010,225 @@ Do not edit tasks.json`;
 
       // Should exit 0 after all tasks complete
       expect(mockExit).toHaveBeenCalledWith(0);
+    });
+  });
+
+  describe("buildSmartSelectionPrompt", () => {
+    it("should build a prompt listing all incomplete tasks with their indices", () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Setup project",
+          steps: ["Step 1"],
+          passes: true,
+        },
+        {
+          category: "implementation",
+          description: "Implement feature A",
+          steps: ["Step A"],
+          passes: false,
+        },
+        {
+          category: "testing",
+          description: "Add tests",
+          steps: ["Step B"],
+          passes: false,
+        },
+      ];
+
+      const prompt = buildSmartSelectionPrompt(tasks);
+
+      expect(prompt).toContain("Index 1: [implementation] Implement feature A");
+      expect(prompt).toContain("Index 2: [testing] Add tests");
+      expect(prompt).not.toContain("Index 0");
+      expect(prompt).not.toContain("Setup project");
+      expect(prompt).toContain('{"index": N}');
+    });
+
+    it("should handle all tasks complete", () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Setup project",
+          steps: ["Step 1"],
+          passes: true,
+        },
+      ];
+
+      const prompt = buildSmartSelectionPrompt(tasks);
+
+      expect(prompt).not.toContain("Index 0");
+      expect(prompt).toContain('{"index": N}');
+    });
+  });
+
+  describe("validateSmartSelection", () => {
+    const tasks: Task[] = [
+      {
+        category: "setup",
+        description: "Task 1",
+        steps: ["Step 1"],
+        passes: true,
+      },
+      {
+        category: "implementation",
+        description: "Task 2",
+        steps: ["Step 2"],
+        passes: false,
+      },
+      {
+        category: "testing",
+        description: "Task 3",
+        steps: ["Step 3"],
+        passes: false,
+      },
+    ];
+
+    it("should validate a correct JSON response", () => {
+      const result = validateSmartSelection('{"index": 1}', tasks);
+      expect(result).toBe(1);
+    });
+
+    it("should validate another correct index", () => {
+      const result = validateSmartSelection('{"index": 2}', tasks);
+      expect(result).toBe(2);
+    });
+
+    it("should handle JSON with extra whitespace", () => {
+      const result = validateSmartSelection('  {"index": 1}  \n', tasks);
+      expect(result).toBe(1);
+    });
+
+    it("should return null for invalid JSON", () => {
+      const result = validateSmartSelection('not json', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for JSON missing index field", () => {
+      const result = validateSmartSelection('{"foo": 1}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for non-number index", () => {
+      const result = validateSmartSelection('{"index": "1"}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for non-integer index", () => {
+      const result = validateSmartSelection('{"index": 1.5}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for negative index", () => {
+      const result = validateSmartSelection('{"index": -1}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for out-of-range index", () => {
+      const result = validateSmartSelection('{"index": 5}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for index pointing to completed task", () => {
+      const result = validateSmartSelection('{"index": 0}', tasks);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("selectTaskSmart", () => {
+    const tasks: Task[] = [
+      {
+        category: "setup",
+        description: "Task 1",
+        steps: ["Step 1"],
+        passes: true,
+      },
+      {
+        category: "implementation",
+        description: "Task 2",
+        steps: ["Step 2"],
+        passes: false,
+      },
+      {
+        category: "testing",
+        description: "Task 3",
+        steps: ["Step 3"],
+        passes: false,
+      },
+    ];
+
+    it("should return selected task when runner returns valid JSON", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 2}',
+          usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0 },
+          total_cost_usd: 0,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toEqual({
+        task: tasks[2],
+        index: 2,
+      });
+
+      expect(mockRunner.runAgent).toHaveBeenCalledWith({
+        promptContent: expect.stringContaining("Index 1"),
+        workingDirectory: "/test",
+      });
+    });
+
+    it("should return null when runner returns invalid JSON", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: "invalid json",
+          usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0 },
+          total_cost_usd: 0,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null when runner returns out-of-range index", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 10}',
+          usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0 },
+          total_cost_usd: 0,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null when runner returns index for completed task", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 0}',
+          usage: { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0 },
+          total_cost_usd: 0,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null when runner throws an error", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockRejectedValue(new Error("Runner failed")),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toBeNull();
     });
   });
 });

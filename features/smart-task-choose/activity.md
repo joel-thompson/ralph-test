@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-02-02
-**Tasks Completed:** 2
-**Current Task:** Task 2 complete - Ready for task 3
+**Tasks Completed:** 3
+**Current Task:** Task 3 complete - Ready for task 4
 
 ---
 
@@ -64,3 +64,35 @@
 - Implementation was straightforward - followed existing patterns for runner and model validation
 - Duplicated validation logic exists for both working directory and root directory config paths, but this is consistent with the existing codebase structure
 - All tests passed on first run, indicating good understanding of the existing codebase patterns
+
+### 2026-02-02 - Task 3: Implement smart task selection using the existing runner abstraction
+
+**Changes Made:**
+- Added `buildSmartSelectionPrompt(tasks)` function in src/commands/run-json.ts:96-121 that creates a compact prompt listing all incomplete tasks with their original indices
+- Added `validateSmartSelection(responseText, tasks)` function in src/commands/run-json.ts:127-161 that parses and validates the JSON response from the runner
+- Added `selectTaskSmart(tasks, workingDirectory, runner)` function in src/commands/run-json.ts:167-192 that orchestrates the smart selection process
+- All three functions follow the plan specification:
+  - buildSmartSelectionPrompt lists incomplete tasks with indices and instructs the runner to return strict JSON format `{"index": N}`
+  - validateSmartSelection performs comprehensive validation: JSON parsing, type checking (number), integer checking, range validation, and ensures the selected task is incomplete
+  - selectTaskSmart wraps the entire process with try-catch to return null on any error (safe fallback design)
+- Updated exports in src/commands/run-json.test.ts:2-10 to include the new functions
+- Added 17 comprehensive tests in src/commands/run-json.test.ts:1014-1199:
+  - buildSmartSelectionPrompt: 2 tests (normal case, all tasks complete)
+  - validateSmartSelection: 10 tests (valid JSON, whitespace handling, invalid JSON, missing index, non-number index, non-integer, negative index, out-of-range, completed task)
+  - selectTaskSmart: 5 tests (valid response, invalid JSON, out-of-range, completed task, runner error)
+
+**Testing and Verification:**
+- Ran `pnpm test src/commands/run-json.test.ts` - all 50 tests passed (33 existing + 17 new)
+- Ran `pnpm test` - all 157 tests passed across 12 test files (up from 140 tests)
+- No regressions detected
+- All validation scenarios properly handled with null fallback
+- Error handling verified: any exception during smart selection returns null
+
+**Dependencies:**
+- No new dependencies installed
+
+**Problems/Lessons:**
+- The implementation follows a defensive design pattern where any failure returns null rather than throwing, ensuring safe fallback to the existing `selectNextTask()` logic
+- The prompt instructs the runner to consider task dependencies and logical ordering (configuration → implementation → testing → documentation)
+- Validation is comprehensive: checks JSON format, type, range, and task completion status
+- All edge cases are covered by tests including whitespace handling, non-integer floats, and error conditions
