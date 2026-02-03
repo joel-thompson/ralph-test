@@ -62,3 +62,22 @@ Average length of filtered lines: 45 characters
 - Produces deterministic, consistent output
 - Exits with code 0 (success)
 - All dependencies handled by Node.js built-in modules (fs, path, url)
+
+---
+
+### 2026-02-03 - Task 1/3: Documentation Completed
+
+**Task:** Write a short 'How to run' note for this demo (after setup + implementation)
+
+**Changes Made:**
+- Updated `plan.md` with corrected paths (changed `test-smart` to `test-logging-choose` throughout)
+- Added accurate expected output to the "Running the demo script" section showing 8 filtered lines with 45 character average
+- Added clarification that lines shorter than the minimum length ("Hi!" and "OK") are excluded from filtered results
+
+**Verification:**
+- Ran `node features/test-logging-choose/demo.mjs` and confirmed the output matches the documented expected output:
+  - Total lines: 9
+  - Lines passing filter: 8
+  - Average length: 45 characters
+
+**Notes:** Documentation now accurately reflects the actual behavior and output of the demo script. All file paths have been corrected to use `test-logging-choose` instead of the incorrect `test-smart` references.
