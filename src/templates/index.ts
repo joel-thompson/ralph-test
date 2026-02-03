@@ -1,3 +1,4 @@
+// TODO: i think there's a bug with the settings scaffolding. not sure if these below are correct. need to test and fix.
 export const CLAUDE_SETTINGS_TEMPLATE = {
   mcpServers: {
     filesystem: {
