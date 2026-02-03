@@ -1106,6 +1106,7 @@ Do not edit tasks.json`;
 
         expect(mockExit).toHaveBeenCalledWith(0);
       });
+
     });
   });
 
@@ -1420,6 +1421,125 @@ Do not edit tasks.json`;
         totalCostUsd: 0,
         durationMs: undefined,
       });
+    });
+
+    it("should return usage data even when selection validation fails (invalid JSON)", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: "invalid json response",
+          usage: {
+            input_tokens: 500,
+            output_tokens: 200,
+            cache_read_input_tokens: 100,
+          },
+          total_cost_usd: 0.005,
+          duration_ms: 1234,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      // Selection should be null due to invalid JSON
+      expect(result.selection).toBeNull();
+
+      // But usage data should still be returned
+      expect(result.usage).toEqual({
+        input_tokens: 500,
+        output_tokens: 200,
+        cache_read_input_tokens: 100,
+      });
+      expect(result.totalCostUsd).toBe(0.005);
+      expect(result.durationMs).toBe(1234);
+    });
+
+    it("should return usage data even when selection validation fails (out of range index)", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 99}',
+          usage: {
+            input_tokens: 450,
+            output_tokens: 180,
+            cache_read_input_tokens: 90,
+          },
+          total_cost_usd: 0.004,
+          duration_ms: 2345,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      // Selection should be null due to out-of-range index
+      expect(result.selection).toBeNull();
+
+      // But usage data should still be returned
+      expect(result.usage).toEqual({
+        input_tokens: 450,
+        output_tokens: 180,
+        cache_read_input_tokens: 90,
+      });
+      expect(result.totalCostUsd).toBe(0.004);
+      expect(result.durationMs).toBe(2345);
+    });
+
+    it("should return zero usage data for Cursor mode (successful selection)", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 1}',
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
+          total_cost_usd: 0,
+          duration_ms: 3456,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      // Selection should succeed
+      expect(result.selection).toEqual({
+        task: tasks[1],
+        index: 1,
+      });
+
+      // Usage data should be zero (Cursor mode)
+      expect(result.usage).toEqual({
+        input_tokens: 0,
+        output_tokens: 0,
+        cache_read_input_tokens: 0,
+      });
+      expect(result.totalCostUsd).toBe(0);
+      expect(result.durationMs).toBe(3456);
+    });
+
+    it("should return zero usage data for Cursor mode (failed selection)", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: "invalid response",
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
+          total_cost_usd: 0,
+          duration_ms: 4567,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      // Selection should fail
+      expect(result.selection).toBeNull();
+
+      // Usage data should be zero (Cursor mode)
+      expect(result.usage).toEqual({
+        input_tokens: 0,
+        output_tokens: 0,
+        cache_read_input_tokens: 0,
+      });
+      expect(result.totalCostUsd).toBe(0);
+      expect(result.durationMs).toBe(4567);
     });
   });
 });

@@ -17,7 +17,7 @@
       "Add selection usage/cost into cumulative totals before attempts.",
       "Do not change per-attempt logging lines."
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "tests",
