@@ -492,6 +492,8 @@ export async function runJson(
 
     // Attempt smart selection if configured
     let selected: { task: Task; index: number } | null = null;
+    let selectionUsage: import("../utils/claude-runner.js").AgentUsage | null = null;
+    let selectionCost: number = 0;
 
     if (config.taskSelection === "smart") {
       const smartResult = await selectTaskSmart(
@@ -501,6 +503,30 @@ export async function runJson(
         verbose
       );
       selected = smartResult.selection;
+      selectionUsage = smartResult.usage;
+      selectionCost = smartResult.totalCostUsd;
+
+      // Log selection spend if non-zero
+      if (selectionUsage) {
+        const hasSelectionSpend =
+          selectionUsage.input_tokens > 0 ||
+          selectionUsage.output_tokens > 0 ||
+          selectionCost > 0;
+
+        if (hasSelectionSpend) {
+          console.log("\nTask selection (smart)");
+          console.log(`  Tokens In: ${selectionUsage.input_tokens}  Tokens Out: ${selectionUsage.output_tokens}  Cache Read: ${selectionUsage.cache_read_input_tokens}  Cost: $${selectionCost.toFixed(4)}`);
+        }
+      }
+
+      // Add selection spend to cumulative totals
+      if (selectionUsage) {
+        cumulative.totalInputTokens += selectionUsage.input_tokens;
+        cumulative.totalOutputTokens += selectionUsage.output_tokens;
+        cumulative.totalCacheReadTokens += selectionUsage.cache_read_input_tokens;
+        cumulative.totalCost += selectionCost;
+      }
+
       if (selected === null) {
         console.warn(
           "⚠ Smart task selection failed, falling back to first incomplete task"

@@ -7,7 +7,7 @@
       "Keep existing selection validation/fallback behavior unchanged.",
       "Update callers/types accordingly."
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "implementation",
