@@ -27,6 +27,6 @@
       "Add coverage for invalid selection where runner returned usage (spend still logged/accumulated).",
       "Add coverage for Cursor/zero-usage behavior (no noisy selection block)."
     ],
-    "passes": false
+    "passes": true
   }
 ]
