@@ -98,12 +98,30 @@ Create a `ral.json` file in your project root or feature directory to configure 
 |-------|------|---------|-------------|
 | `runner` | `"claude"` \| `"cursor"` | `"claude"` | Which AI CLI to use |
 | `model` | `string` | `"composer-1"` | Model for Cursor runner (ignored for Claude) |
+| `taskSelection` | `"first-incomplete"` \| `"smart"` | `"first-incomplete"` | Task selection strategy for `run-json` command |
+
+**Task Selection Strategies (`run-json` only):**
+
+The `taskSelection` field controls how Ralph chooses the next task to work on:
+
+- **`"first-incomplete"`** (default): Selects the first task in `tasks.json` where `passes !== true`. Simple, predictable, follows the order you defined.
+
+- **`"smart"`**: Asks the AI runner to analyze all incomplete tasks and choose the best next task based on dependencies, logical ordering, and current context. Falls back to `"first-incomplete"` if the AI returns invalid output or an error occurs.
+
+Example with smart task selection:
+```json
+{
+  "runner": "claude",
+  "taskSelection": "smart"
+}
+```
 
 **Notes:**
 - If `ral.json` doesn't exist, Ralph uses Claude by default
 - The `model` field only applies to Cursor runner
 - Claude runner uses the model configured in your Claude CLI settings
 - When using Cursor, token usage and cost information are not displayed (Cursor doesn't provide this data)
+- The `taskSelection` field only applies to the `run-json` command (ignored by `run`)
 
 **Example with working directory:**
 ```bash
@@ -531,51 +549,25 @@ pnpm install
 pnpm build
 ```
 
-### 2. Make `ral` Command Available Globally
+### 2. Make `ral` Command Available
 
-**Option 1: pnpm link (Recommended for Development)**
-
-This creates a global symlink so `ral` works from anywhere and automatically picks up your local changes:
-
+**Option 1: pnpm link (Recommended)**
 ```bash
-# From the project directory
-cd /Users/Joel/src/ralph-test
-pnpm build                    # Build first
-pnpm link --global           # Create global symlink
+pnpm link --global
 ```
-
-**Verify it works:**
-```bash
-# Test from anywhere
-cd ~/some-other-project
-ral --version                # Should show version
-ral scaffold                 # Should work!
-```
-
-**Development Workflow:**
-When you make changes to the CLI:
-1. Edit source files in `src/`
-2. Run `pnpm build` to rebuild
-3. Changes are immediately available (symlink points to updated `dist/index.js`)
-
-**Unlink when done:**
-```bash
-pnpm unlink --global
-```
+Auto-updates when you rebuild. Run from project directory.
 
 **Option 2: Shell Alias**
 ```bash
 # Add to .zshrc or .bashrc
 alias ral='/absolute/path/to/ralph-test/dist/index.js'
 ```
-Note: Requires manual rebuild after changes.
 
 **Option 3: Add to PATH**
 ```bash
 # Add to .zshrc or .bashrc
 export PATH="/absolute/path/to/ralph-test/dist:$PATH"
 ```
-Note: Requires manual rebuild after changes.
 
 ### 3. Development Commands
 

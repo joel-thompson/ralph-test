@@ -1,6 +1,14 @@
 import path from "path";
-import { CLAUDE_SETTINGS_TEMPLATE, MCP_SETTINGS_TEMPLATE } from "../templates/index.js";
-import { FileSystem, DefaultFileSystem, ensureDirectory, writeFileIfNotExists } from "../utils/file-helpers.js";
+import {
+  CLAUDE_SETTINGS_TEMPLATE,
+  MCP_SETTINGS_TEMPLATE,
+} from "../templates/index.js";
+import {
+  FileSystem,
+  DefaultFileSystem,
+  ensureDirectory,
+  writeFileIfNotExists,
+} from "../utils/file-helpers.js";
 import { validateWorkingDirectory } from "../utils/validation.js";
 
 export interface CreateSettingsOptions {
@@ -24,13 +32,24 @@ export async function createSettings(
 
   // Create .claude/settings.json
   const claudeSettingsPath = path.join(claudeDir, "settings.json");
-  const claudeSettingsContent = JSON.stringify(CLAUDE_SETTINGS_TEMPLATE, null, 2);
-  const claudeResult = await writeFileIfNotExists(claudeSettingsPath, claudeSettingsContent, force, fs);
+  const claudeSettingsContent = JSON.stringify(
+    CLAUDE_SETTINGS_TEMPLATE,
+    null,
+    2
+  );
+  const claudeResult = await writeFileIfNotExists(
+    claudeSettingsPath,
+    claudeSettingsContent,
+    force,
+    fs
+  );
 
   if (claudeResult.written) {
     console.log(`Created ${claudeSettingsPath}`);
   } else {
-    console.log(`Skipped ${claudeSettingsPath} (already exists, use -f to overwrite)`);
+    console.log(
+      `Skipped ${claudeSettingsPath} (already exists, use -f to overwrite)`
+    );
   }
 
   // Create .mcp.json

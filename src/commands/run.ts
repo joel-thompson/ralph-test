@@ -125,7 +125,7 @@ export async function run(
 
     try {
       // Call Claude CLI
-      const response = await runner.runClaude({
+      const response = await runner.runAgent({
         promptPath,
         workingDirectory,
       });

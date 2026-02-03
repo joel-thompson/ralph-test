@@ -1,14 +1,8 @@
 {
   "mcpServers": {
-    "playwright": {
+    "context7": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@playwright/mcp@latest",
-        "--headless",
-        "--output-dir",
-        "."
-      ]
+      "args": ["-y", "@upstash/context7-mcp"]
     }
   }
 }

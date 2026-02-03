@@ -12,7 +12,9 @@
       "Bash(kill -9 $(lsof -ti:3001))",
       "Bash(lsof -ti:3001)",
       "Bash(kill -9 $(lsof -ti:3002))",
-      "Bash(lsof -ti:3002)"
+      "Bash(lsof -ti:3002)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs"
     ],
     "deny": [
       "Bash(sudo *)",

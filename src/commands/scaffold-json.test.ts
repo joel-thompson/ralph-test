@@ -138,7 +138,7 @@ describe("scaffold-json", () => {
 
     expect(configContent).toBeDefined();
     const parsed = JSON.parse(configContent!);
-    expect(parsed).toEqual({ runner: "claude" });
+    expect(parsed).toEqual({ runner: "claude", taskSelection: "smart" });
   });
 
   it("should not overwrite existing files when force is false", async () => {

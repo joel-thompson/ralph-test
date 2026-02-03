@@ -1,0 +1,32 @@
+[
+  {
+    "category": "implementation",
+    "description": "Return selection + usage from selectTaskSmart()",
+    "steps": [
+      "Change selectTaskSmart() return value to include runner usage/cost (even when selection is invalid/null).",
+      "Keep existing selection validation/fallback behavior unchanged.",
+      "Update callers/types accordingly."
+    ],
+    "passes": true
+  },
+  {
+    "category": "implementation",
+    "description": "Log + accumulate smart-selection spend in runJson()",
+    "steps": [
+      "When taskSelection is smart, log a compact selection spend block (skip printing if all zeros).",
+      "Add selection usage/cost into cumulative totals before attempts.",
+      "Do not change per-attempt logging lines."
+    ],
+    "passes": true
+  },
+  {
+    "category": "tests",
+    "description": "Cover selection spend logging + accumulation",
+    "steps": [
+      "Update existing tests for new selectTaskSmart() return shape.",
+      "Add coverage for invalid selection where runner returned usage (spend still logged/accumulated).",
+      "Add coverage for Cursor/zero-usage behavior (no noisy selection block)."
+    ],
+    "passes": true
+  }
+]

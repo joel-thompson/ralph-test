@@ -5,6 +5,7 @@ import { PROMPT_JSON_TEMPLATE } from "../templates/index.js";
 export interface RunJsonOptions {
   workingDirectory: string;
   maxIterations: number;
+  verbose?: boolean;
 }
 
 interface AttemptStats {
@@ -45,7 +46,11 @@ export async function loadTasks(
   try {
     tasks = JSON.parse(content);
   } catch (error) {
-    throw new Error(`tasks.json is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `tasks.json is not valid JSON: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
 
   if (!Array.isArray(tasks)) {
@@ -60,19 +65,27 @@ export async function loadTasks(
     }
 
     if (typeof task.category !== "string") {
-      throw new Error(`Task at index ${i} missing required field: category (string)`);
+      throw new Error(
+        `Task at index ${i} missing required field: category (string)`
+      );
     }
 
     if (typeof task.description !== "string") {
-      throw new Error(`Task at index ${i} missing required field: description (string)`);
+      throw new Error(
+        `Task at index ${i} missing required field: description (string)`
+      );
     }
 
     if (!Array.isArray(task.steps)) {
-      throw new Error(`Task at index ${i} missing required field: steps (array)`);
+      throw new Error(
+        `Task at index ${i} missing required field: steps (array)`
+      );
     }
 
     if (typeof task.passes !== "boolean") {
-      throw new Error(`Task at index ${i} missing required field: passes (boolean)`);
+      throw new Error(
+        `Task at index ${i} missing required field: passes (boolean)`
+      );
     }
   }
 
@@ -83,13 +96,232 @@ export async function loadTasks(
  * Select the next incomplete task (first task where passes !== true).
  * @returns The task and its index, or null if all tasks are complete
  */
-export function selectNextTask(tasks: Task[]): { task: Task; index: number } | null {
+export function selectNextTask(
+  tasks: Task[]
+): { task: Task; index: number } | null {
   for (let i = 0; i < tasks.length; i++) {
     if (tasks[i].passes !== true) {
       return { task: tasks[i], index: i };
     }
   }
   return null;
+}
+
+/**
+ * Build a compact prompt for smart task selection.
+ * Lists all incomplete tasks with their original indices.
+ */
+export function buildSmartSelectionPrompt(tasks: Task[]): string {
+  const incompleteTasks: Array<{ index: number; task: Task }> = [];
+
+  for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].passes !== true) {
+      incompleteTasks.push({ index: i, task: tasks[i] });
+    }
+  }
+
+  const taskList = incompleteTasks
+    .map(({ index, task }) => {
+      return `Index ${index}: [${task.category}] ${task.description}`;
+    })
+    .join("\n");
+
+  return `You are a task selection assistant. Choose the best next task to work on from the following incomplete tasks:
+
+${taskList}
+
+Consider:
+- Task dependencies (some tasks may need to be done before others)
+- Logical ordering (configuration before implementation, implementation before testing, testing before documentation)
+- Current project state and what makes the most sense to tackle next
+
+Respond with ONLY valid JSON in this exact format:
+{"index": N}
+
+Where N is the index number of the task you select. No explanation, no additional text, just the JSON object.`;
+}
+
+/**
+ * Validate a smart selection response.
+ * @returns The validated index, or null if invalid
+ */
+export function validateSmartSelection(
+  responseText: string,
+  tasks: Task[]
+): number | null {
+  const tryParse = (text: string): unknown => JSON.parse(text);
+  const candidates: string[] = [];
+
+  const trimmed = responseText.trim();
+  if (trimmed.length > 0) {
+    candidates.push(trimmed);
+  }
+
+  // Handle common "```json ... ```" / "``` ... ```" wrappers.
+  // This keeps validation strict while being tolerant of formatting.
+  const fenceMatch = trimmed.match(/^```(?:json)?\s*\n([\s\S]*?)\n```$/i);
+  if (fenceMatch?.[1]) {
+    const fenced = fenceMatch[1].trim();
+    if (fenced.length > 0) {
+      candidates.push(fenced);
+    }
+  }
+
+  // As a last resort, try extracting the first {...} block.
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    const braceSlice = trimmed.slice(firstBrace, lastBrace + 1).trim();
+    if (braceSlice.length > 0) {
+      candidates.push(braceSlice);
+    }
+  }
+
+  let parsed: unknown = null;
+  for (const candidate of candidates) {
+    try {
+      parsed = tryParse(candidate);
+      break;
+    } catch {
+      // keep trying candidates
+    }
+  }
+
+  try {
+    if (parsed === null) {
+      return null;
+    }
+
+    // Check if it has an index field
+    if (typeof parsed !== "object" || parsed === null) {
+      return null;
+    }
+
+    if (
+      !("index" in parsed) ||
+      typeof (parsed as { index?: unknown }).index !== "number"
+    ) {
+      return null;
+    }
+
+    const index = (parsed as { index: number }).index;
+
+    // Check if index is an integer
+    if (!Number.isInteger(index)) {
+      return null;
+    }
+
+    // Check if index is in valid range
+    if (index < 0 || index >= tasks.length) {
+      return null;
+    }
+
+    // Check if task at index is incomplete
+    if (tasks[index].passes === true) {
+      return null;
+    }
+
+    return index;
+  } catch {
+    // JSON parse error or any other error
+    return null;
+  }
+}
+
+/**
+ * Result of smart task selection, including selection and usage data.
+ */
+export interface SmartSelectionResult {
+  selection: { task: Task; index: number } | null;
+  usage: import("../utils/claude-runner.js").AgentUsage | null;
+  totalCostUsd: number;
+  durationMs?: number;
+}
+
+/**
+ * Attempt smart task selection using the runner.
+ * @returns Selection result (task + index or null), plus usage/cost data from the runner
+ */
+export async function selectTaskSmart(
+  tasks: Task[],
+  workingDirectory: string,
+  runner: import("../utils/claude-runner.js").AgentRunner,
+  verbose: boolean = false
+): Promise<SmartSelectionResult> {
+  try {
+    const promptContent = buildSmartSelectionPrompt(tasks);
+
+    const response = await runner.runAgent({
+      promptContent,
+      workingDirectory,
+    });
+
+    const validatedIndex = validateSmartSelection(response.result, tasks);
+
+    if (validatedIndex === null) {
+      if (verbose) {
+        console.warn(
+          "\n--- Smart task selection debug (validation failed) ---"
+        );
+        console.warn("Prompt sent to runner:");
+        console.warn(promptContent);
+        console.warn("\nRunner response:");
+        const trimmedResponse = response.result.trim();
+        const previewLength = 500;
+        if (trimmedResponse.length > previewLength) {
+          console.warn(
+            `${trimmedResponse.substring(
+              0,
+              previewLength
+            )}...\n[truncated, full length: ${trimmedResponse.length} chars]`
+          );
+        } else {
+          console.warn(trimmedResponse);
+        }
+        console.warn("--- End debug ---\n");
+      }
+      // Selection failed validation, but return usage/cost data
+      return {
+        selection: null,
+        usage: response.usage,
+        totalCostUsd: response.total_cost_usd,
+        durationMs: response.duration_ms,
+      };
+    }
+
+    return {
+      selection: {
+        task: tasks[validatedIndex],
+        index: validatedIndex,
+      },
+      usage: response.usage,
+      totalCostUsd: response.total_cost_usd,
+      durationMs: response.duration_ms,
+    };
+  } catch (error) {
+    if (verbose) {
+      console.warn("\n--- Smart task selection debug (runner error) ---");
+      const promptContent = buildSmartSelectionPrompt(tasks);
+      console.warn("Prompt sent to runner:");
+      console.warn(promptContent);
+      console.warn("\nRunner error:");
+      if (error instanceof Error) {
+        console.warn(`Message: ${error.message}`);
+        if (error.stack) {
+          console.warn(`Stack: ${error.stack}`);
+        }
+      } else {
+        console.warn(String(error));
+      }
+      console.warn("--- End debug ---\n");
+    }
+    // Any error during smart selection returns null (no usage/cost available)
+    return {
+      selection: null,
+      usage: null,
+      totalCostUsd: 0,
+    };
+  }
 }
 
 /**
@@ -173,10 +405,12 @@ export async function runJson(
   runner?: import("../utils/claude-runner.js").AgentRunner,
   fs: FileSystem = new DefaultFileSystem()
 ): Promise<void> {
-  const { workingDirectory, maxIterations } = options;
+  const { workingDirectory, maxIterations, verbose = false } = options;
 
   // Import validation utilities and config
-  const { validateWorkingDirectory, validateRequiredFiles } = await import("../utils/validation.js");
+  const { validateWorkingDirectory, validateRequiredFiles } = await import(
+    "../utils/validation.js"
+  );
   const { loadConfig } = await import("../utils/config.js");
   const { DefaultClaudeRunner } = await import("../utils/claude-runner.js");
   const { CursorRunner } = await import("../utils/cursor-runner.js");
@@ -186,10 +420,10 @@ export async function runJson(
   await validateWorkingDirectory(workingDirectory, fs);
 
   // Load config and select runner if not provided
-  if (!runner) {
-    const configResult = await loadConfig(workingDirectory, process.cwd());
-    const config = configResult.config;
+  const configResult = await loadConfig(workingDirectory, process.cwd());
+  const config = configResult.config;
 
+  if (!runner) {
     // Log config information
     console.log("\n--- Configuration ---");
     if (configResult.source === "default") {
@@ -227,6 +461,13 @@ export async function runJson(
     );
   }
 
+  // Log task selection mode
+  if (config.taskSelection === "smart") {
+    console.log(
+      "Task selection mode: smart (with fallback to first-incomplete)"
+    );
+  }
+
   // Initialize cumulative stats
   const cumulative: CumulativeStats = {
     totalInputTokens: 0,
@@ -243,11 +484,61 @@ export async function runJson(
       tasks = await loadTasks(workingDirectory, fs);
     } catch (error) {
       throw new CommandError(
-        `Failed to load tasks.json: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to load tasks.json: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
 
-    const selected = selectNextTask(tasks);
+    // Attempt smart selection if configured
+    let selected: { task: Task; index: number } | null = null;
+    let selectionUsage: import("../utils/claude-runner.js").AgentUsage | null = null;
+    let selectionCost: number = 0;
+
+    if (config.taskSelection === "smart") {
+      const smartResult = await selectTaskSmart(
+        tasks,
+        workingDirectory,
+        runner,
+        verbose
+      );
+      selected = smartResult.selection;
+      selectionUsage = smartResult.usage;
+      selectionCost = smartResult.totalCostUsd;
+
+      // Log selection spend if non-zero
+      if (selectionUsage) {
+        const hasSelectionSpend =
+          selectionUsage.input_tokens > 0 ||
+          selectionUsage.output_tokens > 0 ||
+          selectionCost > 0;
+
+        if (hasSelectionSpend) {
+          console.log("\nTask selection (smart)");
+          console.log(`  Tokens In: ${selectionUsage.input_tokens}  Tokens Out: ${selectionUsage.output_tokens}  Cache Read: ${selectionUsage.cache_read_input_tokens}  Cost: $${selectionCost.toFixed(4)}`);
+        }
+      }
+
+      // Add selection spend to cumulative totals
+      if (selectionUsage) {
+        cumulative.totalInputTokens += selectionUsage.input_tokens;
+        cumulative.totalOutputTokens += selectionUsage.output_tokens;
+        cumulative.totalCacheReadTokens += selectionUsage.cache_read_input_tokens;
+        cumulative.totalCost += selectionCost;
+      }
+
+      if (selected === null) {
+        console.warn(
+          "⚠ Smart task selection failed, falling back to first incomplete task"
+        );
+      }
+    }
+
+    // Fall back to first incomplete task if smart selection didn't work
+    if (selected === null) {
+      selected = selectNextTask(tasks);
+    }
+
     if (!selected) {
       console.log("\n✓ All tasks completed successfully!");
       process.exit(0);
@@ -258,28 +549,39 @@ export async function runJson(
     console.log(`\n--- Attempt ${attempt}/${maxIterations} ---`);
 
     const { task, index } = selected;
-    console.log(`Working on task ${index + 1}/${tasks.length}: ${task.description}`);
+    console.log(
+      `Working on task ${index + 1}/${tasks.length}: ${task.description}`
+    );
 
     // Build prompt content
     let promptContent: string;
     try {
-      promptContent = await buildPromptContent(workingDirectory, task, index, fs);
+      promptContent = await buildPromptContent(
+        workingDirectory,
+        task,
+        index,
+        fs
+      );
     } catch (error) {
       throw new CommandError(
-        `Failed to build prompt content: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to build prompt content: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
 
     // Call runner with prompt content
     let response;
     try {
-      response = await runner.runClaude({
+      response = await runner.runAgent({
         promptContent,
         workingDirectory,
       });
     } catch (error) {
       throw new CommandError(
-        `Failed to run agent: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to run agent: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
     }
 
@@ -299,7 +601,10 @@ export async function runJson(
     };
 
     // Only show token/cost stats if they are non-zero (Claude mode)
-    const hasTokenStats = attemptStats.inputTokens > 0 || attemptStats.outputTokens > 0 || attemptStats.cost > 0;
+    const hasTokenStats =
+      attemptStats.inputTokens > 0 ||
+      attemptStats.outputTokens > 0 ||
+      attemptStats.cost > 0;
 
     if (hasTokenStats) {
       console.log(`Tokens In: ${attemptStats.inputTokens}`);
@@ -329,7 +634,9 @@ export async function runJson(
         console.log("✓ tasks.json updated");
       } catch (error) {
         throw new CommandError(
-          `Failed to save tasks.json: ${error instanceof Error ? error.message : String(error)}`
+          `Failed to save tasks.json: ${
+            error instanceof Error ? error.message : String(error)
+          }`
         );
       }
 
@@ -341,7 +648,11 @@ export async function runJson(
         return; // For testing - process.exit doesn't actually exit when mocked
       }
     } else {
-      console.log(`✗ Task ${index + 1} did not complete (no <promise>success</promise> found)`);
+      console.log(
+        `✗ Task ${
+          index + 1
+        } did not complete (no <promise>success</promise> found)`
+      );
       console.log("The task will be retried on the next attempt.");
     }
   }

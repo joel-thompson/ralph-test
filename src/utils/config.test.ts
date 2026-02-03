@@ -24,6 +24,7 @@ describe("loadConfig", () => {
     expect(result).toEqual({
       config: {
         runner: "claude",
+        taskSelection: "first-incomplete",
       },
       source: "default",
     });
@@ -43,6 +44,7 @@ describe("loadConfig", () => {
     expect(result).toEqual({
       config: {
         runner: "claude",
+        taskSelection: "first-incomplete",
       },
       source: "working-directory",
       path: "/test/dir/ral.json",
@@ -69,6 +71,7 @@ describe("loadConfig", () => {
       config: {
         runner: "cursor",
         model: "composer-1",
+        taskSelection: "first-incomplete",
       },
       source: "working-directory",
       path: "/test/dir/ral.json",
@@ -87,6 +90,7 @@ describe("loadConfig", () => {
       config: {
         runner: "claude",
         model: "composer-1",
+        taskSelection: "first-incomplete",
       },
       source: "working-directory",
       path: "/test/dir/ral.json",
@@ -144,6 +148,7 @@ describe("loadConfig", () => {
     expect(result).toEqual({
       config: {
         runner: "claude",
+        taskSelection: "first-incomplete",
       },
       source: "working-directory",
       path: "/test/dir/ral.json",
@@ -155,9 +160,6 @@ describe("loadConfig", () => {
       runner: "cursor",
       model: "composer-1",
     });
-    const rootConfigContent = JSON.stringify({
-      runner: "claude",
-    });
 
     vi.mocked(readFile).mockResolvedValue(workingConfigContent);
 
@@ -167,6 +169,7 @@ describe("loadConfig", () => {
       config: {
         runner: "cursor",
         model: "composer-1",
+        taskSelection: "first-incomplete",
       },
       source: "working-directory",
       path: "/test/working/ral.json",
@@ -197,6 +200,7 @@ describe("loadConfig", () => {
       config: {
         runner: "cursor",
         model: "composer-2",
+        taskSelection: "first-incomplete",
       },
       source: "root-directory",
       path: "/test/root/ral.json",
@@ -226,6 +230,7 @@ describe("loadConfig", () => {
     expect(result).toEqual({
       config: {
         runner: "claude",
+        taskSelection: "first-incomplete",
       },
       source: "default",
     });
@@ -241,5 +246,76 @@ describe("loadConfig", () => {
     expect(console.log).toHaveBeenCalledWith(
       "No ral.json found, using default config (runner: claude)"
     );
+  });
+
+  it("should load valid config with taskSelection set to first-incomplete", async () => {
+    const configContent = JSON.stringify({
+      runner: "claude",
+      taskSelection: "first-incomplete",
+    });
+    vi.mocked(readFile).mockResolvedValue(configContent);
+
+    const result = await loadConfig("/test/dir");
+
+    expect(result).toEqual({
+      config: {
+        runner: "claude",
+        taskSelection: "first-incomplete",
+      },
+      source: "working-directory",
+      path: "/test/dir/ral.json",
+    });
+  });
+
+  it("should load valid config with taskSelection set to smart", async () => {
+    const configContent = JSON.stringify({
+      runner: "claude",
+      taskSelection: "smart",
+    });
+    vi.mocked(readFile).mockResolvedValue(configContent);
+
+    const result = await loadConfig("/test/dir");
+
+    expect(result).toEqual({
+      config: {
+        runner: "claude",
+        taskSelection: "smart",
+      },
+      source: "working-directory",
+      path: "/test/dir/ral.json",
+    });
+  });
+
+  it("should throw CommandError for invalid taskSelection value", async () => {
+    const configContent = JSON.stringify({
+      runner: "claude",
+      taskSelection: "invalid",
+    });
+    vi.mocked(readFile).mockResolvedValue(configContent);
+
+    await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+    await expect(loadConfig("/test/dir")).rejects.toThrow(
+      'Invalid ral.json: taskSelection must be "first-incomplete" or "smart", got "invalid"'
+    );
+  });
+
+  it("should use default taskSelection when not specified", async () => {
+    const configContent = JSON.stringify({
+      runner: "cursor",
+      model: "composer-1",
+    });
+    vi.mocked(readFile).mockResolvedValue(configContent);
+
+    const result = await loadConfig("/test/dir");
+
+    expect(result).toEqual({
+      config: {
+        runner: "cursor",
+        model: "composer-1",
+        taskSelection: "first-incomplete",
+      },
+      source: "working-directory",
+      path: "/test/dir/ral.json",
+    });
   });
 });

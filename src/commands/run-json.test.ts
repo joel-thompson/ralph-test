@@ -7,9 +7,12 @@ import {
   saveTasks,
   runJson,
   Task,
+  buildSmartSelectionPrompt,
+  validateSmartSelection,
+  selectTaskSmart,
 } from "./run-json.js";
 import { FileSystem } from "../utils/file-helpers.js";
-import type { AgentRunner, ClaudeResponse } from "../utils/claude-runner.js";
+import type { AgentRunner, AgentResponse } from "../utils/claude-runner.js";
 
 class MockFileSystem implements FileSystem {
   private files: Map<string, string> = new Map();
@@ -41,7 +44,10 @@ class MockFileSystem implements FileSystem {
     return false;
   }
 
-  async mkdir(_dirPath: string, _options?: { recursive?: boolean }): Promise<void> {
+  async mkdir(
+    _dirPath: string,
+    _options?: { recursive?: boolean }
+  ): Promise<void> {
     // No-op for tests
   }
 
@@ -89,13 +95,17 @@ describe("run-json helpers", () => {
     it("should throw error if tasks.json is not valid JSON", async () => {
       mockFs.setFile("/test/tasks.json", "not valid json {");
 
-      await expect(loadTasks("/test", mockFs)).rejects.toThrow("tasks.json is not valid JSON");
+      await expect(loadTasks("/test", mockFs)).rejects.toThrow(
+        "tasks.json is not valid JSON"
+      );
     });
 
     it("should throw error if tasks.json is not an array", async () => {
       mockFs.setFile("/test/tasks.json", JSON.stringify({ foo: "bar" }));
 
-      await expect(loadTasks("/test", mockFs)).rejects.toThrow("tasks.json must be a JSON array");
+      await expect(loadTasks("/test", mockFs)).rejects.toThrow(
+        "tasks.json must be a JSON array"
+      );
     });
 
     it("should throw error if task is missing category field", async () => {
@@ -315,7 +325,9 @@ describe("run-json helpers", () => {
         },
       ];
 
-      expect(() => markTaskComplete(tasks, -1)).toThrow("Invalid task index: -1");
+      expect(() => markTaskComplete(tasks, -1)).toThrow(
+        "Invalid task index: -1"
+      );
     });
 
     it("should throw error for invalid index (out of bounds)", () => {
@@ -361,7 +373,9 @@ Do not edit tasks.json`;
       expect(result).toContain("2. Step 2");
       expect(result).toContain("3. Step 3");
       expect(result).toContain(JSON.stringify(task, null, 2));
-      expect(result).not.toContain("The CLI will insert the current task details here when invoking the agent.");
+      expect(result).not.toContain(
+        "The CLI will insert the current task details here when invoking the agent."
+      );
     });
 
     it("should use default template if prompt.md does not exist", async () => {
@@ -382,7 +396,10 @@ Do not edit tasks.json`;
     });
 
     it("should format steps as numbered list", async () => {
-      mockFs.setFile("/test/prompt.md", "The CLI will insert the current task details here when invoking the agent.");
+      mockFs.setFile(
+        "/test/prompt.md",
+        "The CLI will insert the current task details here when invoking the agent."
+      );
 
       const task: Task = {
         category: "test",
@@ -460,22 +477,30 @@ Do not edit tasks.json`;
     let mockRunner: AgentRunner;
     let mockExit: ReturnType<typeof vi.spyOn>;
     let mockConsoleLog: ReturnType<typeof vi.spyOn>;
+    let mockConsoleWarn: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
       mockFs = new MockFileSystem();
-      mockExit = vi.spyOn(process, "exit").mockImplementation((() => {}) as never);
+      mockExit = vi
+        .spyOn(process, "exit")
+        .mockImplementation((() => {}) as never);
       mockConsoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
+      mockConsoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       // Clear mock call history before each test
       mockExit.mockClear();
       mockConsoleLog.mockClear();
+      mockConsoleWarn.mockClear();
 
       // Setup working directory (directory itself must exist)
       mockFs.setFile("/test/.placeholder", "");
 
       // Setup required files
       mockFs.setFile("/test/plan.md", "# Plan");
-      mockFs.setFile("/test/prompt.md", "The CLI will insert the current task details here when invoking the agent.");
+      mockFs.setFile(
+        "/test/prompt.md",
+        "The CLI will insert the current task details here when invoking the agent."
+      );
       mockFs.setFile("/test/activity.md", "# Activity");
     });
 
@@ -495,10 +520,13 @@ Do not edit tasks.json`;
         },
       ];
 
-      mockFs.setFile("/test/tasks.json", JSON.stringify(completeTasks, null, 2));
+      mockFs.setFile(
+        "/test/tasks.json",
+        JSON.stringify(completeTasks, null, 2)
+      );
 
       mockRunner = {
-        runClaude: vi.fn(),
+        runAgent: vi.fn(),
       };
 
       await runJson(
@@ -508,7 +536,7 @@ Do not edit tasks.json`;
       );
 
       expect(mockExit).toHaveBeenCalledWith(0);
-      expect(mockRunner.runClaude).not.toHaveBeenCalled();
+      expect(mockRunner.runAgent).not.toHaveBeenCalled();
     });
 
     it("should mark task complete and persist when <promise>success</promise> is found", async () => {
@@ -523,7 +551,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Task completed successfully. <promise>success</promise>",
         usage: {
           input_tokens: 100,
@@ -534,7 +562,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -544,8 +572,8 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner with promptContent
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(1);
-      expect(mockRunner.runClaude).toHaveBeenCalledWith({
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(1);
+      expect(mockRunner.runAgent).toHaveBeenCalledWith({
         promptContent: expect.stringContaining("Setup project"),
         workingDirectory: "/test",
       });
@@ -570,7 +598,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Task not completed yet.",
         usage: {
           input_tokens: 100,
@@ -581,7 +609,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -591,7 +619,7 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner twice (retrying same task)
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(2);
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(2);
 
       // Task should still be incomplete
       const savedTasks = JSON.parse(mockFs.getFile("/test/tasks.json")!);
@@ -619,7 +647,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const successResponse: ClaudeResponse = {
+      const successResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 100,
@@ -630,7 +658,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(successResponse),
+        runAgent: vi.fn().mockResolvedValue(successResponse),
       };
 
       await runJson(
@@ -640,16 +668,16 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner twice (once per task)
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(2);
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(2);
 
       // First call should be for task 1
-      expect(mockRunner.runClaude).toHaveBeenNthCalledWith(1, {
+      expect(mockRunner.runAgent).toHaveBeenNthCalledWith(1, {
         promptContent: expect.stringContaining("Task 1"),
         workingDirectory: "/test",
       });
 
       // Second call should be for task 2
-      expect(mockRunner.runClaude).toHaveBeenNthCalledWith(2, {
+      expect(mockRunner.runAgent).toHaveBeenNthCalledWith(2, {
         promptContent: expect.stringContaining("Task 2"),
         workingDirectory: "/test",
       });
@@ -681,7 +709,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Not done yet.",
         usage: {
           input_tokens: 100,
@@ -692,7 +720,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -702,11 +730,11 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner 3 times (max attempts)
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(3);
 
       // All calls should be for task 1 (never completed)
       for (let i = 1; i <= 3; i++) {
-        expect(mockRunner.runClaude).toHaveBeenNthCalledWith(i, {
+        expect(mockRunner.runAgent).toHaveBeenNthCalledWith(i, {
           promptContent: expect.stringContaining("Task 1"),
           workingDirectory: "/test",
         });
@@ -726,11 +754,15 @@ Do not edit tasks.json`;
       mockFs.setFile("/test/plan.md", "# Plan");
 
       mockRunner = {
-        runClaude: vi.fn(),
+        runAgent: vi.fn(),
       };
 
       await expect(
-        runJson({ workingDirectory: "/test", maxIterations: 5 }, mockRunner, mockFs)
+        runJson(
+          { workingDirectory: "/test", maxIterations: 5 },
+          mockRunner,
+          mockFs
+        )
       ).rejects.toThrow("Missing required files");
     });
 
@@ -741,11 +773,15 @@ Do not edit tasks.json`;
       mockFs.setFile("/test/tasks.json", "invalid json {");
 
       mockRunner = {
-        runClaude: vi.fn(),
+        runAgent: vi.fn(),
       };
 
       await expect(
-        runJson({ workingDirectory: "/test", maxIterations: 5 }, mockRunner, mockFs)
+        runJson(
+          { workingDirectory: "/test", maxIterations: 5 },
+          mockRunner,
+          mockFs
+        )
       ).rejects.toThrow("Failed to load tasks.json");
     });
 
@@ -767,7 +803,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const successResponse: ClaudeResponse = {
+      const successResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 100,
@@ -778,7 +814,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(successResponse),
+        runAgent: vi.fn().mockResolvedValue(successResponse),
       };
 
       await runJson(
@@ -807,7 +843,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 1500,
@@ -818,7 +854,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -853,7 +889,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse: ClaudeResponse = {
+      const mockResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 0,
@@ -865,7 +901,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(mockResponse),
+        runAgent: vi.fn().mockResolvedValue(mockResponse),
       };
 
       await runJson(
@@ -878,8 +914,12 @@ Do not edit tasks.json`;
       expect(mockConsoleLog).toHaveBeenCalledWith("Duration: 5432ms");
 
       // Should NOT log token stats
-      expect(mockConsoleLog).not.toHaveBeenCalledWith(expect.stringContaining("Tokens In:"));
-      expect(mockConsoleLog).not.toHaveBeenCalledWith(expect.stringContaining("Cost:"));
+      expect(mockConsoleLog).not.toHaveBeenCalledWith(
+        expect.stringContaining("Tokens In:")
+      );
+      expect(mockConsoleLog).not.toHaveBeenCalledWith(
+        expect.stringContaining("Cost:")
+      );
     });
 
     it("should accumulate stats across multiple attempts", async () => {
@@ -900,7 +940,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const mockResponse1: ClaudeResponse = {
+      const mockResponse1: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 1000,
@@ -910,7 +950,7 @@ Do not edit tasks.json`;
         total_cost_usd: 0.01,
       };
 
-      const mockResponse2: ClaudeResponse = {
+      const mockResponse2: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 2000,
@@ -921,7 +961,8 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn()
+        runAgent: vi
+          .fn()
           .mockResolvedValueOnce(mockResponse1)
           .mockResolvedValueOnce(mockResponse2),
       };
@@ -971,7 +1012,7 @@ Do not edit tasks.json`;
 
       mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
 
-      const successResponse: ClaudeResponse = {
+      const successResponse: AgentResponse = {
         result: "Done! <promise>success</promise>",
         usage: {
           input_tokens: 100,
@@ -982,7 +1023,7 @@ Do not edit tasks.json`;
       };
 
       mockRunner = {
-        runClaude: vi.fn().mockResolvedValue(successResponse),
+        runAgent: vi.fn().mockResolvedValue(successResponse),
       };
 
       await runJson(
@@ -992,7 +1033,7 @@ Do not edit tasks.json`;
       );
 
       // Should have called runner exactly 3 times (once per task)
-      expect(mockRunner.runClaude).toHaveBeenCalledTimes(3);
+      expect(mockRunner.runAgent).toHaveBeenCalledTimes(3);
 
       // Count how many times the attempt banner was logged
       const attemptBannerCalls = mockConsoleLog.mock.calls.filter(
@@ -1007,6 +1048,498 @@ Do not edit tasks.json`;
 
       // Should exit 0 after all tasks complete
       expect(mockExit).toHaveBeenCalledWith(0);
+    });
+
+    describe("smart task selection integration", () => {
+      // Note: Full integration tests with ral.json configuration are not included here
+      // because loadConfig() uses the real filesystem (fs/promises), not the mock filesystem.
+      // The smart selection logic is thoroughly tested via unit tests:
+      // - buildSmartSelectionPrompt: tests prompt generation
+      // - validateSmartSelection: tests JSON validation and bounds checking
+      // - selectTaskSmart: tests end-to-end smart selection with mocked runner
+      // This test verifies default behavior when smart selection is NOT configured.
+
+      it("should not attempt smart selection when taskSelection is 'first-incomplete'", async () => {
+        const tasks: Task[] = [
+          {
+            category: "setup",
+            description: "Task 1",
+            steps: ["Step 1"],
+            passes: false,
+          },
+        ];
+
+        mockFs.setFile("/test/tasks.json", JSON.stringify(tasks, null, 2));
+        mockFs.setFile(
+          "/test/ral.json",
+          JSON.stringify({
+            runner: "claude",
+            taskSelection: "first-incomplete",
+          })
+        );
+
+        mockRunner = {
+          runAgent: vi.fn().mockResolvedValue({
+            result: "Done! <promise>success</promise>",
+            usage: {
+              input_tokens: 100,
+              output_tokens: 50,
+              cache_read_input_tokens: 0,
+            },
+            total_cost_usd: 0.01,
+          }),
+        };
+
+        await runJson(
+          { workingDirectory: "/test", maxIterations: 5 },
+          mockRunner,
+          mockFs
+        );
+
+        // Should call runner only once (no smart selection attempt)
+        expect(mockRunner.runAgent).toHaveBeenCalledTimes(1);
+
+        // Should not log smart selection enabled message
+        expect(mockConsoleLog).not.toHaveBeenCalledWith(
+          expect.stringContaining("Smart task selection enabled")
+        );
+
+        expect(mockExit).toHaveBeenCalledWith(0);
+      });
+
+    });
+  });
+
+  describe("buildSmartSelectionPrompt", () => {
+    it("should build a prompt listing all incomplete tasks with their indices", () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Setup project",
+          steps: ["Step 1"],
+          passes: true,
+        },
+        {
+          category: "implementation",
+          description: "Implement feature A",
+          steps: ["Step A"],
+          passes: false,
+        },
+        {
+          category: "testing",
+          description: "Add tests",
+          steps: ["Step B"],
+          passes: false,
+        },
+      ];
+
+      const prompt = buildSmartSelectionPrompt(tasks);
+
+      expect(prompt).toContain("Index 1: [implementation] Implement feature A");
+      expect(prompt).toContain("Index 2: [testing] Add tests");
+      expect(prompt).not.toContain("Index 0");
+      expect(prompt).not.toContain("Setup project");
+      expect(prompt).toContain('{"index": N}');
+    });
+
+    it("should handle all tasks complete", () => {
+      const tasks: Task[] = [
+        {
+          category: "setup",
+          description: "Setup project",
+          steps: ["Step 1"],
+          passes: true,
+        },
+      ];
+
+      const prompt = buildSmartSelectionPrompt(tasks);
+
+      expect(prompt).not.toContain("Index 0");
+      expect(prompt).toContain('{"index": N}');
+    });
+  });
+
+  describe("validateSmartSelection", () => {
+    const tasks: Task[] = [
+      {
+        category: "setup",
+        description: "Task 1",
+        steps: ["Step 1"],
+        passes: true,
+      },
+      {
+        category: "implementation",
+        description: "Task 2",
+        steps: ["Step 2"],
+        passes: false,
+      },
+      {
+        category: "testing",
+        description: "Task 3",
+        steps: ["Step 3"],
+        passes: false,
+      },
+    ];
+
+    it("should validate a correct JSON response", () => {
+      const result = validateSmartSelection('{"index": 1}', tasks);
+      expect(result).toBe(1);
+    });
+
+    it("should validate another correct index", () => {
+      const result = validateSmartSelection('{"index": 2}', tasks);
+      expect(result).toBe(2);
+    });
+
+    it("should handle JSON with extra whitespace", () => {
+      const result = validateSmartSelection('  {"index": 1}  \n', tasks);
+      expect(result).toBe(1);
+    });
+
+    it("should handle JSON wrapped in a markdown code fence", () => {
+      const result = validateSmartSelection(
+        '```json\n{"index": 1}\n```',
+        tasks
+      );
+      expect(result).toBe(1);
+    });
+
+    it("should return null for invalid JSON", () => {
+      const result = validateSmartSelection("not json", tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for JSON missing index field", () => {
+      const result = validateSmartSelection('{"foo": 1}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for non-number index", () => {
+      const result = validateSmartSelection('{"index": "1"}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for non-integer index", () => {
+      const result = validateSmartSelection('{"index": 1.5}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for negative index", () => {
+      const result = validateSmartSelection('{"index": -1}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for out-of-range index", () => {
+      const result = validateSmartSelection('{"index": 5}', tasks);
+      expect(result).toBeNull();
+    });
+
+    it("should return null for index pointing to completed task", () => {
+      const result = validateSmartSelection('{"index": 0}', tasks);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("selectTaskSmart", () => {
+    const tasks: Task[] = [
+      {
+        category: "setup",
+        description: "Task 1",
+        steps: ["Step 1"],
+        passes: true,
+      },
+      {
+        category: "implementation",
+        description: "Task 2",
+        steps: ["Step 2"],
+        passes: false,
+      },
+      {
+        category: "testing",
+        description: "Task 3",
+        steps: ["Step 3"],
+        passes: false,
+      },
+    ];
+
+    it("should return selected task when runner returns valid JSON", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 2}',
+          usage: {
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
+          },
+          total_cost_usd: 0.01,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toEqual({
+        selection: {
+          task: tasks[2],
+          index: 2,
+        },
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
+      });
+
+      expect(mockRunner.runAgent).toHaveBeenCalledWith({
+        promptContent: expect.stringContaining("Index 1"),
+        workingDirectory: "/test",
+      });
+    });
+
+    it("should return selected task when runner returns fenced JSON", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '```json\n{"index": 2}\n```',
+          usage: {
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
+          },
+          total_cost_usd: 0.01,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toEqual({
+        selection: {
+          task: tasks[2],
+          index: 2,
+        },
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
+      });
+    });
+
+    it("should return null selection when runner returns invalid JSON", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: "invalid json",
+          usage: {
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
+          },
+          total_cost_usd: 0.01,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toEqual({
+        selection: null,
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
+      });
+    });
+
+    it("should return null selection when runner returns out-of-range index", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 10}',
+          usage: {
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
+          },
+          total_cost_usd: 0.01,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toEqual({
+        selection: null,
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
+      });
+    });
+
+    it("should return null selection when runner returns index for completed task", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 0}',
+          usage: {
+            input_tokens: 100,
+            output_tokens: 50,
+            cache_read_input_tokens: 20,
+          },
+          total_cost_usd: 0.01,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toEqual({
+        selection: null,
+        usage: {
+          input_tokens: 100,
+          output_tokens: 50,
+          cache_read_input_tokens: 20,
+        },
+        totalCostUsd: 0.01,
+        durationMs: undefined,
+      });
+    });
+
+    it("should return null selection and zero usage when runner throws an error", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockRejectedValue(new Error("Runner failed")),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      expect(result).toEqual({
+        selection: null,
+        usage: null,
+        totalCostUsd: 0,
+        durationMs: undefined,
+      });
+    });
+
+    it("should return usage data even when selection validation fails (invalid JSON)", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: "invalid json response",
+          usage: {
+            input_tokens: 500,
+            output_tokens: 200,
+            cache_read_input_tokens: 100,
+          },
+          total_cost_usd: 0.005,
+          duration_ms: 1234,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      // Selection should be null due to invalid JSON
+      expect(result.selection).toBeNull();
+
+      // But usage data should still be returned
+      expect(result.usage).toEqual({
+        input_tokens: 500,
+        output_tokens: 200,
+        cache_read_input_tokens: 100,
+      });
+      expect(result.totalCostUsd).toBe(0.005);
+      expect(result.durationMs).toBe(1234);
+    });
+
+    it("should return usage data even when selection validation fails (out of range index)", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 99}',
+          usage: {
+            input_tokens: 450,
+            output_tokens: 180,
+            cache_read_input_tokens: 90,
+          },
+          total_cost_usd: 0.004,
+          duration_ms: 2345,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      // Selection should be null due to out-of-range index
+      expect(result.selection).toBeNull();
+
+      // But usage data should still be returned
+      expect(result.usage).toEqual({
+        input_tokens: 450,
+        output_tokens: 180,
+        cache_read_input_tokens: 90,
+      });
+      expect(result.totalCostUsd).toBe(0.004);
+      expect(result.durationMs).toBe(2345);
+    });
+
+    it("should return zero usage data for Cursor mode (successful selection)", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: '{"index": 1}',
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
+          total_cost_usd: 0,
+          duration_ms: 3456,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      // Selection should succeed
+      expect(result.selection).toEqual({
+        task: tasks[1],
+        index: 1,
+      });
+
+      // Usage data should be zero (Cursor mode)
+      expect(result.usage).toEqual({
+        input_tokens: 0,
+        output_tokens: 0,
+        cache_read_input_tokens: 0,
+      });
+      expect(result.totalCostUsd).toBe(0);
+      expect(result.durationMs).toBe(3456);
+    });
+
+    it("should return zero usage data for Cursor mode (failed selection)", async () => {
+      const mockRunner: AgentRunner = {
+        runAgent: vi.fn().mockResolvedValue({
+          result: "invalid response",
+          usage: {
+            input_tokens: 0,
+            output_tokens: 0,
+            cache_read_input_tokens: 0,
+          },
+          total_cost_usd: 0,
+          duration_ms: 4567,
+        }),
+      };
+
+      const result = await selectTaskSmart(tasks, "/test", mockRunner);
+
+      // Selection should fail
+      expect(result.selection).toBeNull();
+
+      // Usage data should be zero (Cursor mode)
+      expect(result.usage).toEqual({
+        input_tokens: 0,
+        output_tokens: 0,
+        cache_read_input_tokens: 0,
+      });
+      expect(result.totalCostUsd).toBe(0);
+      expect(result.durationMs).toBe(4567);
     });
   });
 });

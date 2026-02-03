@@ -57,7 +57,7 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude({
+      await runner.runAgent({
         promptPath: "/path/to/prompt.md",
         workingDirectory,
       });
@@ -77,7 +77,7 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude({
+      await runner.runAgent({
         promptPath: "/path/to/prompt.md",
         workingDirectory,
       });
@@ -96,7 +96,7 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude({
+      await runner.runAgent({
         promptPath: "/path/to/prompt.md",
         workingDirectory,
       });
@@ -115,7 +115,7 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude({
+      await runner.runAgent({
         promptPath: "/path/to/prompt.md",
         workingDirectory,
       });
@@ -134,7 +134,7 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude({
+      await runner.runAgent({
         promptPath: "/path/to/prompt.md",
         workingDirectory,
       });
@@ -154,7 +154,7 @@ describe("DefaultClaudeRunner", () => {
       vi.mocked(readFile).mockResolvedValue(promptContent);
       createMockSpawn(validResponse);
 
-      await runner.runClaude({
+      await runner.runAgent({
         promptPath: "/path/to/prompt.md",
         workingDirectory,
       });
@@ -173,7 +173,7 @@ describe("DefaultClaudeRunner", () => {
 
       createMockSpawn(validResponse);
 
-      await runner.runClaude({
+      await runner.runAgent({
         promptContent,
         workingDirectory,
       });
@@ -191,7 +191,7 @@ describe("DefaultClaudeRunner", () => {
 
     it("should throw error when both promptPath and promptContent are provided", async () => {
       await expect(
-        runner.runClaude({
+        runner.runAgent({
           promptPath: "/path/to/prompt.md",
           promptContent: "Some content",
           workingDirectory: ".",
@@ -201,7 +201,7 @@ describe("DefaultClaudeRunner", () => {
 
     it("should throw error when neither promptPath nor promptContent are provided", async () => {
       await expect(
-        runner.runClaude({
+        runner.runAgent({
           workingDirectory: ".",
         })
       ).rejects.toThrow("Exactly one of promptPath or promptContent must be provided");
