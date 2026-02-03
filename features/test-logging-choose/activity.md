@@ -29,3 +29,36 @@
 **Dependencies:** None required
 
 **Notes:** Setup artifacts are now ready for the implementation task (Task 3) which will create the demo script that reads these files.
+
+---
+
+### 2026-02-03 - Task 3/3: Demo Script Implementation
+
+**Task:** Implement a tiny demo script that reads demo-input.txt and prints a deterministic summary
+
+**Changes Made:**
+- Created `demo.mjs` that reads `demo-input.txt` and `demo-config.json`
+- Script filters lines based on the `minLineLength` configuration value
+- Calculates and displays deterministic statistics: total lines, filtered lines count, and average line length
+
+**Files Created:**
+- `features/test-logging-choose/demo.mjs` - Node.js ESM script that processes input files and prints summary
+
+**Verification:**
+Ran `node features/test-logging-choose/demo.mjs` and received the following output:
+
+```
+=== Demo Script Summary ===
+Total lines: 9
+Min line length filter: 3
+Lines passing filter: 8
+Average length of filtered lines: 45 characters
+===========================
+```
+
+**Notes:**
+- Script successfully reads both input files
+- Filters out lines shorter than the configured minimum length (3 characters) - this excludes "Hi!" and "OK"
+- Produces deterministic, consistent output
+- Exits with code 0 (success)
+- All dependencies handled by Node.js built-in modules (fs, path, url)
