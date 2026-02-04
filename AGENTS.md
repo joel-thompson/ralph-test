@@ -68,7 +68,7 @@ pnpm run dev run -m 10             # Dev mode with args
 - **AgentRunner interface**: `runAgent(options) => AgentResponse` with usage/cost/duration data.
 
 ### Configuration System
-- **src/utils/config.ts**: Loads `ral.json` from working directory or project root
+- **src/utils/config.ts**: Loads `ral.json` from project root only
 - Config schema: `{ runner: "claude"|"cursor", model?: string, taskSelection?: "first-incomplete"|"smart" }`
 - Falls back to default config (claude runner, first-incomplete selection) if no ral.json found
 
@@ -77,7 +77,7 @@ pnpm run dev run -m 10             # Dev mode with args
 - **src/utils/validation.ts**: Validates working directory exists and required files are present.
 
 ### Templates
-- **src/templates/index.ts**: Template strings for scaffolding (activity.md, plan.md, prompt.md, tasks.json, ral.json).
+- **src/templates/index.ts**: Template strings for scaffolding (activity.md, plan.md, prompt.md, tasks.json).
 - Includes `PROMPT_TASK_PLACEHOLDER` for dynamic task injection in JSON workflow.
 
 ### Error Handling

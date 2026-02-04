@@ -44,7 +44,7 @@ export async function run(
   let model: string | undefined;
 
   if (!runner) {
-    const configResult = await loadConfig(workingDirectory, process.cwd());
+    const configResult = await loadConfig(process.cwd());
     const config = configResult.config;
 
     // Store config info for summary logging
@@ -57,8 +57,6 @@ export async function run(
     console.log("\n--- Configuration ---");
     if (configResult.source === "default") {
       console.log("Using default config (no ral.json found)");
-    } else if (configResult.source === "working-directory") {
-      console.log(`Config loaded from: ${configResult.path}`);
     } else if (configResult.source === "root-directory") {
       console.log(`Config loaded from: ${configResult.path}`);
     }
@@ -88,8 +86,6 @@ export async function run(
     }
     if (configSource === "default") {
       console.log("Config source: default");
-    } else if (configSource === "working-directory") {
-      console.log(`Config source: working directory (${configPath})`);
     } else if (configSource === "root-directory") {
       console.log(`Config source: root directory (${configPath})`);
     }
@@ -146,7 +142,10 @@ export async function run(
       };
 
       // Only show token/cost stats if they are non-zero (Claude mode)
-      const hasTokenStats = iterationStats.inputTokens > 0 || iterationStats.outputTokens > 0 || iterationStats.cost > 0;
+      const hasTokenStats =
+        iterationStats.inputTokens > 0 ||
+        iterationStats.outputTokens > 0 ||
+        iterationStats.cost > 0;
 
       if (hasTokenStats) {
         console.log(`Tokens In: ${iterationStats.inputTokens}`);

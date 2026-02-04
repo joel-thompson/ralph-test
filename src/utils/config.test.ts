@@ -46,7 +46,7 @@ describe("loadConfig", () => {
         runner: "claude",
         taskSelection: "first-incomplete",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
     });
     expect(vi.mocked(readFile)).toHaveBeenCalledWith(
@@ -73,7 +73,7 @@ describe("loadConfig", () => {
         model: "composer-1",
         taskSelection: "first-incomplete",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
     });
   });
@@ -92,7 +92,7 @@ describe("loadConfig", () => {
         model: "composer-1",
         taskSelection: "first-incomplete",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
     });
   });
@@ -150,82 +150,13 @@ describe("loadConfig", () => {
         runner: "claude",
         taskSelection: "first-incomplete",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
     });
   });
 
-  it("should use working directory config when both working and root configs exist", async () => {
-    const workingConfigContent = JSON.stringify({
-      runner: "cursor",
-      model: "composer-1",
-    });
-
-    vi.mocked(readFile).mockResolvedValue(workingConfigContent);
-
-    const result = await loadConfig("/test/working", "/test/root");
-
-    expect(result).toEqual({
-      config: {
-        runner: "cursor",
-        model: "composer-1",
-        taskSelection: "first-incomplete",
-      },
-      source: "working-directory",
-      path: "/test/working/ral.json",
-    });
-    expect(vi.mocked(readFile)).toHaveBeenCalledWith(
-      "/test/working/ral.json",
-      "utf-8"
-    );
-    expect(vi.mocked(readFile)).toHaveBeenCalledTimes(1);
-  });
-
-  it("should use root directory config when working directory has no ral.json", async () => {
-    const workingError: any = new Error("File not found");
-    workingError.code = "ENOENT";
-
-    const rootConfigContent = JSON.stringify({
-      runner: "cursor",
-      model: "composer-2",
-    });
-
-    vi.mocked(readFile)
-      .mockRejectedValueOnce(workingError)
-      .mockResolvedValueOnce(rootConfigContent);
-
-    const result = await loadConfig("/test/working", "/test/root");
-
-    expect(result).toEqual({
-      config: {
-        runner: "cursor",
-        model: "composer-2",
-        taskSelection: "first-incomplete",
-      },
-      source: "root-directory",
-      path: "/test/root/ral.json",
-    });
-    expect(vi.mocked(readFile)).toHaveBeenCalledWith(
-      "/test/working/ral.json",
-      "utf-8"
-    );
-    expect(vi.mocked(readFile)).toHaveBeenCalledWith(
-      "/test/root/ral.json",
-      "utf-8"
-    );
-    expect(vi.mocked(readFile)).toHaveBeenCalledTimes(2);
-    expect(console.log).toHaveBeenCalledWith(
-      "Config not found in working directory, using root config from /test/root/ral.json"
-    );
-  });
-
-  it("should return default config when neither directory has ral.json", async () => {
-    const error: any = new Error("File not found");
-    error.code = "ENOENT";
-
-    vi.mocked(readFile).mockRejectedValue(error);
-
-    const result = await loadConfig("/test/working", "/test/root");
+  it("should return default config when no rootDirectory provided", async () => {
+    const result = await loadConfig();
 
     expect(result).toEqual({
       config: {
@@ -234,15 +165,6 @@ describe("loadConfig", () => {
       },
       source: "default",
     });
-    expect(vi.mocked(readFile)).toHaveBeenCalledWith(
-      "/test/working/ral.json",
-      "utf-8"
-    );
-    expect(vi.mocked(readFile)).toHaveBeenCalledWith(
-      "/test/root/ral.json",
-      "utf-8"
-    );
-    expect(vi.mocked(readFile)).toHaveBeenCalledTimes(2);
     expect(console.log).toHaveBeenCalledWith(
       "No ral.json found, using default config (runner: claude)"
     );
@@ -262,7 +184,7 @@ describe("loadConfig", () => {
         runner: "claude",
         taskSelection: "first-incomplete",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
     });
   });
@@ -281,7 +203,7 @@ describe("loadConfig", () => {
         runner: "claude",
         taskSelection: "smart",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
     });
   });
@@ -314,8 +236,259 @@ describe("loadConfig", () => {
         model: "composer-1",
         taskSelection: "first-incomplete",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
+    });
+  });
+
+  describe("services configuration", () => {
+    it("should load valid services config", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: {
+          web: {
+            type: "docker-compose",
+            cwd: "/test/project",
+            composeFile: "docker-compose.yml",
+            service: "web",
+            healthcheckUrl: "http://localhost:5173",
+          },
+        },
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      const result = await loadConfig("/test/dir");
+
+      expect(result).toEqual({
+        config: {
+          runner: "claude",
+          taskSelection: "first-incomplete",
+          services: {
+            web: {
+              type: "docker-compose",
+              cwd: "/test/project",
+              composeFile: "docker-compose.yml",
+              service: "web",
+              healthcheckUrl: "http://localhost:5173",
+            },
+          },
+        },
+        source: "root-directory",
+        path: "/test/dir/ral.json",
+      });
+    });
+
+    it("should load multiple services", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: {
+          web: {
+            type: "docker-compose",
+            cwd: "/test/project",
+            composeFile: "docker-compose.yml",
+            service: "web",
+            healthcheckUrl: "http://localhost:5173",
+          },
+          api: {
+            type: "docker-compose",
+            cwd: "/test/project",
+            composeFile: "docker-compose.yml",
+            service: "api",
+            healthcheckUrl: "http://localhost:3000",
+          },
+        },
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      const result = await loadConfig("/test/dir");
+
+      expect(result.config.services).toHaveProperty("web");
+      expect(result.config.services).toHaveProperty("api");
+      expect(result.config.services?.web.healthcheckUrl).toBe(
+        "http://localhost:5173"
+      );
+      expect(result.config.services?.api.healthcheckUrl).toBe(
+        "http://localhost:3000"
+      );
+    });
+
+    it("should throw CommandError for services not being an object", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: "not-an-object",
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+      await expect(loadConfig("/test/dir")).rejects.toThrow(
+        "Invalid ral.json: services must be an object"
+      );
+    });
+
+    it("should throw CommandError for services being an array", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: [],
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+      await expect(loadConfig("/test/dir")).rejects.toThrow(
+        "Invalid ral.json: services must be an object"
+      );
+    });
+
+    it("should throw CommandError for missing service type", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: {
+          web: {
+            cwd: "/test/project",
+            composeFile: "docker-compose.yml",
+            service: "web",
+            healthcheckUrl: "http://localhost:5173",
+          },
+        },
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+      await expect(loadConfig("/test/dir")).rejects.toThrow(
+        'Invalid ral.json: services.web.type must be "docker-compose"'
+      );
+    });
+
+    it("should throw CommandError for invalid service type", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: {
+          web: {
+            type: "invalid-type",
+            cwd: "/test/project",
+            composeFile: "docker-compose.yml",
+            service: "web",
+            healthcheckUrl: "http://localhost:5173",
+          },
+        },
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+      await expect(loadConfig("/test/dir")).rejects.toThrow(
+        'Invalid ral.json: services.web.type must be "docker-compose", got "invalid-type"'
+      );
+    });
+
+    it("should throw CommandError for missing cwd", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: {
+          web: {
+            type: "docker-compose",
+            composeFile: "docker-compose.yml",
+            service: "web",
+            healthcheckUrl: "http://localhost:5173",
+          },
+        },
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+      await expect(loadConfig("/test/dir")).rejects.toThrow(
+        "Invalid ral.json: services.web.cwd is required and must be a string"
+      );
+    });
+
+    it("should throw CommandError for missing composeFile", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: {
+          web: {
+            type: "docker-compose",
+            cwd: "/test/project",
+            service: "web",
+            healthcheckUrl: "http://localhost:5173",
+          },
+        },
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+      await expect(loadConfig("/test/dir")).rejects.toThrow(
+        "Invalid ral.json: services.web.composeFile is required and must be a string"
+      );
+    });
+
+    it("should throw CommandError for missing service name", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: {
+          web: {
+            type: "docker-compose",
+            cwd: "/test/project",
+            composeFile: "docker-compose.yml",
+            healthcheckUrl: "http://localhost:5173",
+          },
+        },
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+      await expect(loadConfig("/test/dir")).rejects.toThrow(
+        "Invalid ral.json: services.web.service is required and must be a string"
+      );
+    });
+
+    it("should throw CommandError for missing healthcheckUrl", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: {
+          web: {
+            type: "docker-compose",
+            cwd: "/test/project",
+            composeFile: "docker-compose.yml",
+            service: "web",
+          },
+        },
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+      await expect(loadConfig("/test/dir")).rejects.toThrow(
+        "Invalid ral.json: services.web.healthcheckUrl is required and must be a string"
+      );
+    });
+
+    it("should throw CommandError for invalid healthcheckUrl", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+        services: {
+          web: {
+            type: "docker-compose",
+            cwd: "/test/project",
+            composeFile: "docker-compose.yml",
+            service: "web",
+            healthcheckUrl: "not-a-valid-url",
+          },
+        },
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      await expect(loadConfig("/test/dir")).rejects.toThrow(CommandError);
+      await expect(loadConfig("/test/dir")).rejects.toThrow(
+        'Invalid ral.json: services.web.healthcheckUrl must be a valid URL, got "not-a-valid-url"'
+      );
+    });
+
+    it("should handle config with no services defined", async () => {
+      const configContent = JSON.stringify({
+        runner: "claude",
+      });
+      vi.mocked(readFile).mockResolvedValue(configContent);
+
+      const result = await loadConfig("/test/dir");
+
+      expect(result.config.services).toBeUndefined();
     });
   });
 });

@@ -1,0 +1,93 @@
+[
+  {
+    "category": "setup",
+    "description": "US-001: Add `services` support to `ral.json` config loading (docker-compose service definitions)",
+    "steps": [
+      "Update config types/schema to allow a top-level `services` object keyed by service name",
+      "Support `type: \"docker-compose\"` service definitions with fields: `cwd`, `composeFile`, `service`, `healthcheckUrl`",
+      "Validate service config with clear errors for missing/invalid fields (e.g., missing `composeFile`, invalid `healthcheckUrl` URL string)",
+      "Add/extend unit tests for config loading/validation covering: valid service config, missing required fields, invalid URL",
+      "Run pnpm test:run to verify tests pass",
+      "Typecheck passes"
+    ],
+    "passes": true
+  },
+  {
+    "category": "implementation",
+    "description": "US-002: Implement `ral service start <name>` (non-blocking Docker Compose up -d)",
+    "steps": [
+      "Add a new CLI command: `ral service start <name>` (Commander wiring + command implementation)",
+      "Resolve `<name>` from `ral.json` `services` and ensure `type` is `docker-compose` (error if not found/unsupported)",
+      "Run Docker Compose equivalent of: `docker compose -f <composeFile> up -d <service>` from configured `cwd`",
+      "Make the command idempotent when already running (safe to re-run without failing)",
+      "Add unit tests for: missing service name, unknown service, and a happy-path start invocation (mocking shell execution)",
+      "Run pnpm test:run to verify tests pass",
+      "Typecheck passes"
+    ],
+    "passes": true
+  },
+  {
+    "category": "implementation",
+    "description": "US-003: Implement `ral service stop <name>` (Docker Compose stop; idempotent)",
+    "steps": [
+      "Add a new CLI command: `ral service stop <name>`",
+      "Run Docker Compose equivalent of: `docker compose -f <composeFile> stop <service>` from configured `cwd`",
+      "Make the command idempotent when already stopped (safe to re-run without failing)",
+      "Add unit tests for: unknown service and a happy-path stop invocation (mocking shell execution)",
+      "Run pnpm test:run to verify tests pass",
+      "Typecheck passes"
+    ],
+    "passes": true
+  },
+  {
+    "category": "implementation",
+    "description": "US-004: Implement `ral service status <name>` with HTTP healthcheck and `--json` output",
+    "steps": [
+      "Add a new CLI command: `ral service status <name> [--json]`",
+      "Determine `running` using Docker Compose (e.g., `docker compose -f <composeFile> ps --status running --format json <service>` from configured `cwd`; do not assume the JSON is always a single array)",
+      "Determine `healthy` by issuing an HTTP request to `healthcheckUrl` with a short timeout; set `healthy=false` on non-2xx or timeout",
+      "When `--json` is provided, output stable JSON including at least: `name`, `type`, `running`, `healthy`, `healthcheckUrl`, `composeFile`, `composeService`",
+      "Add unit tests covering: running/not-running parsing and healthcheck success/failure (mock HTTP + shell execution)",
+      "Run pnpm test:run to verify tests pass",
+      "Typecheck passes"
+    ],
+    "passes": true
+  },
+  {
+    "category": "implementation",
+    "description": "US-005: Implement `ral service logs <name>` with `--tail` (tail-and-exit default) and optional `--json`",
+    "steps": [
+      "Add a new CLI command: `ral service logs <name> [--tail <n>] [--json]`",
+      "Default behavior: fetch the last 200 lines and exit (no follow/attach)",
+      "Run Docker Compose equivalent of: `docker compose -f <composeFile> logs --tail <n> <service>` from configured `cwd`",
+      "If `--json` is implemented, output a JSON object containing metadata and a `lines` array (or document that logs are plain text in v1 if JSON is not feasible)",
+      "Add unit tests for: default tail value, custom tail, unknown service (mock shell execution)",
+      "Run pnpm test:run to verify tests pass",
+      "Typecheck passes"
+    ],
+    "passes": true
+  },
+  {
+    "category": "documentation",
+    "description": "US-001a: Document `services` config + `ral service …` commands in README",
+    "steps": [
+      "Update `README.md` to document `services` in `ral.json`, including a Vite + React example (`type`, `cwd`, `composeFile`, `service`, `healthcheckUrl`)",
+      "Update `README.md` to document `ral service start|stop|status|logs` with example invocations (including `status --json` and `logs --tail 200`)",
+      "Ensure README guidance tells agents not to run dev servers directly, and to use `ral service …` instead",
+      "Typecheck passes"
+    ],
+    "passes": true
+  },
+  {
+    "category": "documentation",
+    "description": "US-006: Add “don’t run dev servers directly” guidance to scaffolded `prompt.md` template(s)",
+    "steps": [
+      "Update the appropriate `prompt.md` template(s) to include concise guidance: do not start dev servers directly (`pnpm dev`, `vite`); use `ral service start|stop|status|logs`",
+      "Place the guidance near other operational constraints so agents see it early",
+      "Add/adjust template unit tests if needed to account for the new prompt text",
+      "Run pnpm test:run to verify tests pass",
+      "Typecheck passes"
+    ],
+    "passes": true
+  }
+]

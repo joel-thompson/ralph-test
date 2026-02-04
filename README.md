@@ -47,16 +47,20 @@ git log
 Ralph includes two powerful skills for use with Claude Code that help you plan and structure your work before running the autonomous loop:
 
 ### ralph-plan: PRD Generator
+
 Generates Product Requirements Documents (PRDs) for new features. Claude will ask clarifying questions and create a structured plan.md file with user stories and acceptance criteria.
 
 **Usage in Claude Code:**
+
 - Say: "create a ralph plan for [feature]"
 - Or use the command: `/ralph-plan`
 
 ### ralph-tasks: PRD to Tasks Converter
+
 Converts an existing PRD into the tasks.json format that Ralph uses for execution. Ensures tasks are properly sized and ordered.
 
 **Usage in Claude Code:**
+
 - Say: "convert this ralph plan to ralph tasks"
 - Or use the command: `/ralph-tasks`
 
@@ -82,13 +86,14 @@ This workflow enables: *Idea → PRD → tasks.json → Autonomous Execution*
 
 ## Configuration
 
-Ralph supports multiple AI backends through a `ral.json` configuration file in your working directory.
+Ralph supports multiple AI backends through a `ral.json` configuration file in your project root.
 
 ### ral.json
 
-Create a `ral.json` file in your project root or feature directory to configure the AI runner:
+Create a `ral.json` file in your project root to configure the AI runner:
 
 **Using Claude (default):**
+
 ```json
 {
   "runner": "claude"
@@ -96,6 +101,7 @@ Create a `ral.json` file in your project root or feature directory to configure 
 ```
 
 **Using Cursor:**
+
 ```json
 {
   "runner": "cursor",
@@ -105,21 +111,23 @@ Create a `ral.json` file in your project root or feature directory to configure 
 
 **Configuration Options:**
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `runner` | `"claude"` \| `"cursor"` | `"claude"` | Which AI CLI to use |
-| `model` | `string` | `"composer-1"` | Model for Cursor runner (ignored for Claude) |
-| `taskSelection` | `"first-incomplete"` \| `"smart"` | `"first-incomplete"` | Task selection strategy for `run-json` command |
+
+| Field           | Type                             | Default              | Description                                    |
+| --------------- | -------------------------------- | -------------------- | ---------------------------------------------- |
+| `runner`        | `"claude"` | `"cursor"`          | `"claude"`           | Which AI CLI to use                            |
+| `model`         | `string`                         | `"composer-1"`       | Model for Cursor runner (ignored for Claude)   |
+| `taskSelection` | `"first-incomplete"` | `"smart"` | `"first-incomplete"` | Task selection strategy for `run-json` command |
+
 
 **Task Selection Strategies (`run-json` only):**
 
 The `taskSelection` field controls how Ralph chooses the next task to work on:
 
-- **`"first-incomplete"`** (default): Selects the first task in `tasks.json` where `passes !== true`. Simple, predictable, follows the order you defined.
-
-- **`"smart"`**: Asks the AI runner to analyze all incomplete tasks and choose the best next task based on dependencies, logical ordering, and current context. Falls back to `"first-incomplete"` if the AI returns invalid output or an error occurs.
+- `**"first-incomplete"**` (default): Selects the first task in `tasks.json` where `passes !== true`. Simple, predictable, follows the order you defined.
+- `**"smart"**`: Asks the AI runner to analyze all incomplete tasks and choose the best next task based on dependencies, logical ordering, and current context. Falls back to `"first-incomplete"` if the AI returns invalid output or an error occurs.
 
 Example with smart task selection:
+
 ```json
 {
   "runner": "claude",
@@ -128,11 +136,206 @@ Example with smart task selection:
 ```
 
 **Notes:**
+
 - If `ral.json` doesn't exist, Ralph uses Claude by default
 - The `model` field only applies to Cursor runner
 - Claude runner uses the model configured in your Claude CLI settings
 - When using Cursor, token usage and cost information are not displayed (Cursor doesn't provide this data)
 - The `taskSelection` field only applies to the `run-json` command (ignored by `run`)
+
+### Service Management
+
+Ralph provides built-in service management commands to safely start, stop, check status, and fetch logs from dev servers (e.g., Vite, Next.js) without blocking the autonomous loop.
+
+**⚠️ Important for AI Agents:** Do not run dev servers directly (e.g., `pnpm dev`, `npm run dev`, `vite`). These commands are long-running and will hang the loop. Always use `ral service ...` commands instead.
+
+#### Configuring Services in ral.json
+
+Add a `services` section to your `ral.json` to define one or more services:
+
+```json
+{
+  "runner": "claude",
+  "services": {
+    "web": {
+      "type": "docker-compose",
+      "cwd": "./my-app",
+      "composeFile": "docker-compose.yml",
+      "service": "web",
+      "healthcheckUrl": "http://localhost:5173/"
+    },
+    "api": {
+      "type": "docker-compose",
+      "cwd": "./backend",
+      "composeFile": "docker-compose.yml",
+      "service": "api",
+      "healthcheckUrl": "http://localhost:3000/health"
+    }
+  }
+}
+```
+
+**Service Configuration Fields:**
+
+
+| Field            | Type               | Required | Description                                                                            |
+| ---------------- | ------------------ | -------- | -------------------------------------------------------------------------------------- |
+| `type`           | `"docker-compose"` | Yes      | Service type (only `docker-compose` supported in v1)                                   |
+| `cwd`            | `string`           | Yes      | Working directory where Docker Compose will run (relative to project root or absolute) |
+| `composeFile`    | `string`           | Yes      | Docker Compose file name (e.g., `docker-compose.yml`)                                  |
+| `service`        | `string`           | Yes      | Service name from the Compose file to manage                                           |
+| `healthcheckUrl` | `string`           | Yes      | HTTP URL to check if the service is healthy (e.g., `http://localhost:5173/`)           |
+
+
+#### Service Commands
+
+Ralph provides four service management commands that are safe for AI agents to use:
+
+##### `ral service start <name>`
+
+Start a service in the background (non-blocking, idempotent).
+
+```bash
+ral service start web                    # Start the "web" service
+ral service start api -w ./features/api  # Start with custom working directory
+```
+
+**Behavior:**
+
+- Runs `docker compose up -d` for the configured service
+- Returns quickly (does not wait for full startup)
+- Idempotent: safe to run when already running
+- Returns clear error if Docker is not available
+
+##### `ral service stop <name>`
+
+Stop a running service (non-blocking, idempotent).
+
+```bash
+ral service stop web                     # Stop the "web" service
+ral service stop api -w ./features/api
+```
+
+**Behavior:**
+
+- Runs `docker compose stop` for the configured service
+- Returns quickly
+- Idempotent: safe to run when already stopped
+
+##### `ral service status <name>`
+
+Check if a service is running and healthy.
+
+```bash
+ral service status web                   # Human-readable output
+ral service status web --json            # JSON output for programmatic use
+```
+
+**Behavior:**
+
+- Checks if the Docker Compose service is running
+- Performs HTTP healthcheck to `healthcheckUrl` with 5 second timeout
+- Returns `running` and `healthy` status
+- Only performs healthcheck if service is running
+
+**Example JSON output:**
+
+```json
+{
+  "name": "web",
+  "type": "docker-compose",
+  "running": true,
+  "healthy": true,
+  "healthcheckUrl": "http://localhost:5173/",
+  "composeFile": "docker-compose.yml",
+  "composeService": "web"
+}
+```
+
+##### `ral service logs <name>`
+
+Fetch recent logs from a service (tail-and-exit, does not follow).
+
+```bash
+ral service logs web                     # Fetch last 200 lines (default)
+ral service logs web --tail 500          # Fetch last 500 lines
+ral service logs web --json              # JSON output with metadata
+```
+
+**Behavior:**
+
+- Fetches the last N lines of logs and exits (does not attach/follow)
+- Default: 200 lines
+- Returns quickly (bounded operation)
+- Safe for AI agents to use for debugging
+
+**Example JSON output:**
+
+```json
+{
+  "name": "web",
+  "type": "docker-compose",
+  "composeFile": "docker-compose.yml",
+  "composeService": "web",
+  "lines": [
+    "web-1  | > vite",
+    "web-1  | ",
+    "web-1  |   VITE v5.0.0  ready in 234 ms"
+  ]
+}
+```
+
+#### Example: Vite + React Dev Server
+
+Here's a complete example for managing a Vite dev server:
+
+**docker-compose.yml:**
+
+```yaml
+version: '3.8'
+services:
+  web:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0
+```
+
+**ral.json:**
+
+```json
+{
+  "runner": "claude",
+  "services": {
+    "web": {
+      "type": "docker-compose",
+      "cwd": ".",
+      "composeFile": "docker-compose.yml",
+      "service": "web",
+      "healthcheckUrl": "http://localhost:5173/"
+    }
+  }
+}
+```
+
+**Usage in a Ralph loop:**
+
+```bash
+# AI agent can safely start the dev server
+ral service start web
+
+# Check if it's running and healthy
+ral service status web
+
+# Fetch recent logs to debug issues
+ral service logs web --tail 100
+
+# Stop when done
+ral service stop web
+```
 
 ## Core Concepts
 
@@ -140,19 +343,22 @@ Example with smart task selection:
 
 Ralph supports two separate workflows:
 
-| Feature | JSON Workflow | Markdown Workflow |
-|---------|---------------|-------------------|
-| **Commands** | `scaffold-json`, `run-json` | `scaffold`, `run` |
-| **Task storage** | Separate tasks.json file | Embedded in plan.md |
-| **Task completion** | CLI writes `passes: true` on `<promise>success</promise>` | AI writes `passes: true` |
-| **Use when** | You want explicit success verification | AI should manage task flow |
-| **plan.md** | Contains only details/context | Contains tasks + details |
+
+| Feature             | JSON Workflow                                             | Markdown Workflow          |
+| ------------------- | --------------------------------------------------------- | -------------------------- |
+| **Commands**        | `scaffold-json`, `run-json`                               | `scaffold`, `run`          |
+| **Task storage**    | Separate tasks.json file                                  | Embedded in plan.md        |
+| **Task completion** | CLI writes `passes: true` on `<promise>success</promise>` | AI writes `passes: true`   |
+| **Use when**        | You want explicit success verification                    | AI should manage task flow |
+| **plan.md**         | Contains only details/context                             | Contains tasks + details   |
+
 
 **Recommendation:** The JSON workflow is recommended and is being actively developed.
 
 ### The Ralph Loop
 
 Ralph automates iterative development by having an AI assistant (Claude or Cursor):
+
 1. Read the activity log to understand current state
 2. Find the next incomplete task in your plan
 3. Complete all steps for that task
@@ -187,6 +393,7 @@ This lets you work on multiple features in parallel with isolated plans.
 ## Commands
 
 Ralph provides two separate workflows:
+
 1. **JSON workflow** (`scaffold-json` + `run-json`): Tasks in tasks.json with CLI-controlled task completion (recommended)
 2. **Markdown workflow** (`scaffold` + `run`): Tasks embedded in plan.md with AI-controlled task completion (legacy)
 
@@ -203,6 +410,7 @@ ral scaffold-json -f                 # Overwrite existing files
 Creates: `activity.md`, `plan.md` (details only), `tasks.json`, `prompt.md`, `screenshots/`
 
 **Key differences from `scaffold`:**
+
 - Tasks are stored separately in `tasks.json` (not embedded in plan.md)
 - The CLI controls task completion (not the AI)
 - plan.md contains only project details and context
@@ -217,6 +425,7 @@ ral run-json -m 10 -w ./features/api  # Run with specific working directory
 ```
 
 **Behavior:**
+
 - Loads tasks from `tasks.json` (array of task objects)
 - Selects first incomplete task (where `passes !== true`) in array order
 - Injects task details into prompt dynamically
@@ -226,6 +435,7 @@ ral run-json -m 10 -w ./features/api  # Run with specific working directory
 - Exits with code 1 if max iterations reached with tasks remaining
 
 **tasks.json schema:**
+
 ```json
 [
   {
@@ -243,6 +453,7 @@ ral run-json -m 10 -w ./features/api  # Run with specific working directory
 ```
 
 **Required fields:**
+
 - `category` (string): Task category (e.g., "setup", "implementation", "testing")
 - `description` (string): Clear description of what to accomplish
 - `steps` (array): Explicit steps to complete the task
@@ -252,6 +463,7 @@ ral run-json -m 10 -w ./features/api  # Run with specific working directory
 The AI must output `<promise>success</promise>` only when the task is verified complete. The CLI detects this tag and marks the task complete in tasks.json. Without this tag, the task remains incomplete and will retry on the next iteration.
 
 **What the AI can edit:**
+
 - ✅ Source code, tests, documentation
 - ✅ activity.md (progress logging)
 - ✅ plan.md (notes and context)
@@ -279,12 +491,14 @@ ral run -m 10 -w ./features/auth     # Run with specific working directory
 ```
 
 **Behavior:**
+
 - Iterates up to max-iterations times
 - Tracks token usage and costs per iteration (Claude runner only)
 - Exits with code 0 when the AI outputs `<promise>COMPLETE</promise>`
 - Exits with code 1 if max iterations reached without completion
 
 **Output (Claude runner):**
+
 ```
 Iteration 1/10
 Input tokens: 15234, Output tokens: 2341
@@ -293,6 +507,7 @@ Cumulative cost: $0.123
 ```
 
 **Output (Cursor runner):**
+
 ```
 Iteration 1/10
 Duration: 2525ms
@@ -317,11 +532,13 @@ Creates: `.claude/settings.json`, `.mcp.json`
 Formula: `max-iterations = number_of_tasks + buffer`
 
 Examples:
+
 - 5 tasks → use `-m 8` (5 + 3 buffer)
 - 10 tasks → use `-m 13` (10 + 3 buffer)
 - 20 tasks → use `-m 25` (20 + 5 buffer)
 
 **Why a buffer?**
+
 - Tests might fail and need fixing
 - Build errors need resolution
 - Tasks might be more complex than anticipated
@@ -343,6 +560,7 @@ For detailed, real-world examples see [EXAMPLES.md](EXAMPLES.md):
 3. **Debugging and Fixing a Bug**: Structured investigation and fix for an intermittent cart bug
 
 Quick example - Building a feature:
+
 ```bash
 # 1. Create feature directory and spec
 ral scaffold-json -w features/notifications
@@ -366,3 +584,4 @@ git log --oneline
 pnpm test:run                # Run all tests
 pnpm test                    # Watch mode
 ```
+

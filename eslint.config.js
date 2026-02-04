@@ -15,6 +15,10 @@ export default [
       globals: {
         console: "readonly",
         process: "readonly",
+        fetch: "readonly",
+        AbortController: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
       },
     },
     plugins: {
@@ -49,6 +53,7 @@ export default [
         console: "readonly",
         process: "readonly",
         setTimeout: "readonly",
+        global: "readonly",
       },
     },
     rules: {

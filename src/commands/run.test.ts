@@ -348,7 +348,7 @@ describe("run command", () => {
         runner: "cursor",
         model: "gpt-4",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
     });
 
@@ -361,8 +361,8 @@ describe("run command", () => {
       })
     ).rejects.toThrow();
 
-    // Verify loadConfig was called with working directory and root directory
-    expect(config.loadConfig).toHaveBeenCalledWith(testDir, expect.any(String));
+    // Verify loadConfig was called with root directory
+    expect(config.loadConfig).toHaveBeenCalledWith(expect.any(String));
 
     consoleSpy.mockRestore();
   });
@@ -466,7 +466,7 @@ describe("run command", () => {
     consoleSpy.mockRestore();
   });
 
-  it("should log config information when loading config from working directory", async () => {
+  it("should log config information when loading config from root directory", async () => {
     // Mock validation
     vi.mocked(validation.validateWorkingDirectory).mockResolvedValue();
     vi.mocked(validation.validateRequiredFiles).mockResolvedValue({
@@ -474,13 +474,13 @@ describe("run command", () => {
       missing: [],
     });
 
-    // Mock config to return working directory config with model
+    // Mock config to return root directory config with model
     vi.mocked(config.loadConfig).mockResolvedValue({
       config: {
         runner: "cursor",
         model: "gpt-4",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
     });
 
@@ -590,7 +590,7 @@ describe("run command", () => {
         runner: "cursor",
         model: "gpt-4",
       },
-      source: "working-directory",
+      source: "root-directory",
       path: "/test/dir/ral.json",
     });
 
@@ -624,7 +624,7 @@ describe("run command", () => {
     expect(logs).toContain("Runner: cursor");
     expect(logs).toContain("Model: gpt-4");
     expect(logs).toContain(
-      "Config source: working directory (/test/dir/ral.json)"
+      "Config source: root directory (/test/dir/ral.json)"
     );
 
     runAgentSpy.mockRestore();

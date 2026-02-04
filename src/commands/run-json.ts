@@ -133,10 +133,11 @@ export function buildSmartSelectionPrompt(tasks: Task[]): string {
 
 ${taskList}
 
+IMPORTANT: All tasks listed above are INCOMPLETE and require work. Do NOT assume any task is complete based on activity.md, code changes, or other project state. The task list above is the authoritative source of what remains to be done.
+
 Consider:
 - Task dependencies (some tasks may need to be done before others)
 - Logical ordering (configuration before implementation, implementation before testing, testing before documentation)
-- Current project state and what makes the most sense to tackle next
 
 Respond with ONLY valid JSON in this exact format:
 {"index": N}
@@ -423,7 +424,7 @@ export async function runJson(
   await validateWorkingDirectory(workingDirectory, fs);
 
   // Load config and select runner if not provided
-  const configResult = await loadConfig(workingDirectory, process.cwd());
+  const configResult = await loadConfig(process.cwd());
   const config = configResult.config;
 
   if (!runner) {
@@ -431,8 +432,6 @@ export async function runJson(
     console.log("\n--- Configuration ---");
     if (configResult.source === "default") {
       console.log("Using default config (no ral.json found)");
-    } else if (configResult.source === "working-directory") {
-      console.log(`Config loaded from: ${configResult.path}`);
     } else if (configResult.source === "root-directory") {
       console.log(`Config loaded from: ${configResult.path}`);
     }
