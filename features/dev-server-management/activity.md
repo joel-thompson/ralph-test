@@ -119,3 +119,53 @@ No new dependencies were added. Used existing Node.js `child_process` module.
 - Docker Compose `up -d` is naturally idempotent, making the command safe to retry
 - Clear error messages with available service names help users quickly identify typos
 - Mocking the shell execution in tests allows for comprehensive testing without Docker dependencies
+
+---
+
+### 2026-02-04 - US-003: Implement `ral service stop <name>` command
+
+**Task:** Implement non-blocking Docker Compose service stop command with idempotency
+
+**Changes Made:**
+1. Created service stop command in `src/commands/service-stop.ts`:
+   - `serviceStop()` function that resolves service from ral.json config
+   - Validates service exists and is of type "docker-compose"
+   - Executes `docker compose -f <composeFile> stop <service>` from configured cwd
+   - Idempotent implementation (safe to run when already stopped)
+   - Provides clear error messages for:
+     - No services configured
+     - Unknown service names (lists available services)
+     - Unsupported service types
+     - Docker not available/daemon not running
+   - Handles both relative and absolute service cwd paths
+   - 60 second timeout for service stop operations
+
+2. Added CLI command wiring in `src/index.ts`:
+   - Added `service stop <name>` subcommand to the existing `service` command group
+   - Supports `-w, --working-directory` option
+   - Proper error handling and exit codes
+
+3. Added comprehensive unit tests in `src/commands/service-stop.test.ts` (8 tests):
+   - No services configured error
+   - Unknown service name error
+   - Unsupported service type error
+   - Successful service stop
+   - Already stopped (idempotent) behavior
+   - Docker command failure handling
+   - Docker not installed error
+   - Absolute path handling
+
+**Verification Results:**
+- All tests pass: 198 tests passing across 15 test files
+- TypeScript typecheck passes with no errors
+- CLI command `ral service stop --help` displays correct usage
+- Build succeeds without errors
+
+**Dependencies:**
+No new dependencies were added. Used existing shell execution utility from `src/utils/shell.ts`.
+
+**Lessons Learned:**
+- Docker Compose `stop` is naturally idempotent, similar to `up -d`
+- Empty stdout/stderr typically indicates the service was already stopped
+- Following the same patterns as `service-start` made implementation straightforward and consistent
+- Comprehensive error handling and validation at the beginning of the function provides better UX
