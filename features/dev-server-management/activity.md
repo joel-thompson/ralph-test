@@ -293,3 +293,43 @@ No new dependencies were added. Used existing shell execution utility from `src/
 - Maintaining consistent error handling patterns across all service commands improves maintainability
 - Providing both JSON (for agent consumption) and plain text (for human inspection) output modes maximizes utility
 - Default tail value of 200 lines prevents commands from hanging while still providing sufficient context for debugging
+
+---
+
+### 2026-02-04 - US-001a: Document `services` config + `ral service …` commands in README
+
+**Task:** Document the `services` configuration and `ral service` commands in README.md
+
+**Changes Made:**
+1. Added comprehensive "Service Management" section to README.md:
+   - Overview of service management feature with important warning for AI agents not to run dev servers directly
+   - Detailed documentation of `services` configuration in `ral.json`
+   - Table of service configuration fields with descriptions
+   - Documentation for all four service commands: `start`, `stop`, `status`, `logs`
+   - Example invocations for each command
+   - Example JSON output for `status` and `logs` commands
+   - Complete Vite + React dev server example with docker-compose.yml and ral.json
+   - Usage examples showing how AI agents should use the commands in a Ralph loop
+
+2. Placement:
+   - Added after existing `ral.json` configuration section in the Configuration area
+   - Included prominent warning at the top: "⚠️ Important for AI Agents: Do not run dev servers directly"
+   - Organized content with clear headings and examples
+
+**Verification Results:**
+- TypeScript typecheck passes with no errors
+- Documentation is comprehensive and includes:
+  - Service configuration schema and field descriptions
+  - All four commands with usage examples
+  - JSON output examples for `status` and `logs`
+  - Complete working example with Vite + React
+  - Clear guidance for AI agents to use `ral service` instead of running dev servers directly
+
+**Dependencies:**
+No dependencies were added. This is a documentation-only change.
+
+**Lessons Learned:**
+- Documentation should include both human-readable and machine-readable output examples
+- Prominent warnings help AI agents avoid common pitfalls (like running long-lived processes directly)
+- Complete working examples (like the Vite + React setup) help users understand how all pieces fit together
+- Organizing service commands with clear behavior descriptions makes the feature more approachable

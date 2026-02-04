@@ -134,6 +134,189 @@ Example with smart task selection:
 - When using Cursor, token usage and cost information are not displayed (Cursor doesn't provide this data)
 - The `taskSelection` field only applies to the `run-json` command (ignored by `run`)
 
+### Service Management
+
+Ralph provides built-in service management commands to safely start, stop, check status, and fetch logs from dev servers (e.g., Vite, Next.js) without blocking the autonomous loop.
+
+**⚠️ Important for AI Agents:** Do not run dev servers directly (e.g., `pnpm dev`, `npm run dev`, `vite`). These commands are long-running and will hang the loop. Always use `ral service ...` commands instead.
+
+#### Configuring Services in ral.json
+
+Add a `services` section to your `ral.json` to define one or more services:
+
+```json
+{
+  "runner": "claude",
+  "services": {
+    "web": {
+      "type": "docker-compose",
+      "cwd": "./my-app",
+      "composeFile": "docker-compose.yml",
+      "service": "web",
+      "healthcheckUrl": "http://localhost:5173/"
+    },
+    "api": {
+      "type": "docker-compose",
+      "cwd": "./backend",
+      "composeFile": "docker-compose.yml",
+      "service": "api",
+      "healthcheckUrl": "http://localhost:3000/health"
+    }
+  }
+}
+```
+
+**Service Configuration Fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | `"docker-compose"` | Yes | Service type (only `docker-compose` supported in v1) |
+| `cwd` | `string` | Yes | Working directory where Docker Compose will run (relative to project root or absolute) |
+| `composeFile` | `string` | Yes | Docker Compose file name (e.g., `docker-compose.yml`) |
+| `service` | `string` | Yes | Service name from the Compose file to manage |
+| `healthcheckUrl` | `string` | Yes | HTTP URL to check if the service is healthy (e.g., `http://localhost:5173/`) |
+
+#### Service Commands
+
+Ralph provides four service management commands that are safe for AI agents to use:
+
+##### `ral service start <name>`
+
+Start a service in the background (non-blocking, idempotent).
+
+```bash
+ral service start web                    # Start the "web" service
+ral service start api -w ./features/api  # Start with custom working directory
+```
+
+**Behavior:**
+- Runs `docker compose up -d` for the configured service
+- Returns quickly (does not wait for full startup)
+- Idempotent: safe to run when already running
+- Returns clear error if Docker is not available
+
+##### `ral service stop <name>`
+
+Stop a running service (non-blocking, idempotent).
+
+```bash
+ral service stop web                     # Stop the "web" service
+ral service stop api -w ./features/api
+```
+
+**Behavior:**
+- Runs `docker compose stop` for the configured service
+- Returns quickly
+- Idempotent: safe to run when already stopped
+
+##### `ral service status <name>`
+
+Check if a service is running and healthy.
+
+```bash
+ral service status web                   # Human-readable output
+ral service status web --json            # JSON output for programmatic use
+```
+
+**Behavior:**
+- Checks if the Docker Compose service is running
+- Performs HTTP healthcheck to `healthcheckUrl` with 5 second timeout
+- Returns `running` and `healthy` status
+- Only performs healthcheck if service is running
+
+**Example JSON output:**
+```json
+{
+  "name": "web",
+  "type": "docker-compose",
+  "running": true,
+  "healthy": true,
+  "healthcheckUrl": "http://localhost:5173/",
+  "composeFile": "docker-compose.yml",
+  "composeService": "web"
+}
+```
+
+##### `ral service logs <name>`
+
+Fetch recent logs from a service (tail-and-exit, does not follow).
+
+```bash
+ral service logs web                     # Fetch last 200 lines (default)
+ral service logs web --tail 500          # Fetch last 500 lines
+ral service logs web --json              # JSON output with metadata
+```
+
+**Behavior:**
+- Fetches the last N lines of logs and exits (does not attach/follow)
+- Default: 200 lines
+- Returns quickly (bounded operation)
+- Safe for AI agents to use for debugging
+
+**Example JSON output:**
+```json
+{
+  "name": "web",
+  "type": "docker-compose",
+  "composeFile": "docker-compose.yml",
+  "composeService": "web",
+  "lines": [
+    "web-1  | > vite",
+    "web-1  | ",
+    "web-1  |   VITE v5.0.0  ready in 234 ms"
+  ]
+}
+```
+
+#### Example: Vite + React Dev Server
+
+Here's a complete example for managing a Vite dev server:
+
+**docker-compose.yml:**
+```yaml
+version: '3.8'
+services:
+  web:
+    image: node:18
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0
+```
+
+**ral.json:**
+```json
+{
+  "runner": "claude",
+  "services": {
+    "web": {
+      "type": "docker-compose",
+      "cwd": ".",
+      "composeFile": "docker-compose.yml",
+      "service": "web",
+      "healthcheckUrl": "http://localhost:5173/"
+    }
+  }
+}
+```
+
+**Usage in a Ralph loop:**
+```bash
+# AI agent can safely start the dev server
+ral service start web
+
+# Check if it's running and healthy
+ral service status web
+
+# Fetch recent logs to debug issues
+ral service logs web --tail 100
+
+# Stop when done
+ral service stop web
+```
+
 ## Core Concepts
 
 ### Workflow Comparison
