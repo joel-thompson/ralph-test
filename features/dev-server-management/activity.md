@@ -169,3 +169,66 @@ No new dependencies were added. Used existing shell execution utility from `src/
 - Empty stdout/stderr typically indicates the service was already stopped
 - Following the same patterns as `service-start` made implementation straightforward and consistent
 - Comprehensive error handling and validation at the beginning of the function provides better UX
+
+---
+
+### 2026-02-04 - US-004: Implement `ral service status <name>` command
+
+**Task:** Implement Docker Compose service status check with HTTP healthcheck and `--json` output
+
+**Changes Made:**
+1. Created service status command in `src/commands/service-status.ts`:
+   - `serviceStatus()` function that resolves service from ral.json config
+   - Validates service exists and is of type "docker-compose"
+   - Determines `running` status using `docker compose -f <composeFile> ps --status running --format json <service>` from configured cwd
+   - Handles newline-delimited JSON output from docker compose ps (doesn't assume single JSON array)
+   - Parses JSON to check if Service matches and State is "running"
+   - Determines `healthy` status by performing HTTP GET request to `healthcheckUrl` with 5 second timeout
+   - Sets `healthy=true` for 2xx responses, `healthy=false` for non-2xx or timeout/connection errors
+   - Only performs healthcheck if service is running
+   - Provides clear error messages for:
+     - No services configured
+     - Unknown service names (lists available services)
+     - Unsupported service types
+     - Docker not available/daemon not running
+   - Handles both relative and absolute service cwd paths
+   - 30 second timeout for status check operations
+   - Returns ServiceStatus object with: name, type, running, healthy, healthcheckUrl, composeFile, composeService
+   - Supports `--json` flag for machine-readable JSON output
+   - Human-readable output format when `--json` is not provided
+
+2. Added CLI command wiring in `src/index.ts`:
+   - Added `service status <name>` subcommand to the existing `service` command group
+   - Supports `-w, --working-directory` option
+   - Supports `--json` flag for JSON output
+   - Proper error handling and exit codes
+
+3. Added comprehensive unit tests in `src/commands/service-status.test.ts` (11 tests):
+   - No services configured error
+   - Unknown service name error
+   - Unsupported service type error
+   - Running and healthy (successful healthcheck)
+   - Not running (no healthcheck attempted)
+   - Running but unhealthy (failed healthcheck with non-2xx status)
+   - Running but unhealthy (healthcheck timeout)
+   - Newline-delimited JSON parsing from docker compose ps
+   - JSON output format when --json flag is provided
+   - Docker not installed error
+   - Absolute path handling
+
+**Verification Results:**
+- All tests pass: 209 tests passing across 16 test files
+- TypeScript typecheck passes with no errors
+- CLI command `ral service status --help` displays correct usage
+- Build succeeds without errors
+
+**Dependencies:**
+No new dependencies were added. Used existing shell execution utility from `src/utils/shell.ts` and Node.js native `fetch` API for HTTP healthchecks.
+
+**Lessons Learned:**
+- Docker compose ps --format json can output newline-delimited JSON objects (one per line) rather than a single JSON array
+- Need to parse each line separately and check if Service name matches and State is "running"
+- Node.js native fetch API with AbortController provides a clean way to implement HTTP request timeouts
+- Only performing healthcheck when service is running saves unnecessary network calls
+- Mocking global fetch in tests requires careful setup but allows for comprehensive healthcheck testing
+- Providing both human-readable and JSON output modes makes the command useful for both manual inspection and programmatic use

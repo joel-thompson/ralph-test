@@ -8,6 +8,7 @@ import { run } from "./commands/run.js";
 import { runJson } from "./commands/run-json.js";
 import { serviceStart } from "./commands/service-start.js";
 import { serviceStop } from "./commands/service-stop.js";
+import { serviceStatus } from "./commands/service-status.js";
 
 const program = new Command();
 
@@ -179,6 +180,29 @@ serviceCommand
       await serviceStop({
         workingDirectory: options.workingDirectory || process.cwd(),
         serviceName: name,
+      });
+    } catch (error) {
+      console.error(
+        `Error: ${error instanceof Error ? error.message : String(error)}`
+      );
+      process.exit(1);
+    }
+  });
+
+serviceCommand
+  .command("status <name>")
+  .description("Check the status of a service")
+  .option(
+    "-w, --working-directory <path>",
+    "Working directory (default: current directory)"
+  )
+  .option("--json", "Output status in JSON format")
+  .action(async (name: string, options) => {
+    try {
+      await serviceStatus({
+        workingDirectory: options.workingDirectory || process.cwd(),
+        serviceName: name,
+        json: options.json,
       });
     } catch (error) {
       console.error(
