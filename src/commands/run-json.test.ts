@@ -427,7 +427,10 @@ Do not edit tasks.json`;
     });
 
     it("should inject service info when services are provided", async () => {
-      const promptTemplate = `## Dev Server Management
+      const { DEV_SERVER_MANAGEMENT_SECTION } = await import(
+        "../templates/index.js"
+      );
+      const promptTemplate = `${DEV_SERVER_MANAGEMENT_SECTION}
 
 IMPORTANT: Do not start dev servers directly.
 

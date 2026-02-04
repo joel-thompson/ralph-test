@@ -1,3 +1,5 @@
+import { DEV_SERVER_MANAGEMENT_SECTION } from "../templates/index.js";
+
 export function injectServiceInfo(
   content: string,
   serviceNames: string[]
@@ -20,8 +22,11 @@ ral service stop ${exampleService}     # Stop when done
 \`\`\``;
 
   // Insert after the Dev Server Management section's first paragraph
-  return content.replace(
-    /(## Dev Server Management\n\n[^\n]+)/,
-    `$1${serviceInfo}`
+  // Escape the section header for use in regex
+  const escapedSection = DEV_SERVER_MANAGEMENT_SECTION.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&"
   );
+  const sectionPattern = new RegExp(`(${escapedSection}\\n\\n[^\\n]+)`);
+  return content.replace(sectionPattern, `$1${serviceInfo}`);
 }

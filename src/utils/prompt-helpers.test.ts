@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { injectServiceInfo } from "./prompt-helpers.js";
+import { DEV_SERVER_MANAGEMENT_SECTION } from "../templates/index.js";
 
 describe("injectServiceInfo", () => {
-  const sampleContent = `## Dev Server Management
+  const sampleContent = `${DEV_SERVER_MANAGEMENT_SECTION}
 
 IMPORTANT: Do not start dev servers directly.
 

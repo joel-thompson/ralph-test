@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { scaffold } from "./scaffold.js";
 import { FileSystem } from "../utils/file-helpers.js";
+import { DEV_SERVER_MANAGEMENT_SECTION } from "../templates/index.js";
 import path from "path";
 
 describe("scaffold", () => {
@@ -150,7 +151,7 @@ describe("scaffold", () => {
     const promptPath = path.join(workingDir, "prompt.md");
     const promptContent = writtenFiles.get(promptPath);
 
-    expect(promptContent).toContain("## Dev Server Management");
+    expect(promptContent).toContain(DEV_SERVER_MANAGEMENT_SECTION);
     expect(promptContent).toContain("Do not start dev servers directly");
     expect(promptContent).toContain("ral service start|stop|status|logs");
   });
