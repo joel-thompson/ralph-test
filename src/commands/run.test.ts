@@ -5,6 +5,7 @@ import { CommandError } from "../utils/errors.js";
 import * as validation from "../utils/validation.js";
 import * as config from "../utils/config.js";
 import * as path from "path";
+import * as fsPromises from "fs/promises";
 
 // Mock validation module
 vi.mock("../utils/validation.js", () => ({
@@ -17,6 +18,11 @@ vi.mock("../utils/config.js", () => ({
   loadConfig: vi.fn(),
 }));
 
+// Mock fs/promises
+vi.mock("fs/promises", () => ({
+  readFile: vi.fn(),
+}));
+
 // Mock process.exit to throw a predictable error
 const mockExit = vi
   .spyOn(process, "exit")
@@ -26,10 +32,21 @@ const mockExit = vi
 
 describe("run command", () => {
   const testDir = "/test/dir";
+  const mockPromptContent = "## Test Prompt\n\nSome content here.";
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockExit.mockClear();
+    // Mock readFile to return prompt content by default
+    vi.mocked(fsPromises.readFile).mockResolvedValue(mockPromptContent);
+    // Set default config mock return value
+    vi.mocked(config.loadConfig).mockResolvedValue({
+      config: {
+        runner: "claude",
+        services: {},
+      },
+      source: "default",
+    });
   });
 
   it("should validate working directory exists", async () => {
@@ -56,6 +73,7 @@ describe("run command", () => {
     vi.mocked(config.loadConfig).mockResolvedValue({
       config: {
         runner: "claude",
+        services: {},
       },
       source: "default",
     });
@@ -106,9 +124,14 @@ describe("run command", () => {
     // Verify Claude runner was called once
     expect(mockRunner.runAgent).toHaveBeenCalledTimes(1);
     expect(mockRunner.runAgent).toHaveBeenCalledWith({
-      promptPath: path.join(testDir, "prompt.md"),
+      promptContent: expect.stringContaining("## Test Prompt"),
       workingDirectory: testDir,
     });
+    // Verify readFile was called with correct path
+    expect(fsPromises.readFile).toHaveBeenCalledWith(
+      path.join(testDir, "prompt.md"),
+      "utf-8"
+    );
   });
 
   it("should run loop and exit with code 1 when max iterations reached", async () => {
@@ -299,6 +322,7 @@ describe("run command", () => {
     vi.mocked(config.loadConfig).mockResolvedValue({
       config: {
         runner: "claude",
+        services: {},
       },
       source: "default",
     });
@@ -347,12 +371,27 @@ describe("run command", () => {
       config: {
         runner: "cursor",
         model: "gpt-4",
+        services: {},
       },
       source: "root-directory",
       path: "/test/dir/ral.json",
     });
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    // Mock CursorRunner to avoid actual CLI calls
+    const CursorRunner = await import("../utils/cursor-runner.js");
+    const runAgentSpy = vi
+      .spyOn(CursorRunner.CursorRunner.prototype, "runAgent")
+      .mockResolvedValue({
+        result: "Task is done. <promise>COMPLETE</promise>",
+        usage: {
+          input_tokens: 0,
+          output_tokens: 0,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0,
+      } as AgentResponse);
 
     await expect(
       run({
@@ -364,6 +403,7 @@ describe("run command", () => {
     // Verify loadConfig was called with root directory
     expect(config.loadConfig).toHaveBeenCalledWith(expect.any(String));
 
+    runAgentSpy.mockRestore();
     consoleSpy.mockRestore();
   });
 
@@ -479,12 +519,27 @@ describe("run command", () => {
       config: {
         runner: "cursor",
         model: "gpt-4",
+        services: {},
       },
       source: "root-directory",
       path: "/test/dir/ral.json",
     });
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    // Mock CursorRunner to avoid actual CLI calls
+    const CursorRunner = await import("../utils/cursor-runner.js");
+    const runAgentSpy = vi
+      .spyOn(CursorRunner.CursorRunner.prototype, "runAgent")
+      .mockResolvedValue({
+        result: "Task is done. <promise>COMPLETE</promise>",
+        usage: {
+          input_tokens: 0,
+          output_tokens: 0,
+          cache_read_input_tokens: 0,
+        },
+        total_cost_usd: 0,
+      } as AgentResponse);
 
     await expect(
       run({
@@ -501,6 +556,7 @@ describe("run command", () => {
     expect(logs).toContain("Runner: cursor");
     expect(logs).toContain("Model: gpt-4");
 
+    runAgentSpy.mockRestore();
     consoleSpy.mockRestore();
   });
 
@@ -516,11 +572,26 @@ describe("run command", () => {
     vi.mocked(config.loadConfig).mockResolvedValue({
       config: {
         runner: "claude",
+        services: {},
       },
       source: "default",
     });
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    // Mock DefaultClaudeRunner to avoid actual CLI calls
+    const ClaudeRunner = await import("../utils/claude-runner.js");
+    const runAgentSpy = vi
+      .spyOn(ClaudeRunner.DefaultClaudeRunner.prototype, "runAgent")
+      .mockResolvedValue({
+        result: "Task is done. <promise>COMPLETE</promise>",
+        usage: {
+          input_tokens: 1000,
+          output_tokens: 500,
+          cache_read_input_tokens: 200,
+        },
+        total_cost_usd: 0.05,
+      } as AgentResponse);
 
     await expect(
       run({
@@ -537,6 +608,7 @@ describe("run command", () => {
     expect(logs).toContain("Runner: claude");
     expect(logs).not.toContain(expect.stringContaining("Model:"));
 
+    runAgentSpy.mockRestore();
     consoleSpy.mockRestore();
   });
 
@@ -552,12 +624,27 @@ describe("run command", () => {
     vi.mocked(config.loadConfig).mockResolvedValue({
       config: {
         runner: "claude",
+        services: {},
       },
       source: "root-directory",
       path: "/root/ral.json",
     });
 
     const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    // Mock DefaultClaudeRunner to avoid actual CLI calls
+    const ClaudeRunner = await import("../utils/claude-runner.js");
+    const runAgentSpy = vi
+      .spyOn(ClaudeRunner.DefaultClaudeRunner.prototype, "runAgent")
+      .mockResolvedValue({
+        result: "Task is done. <promise>COMPLETE</promise>",
+        usage: {
+          input_tokens: 1000,
+          output_tokens: 500,
+          cache_read_input_tokens: 200,
+        },
+        total_cost_usd: 0.05,
+      } as AgentResponse);
 
     await expect(
       run({
@@ -573,6 +660,7 @@ describe("run command", () => {
     expect(logs).toContain("Config loaded from: /root/ral.json");
     expect(logs).toContain("Runner: claude");
 
+    runAgentSpy.mockRestore();
     consoleSpy.mockRestore();
   });
 
@@ -589,6 +677,7 @@ describe("run command", () => {
       config: {
         runner: "cursor",
         model: "gpt-4",
+        services: {},
       },
       source: "root-directory",
       path: "/test/dir/ral.json",
@@ -643,6 +732,7 @@ describe("run command", () => {
     vi.mocked(config.loadConfig).mockResolvedValue({
       config: {
         runner: "claude",
+        services: {},
       },
       source: "default",
     });
@@ -693,6 +783,7 @@ describe("run command", () => {
     vi.mocked(config.loadConfig).mockResolvedValue({
       config: {
         runner: "claude",
+        services: {},
       },
       source: "root-directory",
       path: "/root/ral.json",
