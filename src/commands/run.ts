@@ -1,4 +1,5 @@
 import path from "path";
+import { readFile } from "fs/promises";
 import {
   validateWorkingDirectory,
   validateRequiredFiles,
@@ -7,6 +8,7 @@ import { CommandError } from "../utils/errors.js";
 import { AgentRunner, DefaultClaudeRunner } from "../utils/claude-runner.js";
 import { CursorRunner } from "../utils/cursor-runner.js";
 import { loadConfig } from "../utils/config.js";
+import { injectServiceInfo } from "../utils/prompt-helpers.js";
 
 export interface RunOptions {
   workingDirectory: string;
@@ -42,6 +44,7 @@ export async function run(
   let configPath: string | undefined;
   let runnerType = "unknown";
   let model: string | undefined;
+  let serviceNames: string[] = [];
 
   if (!runner) {
     const configResult = await loadConfig(process.cwd());
@@ -52,6 +55,7 @@ export async function run(
     configPath = configResult.path;
     runnerType = config.runner;
     model = config.model;
+    serviceNames = Object.keys(config.services || {});
 
     // Log config information
     console.log("\n--- Configuration ---");
@@ -71,6 +75,10 @@ export async function run(
     } else {
       runner = new DefaultClaudeRunner();
     }
+  } else {
+    // If runner is provided, still load config to get service names
+    const configResult = await loadConfig(process.cwd());
+    serviceNames = Object.keys(configResult.config.services || {});
   }
 
   // Helper function to log config summary
@@ -106,6 +114,8 @@ export async function run(
   }
 
   const promptPath = path.join(workingDirectory, "prompt.md");
+  const promptContent = await readFile(promptPath, "utf-8");
+  const finalPrompt = injectServiceInfo(promptContent, serviceNames);
 
   // Initialize cumulative stats
   const cumulative: CumulativeStats = {
@@ -122,7 +132,7 @@ export async function run(
     try {
       // Call Claude CLI
       const response = await runner.runAgent({
-        promptPath,
+        promptContent: finalPrompt,
         workingDirectory,
       });
 

@@ -1,3 +1,5 @@
+export const DEV_SERVER_MANAGEMENT_SECTION = "## Dev Server Management";
+
 export const CLAUDE_SETTINGS_TEMPLATE = {
   env: {
     XDG_CACHE_HOME: ".cache",
@@ -110,7 +112,7 @@ export const PROMPT_TEMPLATE = `@plan.md @activity.md
 7. Update that task's passes value in plan.md from false to true. Important: Only modify the passes field. Do not remove or rewrite tasks.
 8. Make one git commit for that task only with a clear message. Important: Do not git init, do not change remotes, do not push.
 
-## Dev Server Management
+${DEV_SERVER_MANAGEMENT_SECTION}
 
 IMPORTANT: Do not start dev servers directly (e.g., \`pnpm dev\`, \`npm run dev\`, \`vite\`, etc.) as these are long-running processes that will hang the agent loop. Instead, use \`ral service start|stop|status|logs\` commands to manage dev servers via Docker Compose.
 
@@ -210,7 +212,7 @@ export const PROMPT_JSON_TEMPLATE = `@plan.md @activity.md @tasks.json
 
 IMPORTANT: Do NOT edit tasks.json directly. The CLI manages task completion status.
 
-## Dev Server Management
+${DEV_SERVER_MANAGEMENT_SECTION}
 
 IMPORTANT: Do not start dev servers directly (e.g., \`pnpm dev\`, \`npm run dev\`, \`vite\`, etc.) as these are long-running processes that will hang the agent loop. Instead, use \`ral service start|stop|status|logs\` commands to manage dev servers via Docker Compose.
 

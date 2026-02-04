@@ -374,7 +374,7 @@ Do not edit tasks.json`;
         passes: false,
       };
 
-      const result = await buildPromptContent("/test", task, 0, mockFs);
+      const result = await buildPromptContent("/test", task, 0, mockFs, []);
 
       expect(result).toContain("@plan.md @activity.md @tasks.json");
       expect(result).toContain("**Task Index:** 0");
@@ -397,7 +397,7 @@ Do not edit tasks.json`;
         passes: false,
       };
 
-      const result = await buildPromptContent("/test", task, 2, mockFs);
+      const result = await buildPromptContent("/test", task, 2, mockFs, []);
 
       // Should contain elements from PROMPT_JSON_TEMPLATE
       expect(result).toContain("@plan.md @activity.md @tasks.json");
@@ -419,11 +419,42 @@ Do not edit tasks.json`;
         passes: false,
       };
 
-      const result = await buildPromptContent("/test", task, 0, mockFs);
+      const result = await buildPromptContent("/test", task, 0, mockFs, []);
 
       expect(result).toContain("1. First");
       expect(result).toContain("2. Second");
       expect(result).toContain("3. Third");
+    });
+
+    it("should inject service info when services are provided", async () => {
+      const { DEV_SERVER_MANAGEMENT_SECTION } = await import(
+        "../templates/index.js"
+      );
+      const promptTemplate = `${DEV_SERVER_MANAGEMENT_SECTION}
+
+IMPORTANT: Do not start dev servers directly.
+
+## Other Section`;
+
+      mockFs.setFile("/test/prompt.md", promptTemplate);
+
+      const task: Task = {
+        category: "setup",
+        description: "Setup project",
+        steps: ["Initialize"],
+        passes: false,
+      };
+
+      const result = await buildPromptContent("/test", task, 0, mockFs, [
+        "web",
+        "api",
+      ]);
+
+      expect(result).toContain("**Available services:** web, api");
+      expect(result).toContain("ral service start web");
+      expect(result).toContain("ral service status web");
+      expect(result).toContain("ral service logs web");
+      expect(result).toContain("ral service stop web");
     });
   });
 

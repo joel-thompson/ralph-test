@@ -4,6 +4,7 @@ import {
   PROMPT_JSON_TEMPLATE,
   PROMPT_TASK_PLACEHOLDER,
 } from "../templates/index.js";
+import { injectServiceInfo } from "../utils/prompt-helpers.js";
 
 export interface RunJsonOptions {
   workingDirectory: string;
@@ -356,7 +357,8 @@ export async function buildPromptContent(
   workingDirectory: string,
   task: Task,
   index: number,
-  fs: FileSystem = new DefaultFileSystem()
+  fs: FileSystem = new DefaultFileSystem(),
+  serviceNames: string[] = []
 ): Promise<string> {
   const promptPath = path.join(workingDirectory, "prompt.md");
   let promptTemplate: string;
@@ -387,7 +389,8 @@ ${task.steps.map((step, i) => `${i + 1}. ${step}`).join("\n")}
     taskSection
   );
 
-  return promptWithTask;
+  // Inject service info if services are configured
+  return injectServiceInfo(promptWithTask, serviceNames);
 }
 
 /**
@@ -426,6 +429,7 @@ export async function runJson(
   // Load config and select runner if not provided
   const configResult = await loadConfig(process.cwd());
   const config = configResult.config;
+  const serviceNames = Object.keys(config.services || {});
 
   if (!runner) {
     // Log config information
@@ -570,7 +574,8 @@ export async function runJson(
         workingDirectory,
         task,
         index,
-        fs
+        fs,
+        serviceNames
       );
     } catch (error) {
       throw new CommandError(
