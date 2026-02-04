@@ -10,7 +10,7 @@
 6. Update activity.md with a dated entry describing your changes and verification results.
 7. Make one git commit for that task only with a clear message. Make sure to commit all changes files. Important: Do not git init, do not change remotes, do not push.
 9. If pre commit hooks fail, fix the errors and commit the changes.
-10. Output success if and only if the task is fully complete and verified.
+10. Output `<promise>success</promise>` if and only if the task is fully complete and verified.
 
 IMPORTANT: Do NOT edit tasks.json directly. The CLI manages task completion status.
 
@@ -36,8 +36,10 @@ Reduce dependencies when possible. Use only well known dependencies.
 
 ## Success Criteria
 
-Output success ONLY when:
+Output `<promise>success</promise>` ONLY when:
 
 - All steps for the current task are complete
 - The implementation has been tested and verified to work
 - The activity log has been updated
+
+This exact tag is required for the CLI to mark the task as complete.

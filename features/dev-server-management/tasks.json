@@ -10,7 +10,7 @@
       "Run pnpm test:run to verify tests pass",
       "Typecheck passes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "implementation",
@@ -24,7 +24,7 @@
       "Run pnpm test:run to verify tests pass",
       "Typecheck passes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "implementation",
