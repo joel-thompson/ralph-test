@@ -2,64 +2,6 @@
 
 A TypeScript CLI tool for AI-assisted development loops where Claude iteratively works through a structured plan until completion.
 
-## Quick Start
-
-### Markdown Workflow (Original)
-
-```bash
-# 1. Clone and set up (for contributors)
-git clone <repository-url>
-cd ralph-test
-pnpm install && pnpm build
-pnpm link --global
-
-# 2. Create a new project
-mkdir my-project && cd my-project
-
-# 3. Set up Ralph loop files
-ral scaffold
-
-# 4. Edit your plan
-# Edit plan.md - define your tasks in JSON format
-# Edit prompt.md - customize instructions (optional)
-
-# 5. Run the loop
-ral run -m 10
-
-# 6. Monitor progress
-cat activity.md
-git log
-```
-
-### JSON Workflow (New)
-
-```bash
-# 1. Clone and set up (for contributors)
-git clone <repository-url>
-cd ralph-test
-pnpm install && pnpm build
-pnpm link --global
-
-# 2. Create a new project
-mkdir my-project && cd my-project
-
-# 3. Set up Ralph loop files for JSON workflow
-ral scaffold-json
-
-# 4. Edit your plan and tasks
-# Edit plan.md - add project details and context (no tasks)
-# Edit tasks.json - define your tasks array
-# Edit prompt.md - customize instructions (optional)
-
-# 5. Run the loop
-ral run-json -m 10
-
-# 6. Monitor progress
-cat activity.md
-cat tasks.json  # See which tasks are complete
-git log
-```
-
 ## Prerequisites
 
 - Node.js 18+
@@ -68,6 +10,75 @@ git log
     - Requires Anthropic API key configured for Claude CLI
   - **Cursor CLI** (alternative): Install Cursor editor from [cursor.sh](https://cursor.sh)
     - The `agent` command is included with Cursor
+
+## Quick Start
+
+### JSON Workflow (Recommended)
+
+```bash
+# 1. Clone and set up (for contributors)
+git clone https://github.com/joel-thompson/ralph-test
+cd ralph-test
+pnpm install && pnpm build
+pnpm link --global # run pnpm build when you make changes to the code
+
+# 2. Create a new project in a separate directory
+mkdir my-project && cd my-project
+
+# 3. Set up Ralph loop files for JSON workflow
+ral scaffold-json -w features/my-feature
+
+# 4. Edit your plan and tasks
+# Edit plan.md - add project details and context (no tasks)
+# Edit tasks.json - define your tasks array
+# Edit prompt.md - customize instructions (optional)
+
+# 5. Run the loop
+ral run-json -m 10 -w features/my-feature
+
+# 6. Monitor progress
+cat activity.md
+cat tasks.json  # See which tasks are complete
+git log
+```
+
+## Claude Code Skills
+
+Ralph includes two powerful skills for use with Claude Code that help you plan and structure your work before running the autonomous loop:
+
+### ralph-plan: PRD Generator
+Generates Product Requirements Documents (PRDs) for new features. Claude will ask clarifying questions and create a structured plan.md file with user stories and acceptance criteria.
+
+**Usage in Claude Code:**
+- Say: "create a ralph plan for [feature]"
+- Or use the command: `/ralph-plan`
+
+### ralph-tasks: PRD to Tasks Converter
+Converts an existing PRD into the tasks.json format that Ralph uses for execution. Ensures tasks are properly sized and ordered.
+
+**Usage in Claude Code:**
+- Say: "convert this ralph plan to ralph tasks"
+- Or use the command: `/ralph-tasks`
+
+### Installing the Skills
+
+Copy the skills to your Claude configuration directory:
+
+```bash
+cp -r skills/ralph-plan ~/.claude/skills/
+cp -r skills/ralph-tasks ~/.claude/skills/
+```
+
+After installation, the skills are available in any Claude Code session.
+
+### Workflow with Skills
+
+1. **Plan**: Use `/ralph-plan` to generate a PRD for your feature
+2. **Convert**: Use `/ralph-tasks` to convert the PRD to tasks.json
+3. **Execute**: Run `ral run-json` to have Claude complete all tasks autonomously
+4. **Review**: Check activity.md and git commits for what was accomplished
+
+This workflow enables: *Idea → PRD → tasks.json → Autonomous Execution*
 
 ## Configuration
 
@@ -123,33 +134,21 @@ Example with smart task selection:
 - When using Cursor, token usage and cost information are not displayed (Cursor doesn't provide this data)
 - The `taskSelection` field only applies to the `run-json` command (ignored by `run`)
 
-**Example with working directory:**
-```bash
-# Create config for a specific feature
-mkdir -p features/my-feature
-echo '{"runner": "cursor", "model": "composer-1"}' > features/my-feature/ral.json
-ral scaffold -w features/my-feature
-ral run -w features/my-feature -m 10
-```
-
 ## Core Concepts
 
 ### Workflow Comparison
 
 Ralph supports two separate workflows:
 
-| Feature | Markdown Workflow | JSON Workflow |
-|---------|-------------------|---------------|
-| **Commands** | `scaffold`, `run` | `scaffold-json`, `run-json` |
-| **Task storage** | Embedded in plan.md | Separate tasks.json file |
-| **Task completion** | AI writes `passes: true` | CLI writes `passes: true` on `<promise>success</promise>` |
-| **Use when** | AI should manage task flow | You want explicit success verification |
-| **plan.md** | Contains tasks + details | Contains only details/context |
+| Feature | JSON Workflow | Markdown Workflow |
+|---------|---------------|-------------------|
+| **Commands** | `scaffold-json`, `run-json` | `scaffold`, `run` |
+| **Task storage** | Separate tasks.json file | Embedded in plan.md |
+| **Task completion** | CLI writes `passes: true` on `<promise>success</promise>` | AI writes `passes: true` |
+| **Use when** | You want explicit success verification | AI should manage task flow |
+| **plan.md** | Contains only details/context | Contains tasks + details |
 
-**Recommendation:** Start with markdown workflow (simpler). Use JSON workflow when you need:
-- Explicit success verification per task
-- Separation of tasks from plan details
-- CLI-controlled task progression
+**Recommendation:** The JSON workflow is recommended and is being actively developed.
 
 ### The Ralph Loop
 
@@ -180,7 +179,7 @@ ral scaffold -w features/my-feature
 ral run -w features/my-feature -m 15
 
 # AI runs from project root (can edit source files)
-# But reads plan/activity from features/my-feature/
+# But reads plan/activity/tasks/prompt from features/my-feature/
 ```
 
 This lets you work on multiple features in parallel with isolated plans.
@@ -188,51 +187,8 @@ This lets you work on multiple features in parallel with isolated plans.
 ## Commands
 
 Ralph provides two separate workflows:
-1. **Markdown workflow** (`scaffold` + `run`): Tasks embedded in plan.md with AI-controlled task completion
-2. **JSON workflow** (`scaffold-json` + `run-json`): Tasks in tasks.json with CLI-controlled task completion
-
-### `ral scaffold`
-
-Generate Ralph loop file structure with starter templates (markdown workflow).
-
-```bash
-ral scaffold                    # Create in current directory
-ral scaffold -w ./my-feature    # Create in subdirectory
-ral scaffold -f                 # Overwrite existing files
-```
-
-Creates: `activity.md`, `plan.md`, `prompt.md`, `screenshots/`
-
-### `ral run`
-
-Execute the Ralph loop (markdown workflow).
-
-```bash
-ral run -m <max-iterations>           # Required: set iteration limit
-ral run -m 10 -w ./features/auth     # Run with specific working directory
-```
-
-**Behavior:**
-- Iterates up to max-iterations times
-- Tracks token usage and costs per iteration (Claude runner only)
-- Exits with code 0 when the AI outputs `<promise>COMPLETE</promise>`
-- Exits with code 1 if max iterations reached without completion
-
-**Output (Claude runner):**
-```
-Iteration 1/10
-Input tokens: 15234, Output tokens: 2341
-Cost this iteration: $0.123
-Cumulative cost: $0.123
-```
-
-**Output (Cursor runner):**
-```
-Iteration 1/10
-Duration: 2525ms
-```
-
-Note: Cursor runner does not provide token usage or cost information.
+1. **JSON workflow** (`scaffold-json` + `run-json`): Tasks in tasks.json with CLI-controlled task completion (recommended)
+2. **Markdown workflow** (`scaffold` + `run`): Tasks embedded in plan.md with AI-controlled task completion (legacy)
 
 ### `ral scaffold-json`
 
@@ -301,6 +257,49 @@ The AI must output `<promise>success</promise>` only when the task is verified c
 - ✅ plan.md (notes and context)
 - ❌ tasks.json (CLI owns task completion status)
 
+### `ral scaffold` (Legacy)
+
+Generate Ralph loop file structure with starter templates (markdown workflow).
+
+```bash
+ral scaffold                    # Create in current directory
+ral scaffold -w ./my-feature    # Create in subdirectory
+ral scaffold -f                 # Overwrite existing files
+```
+
+Creates: `activity.md`, `plan.md`, `prompt.md`, `screenshots/`
+
+### `ral run` (Legacy)
+
+Execute the Ralph loop (markdown workflow).
+
+```bash
+ral run -m <max-iterations>           # Required: set iteration limit
+ral run -m 10 -w ./features/auth     # Run with specific working directory
+```
+
+**Behavior:**
+- Iterates up to max-iterations times
+- Tracks token usage and costs per iteration (Claude runner only)
+- Exits with code 0 when the AI outputs `<promise>COMPLETE</promise>`
+- Exits with code 1 if max iterations reached without completion
+
+**Output (Claude runner):**
+```
+Iteration 1/10
+Input tokens: 15234, Output tokens: 2341
+Cost this iteration: $0.123
+Cumulative cost: $0.123
+```
+
+**Output (Cursor runner):**
+```
+Iteration 1/10
+Duration: 2525ms
+```
+
+Note: Cursor runner does not provide token usage or cost information.
+
 ### `ral create-settings`
 
 Generate Claude and MCP configuration files (optional).
@@ -312,126 +311,6 @@ ral create-settings -f           # Overwrite existing
 ```
 
 Creates: `.claude/settings.json`, `.mcp.json`
-
-## Writing Your Plan
-
-### 1. Write a Spec (Recommended for Complex Features)
-
-Create `spec.md` with detailed requirements:
-
-```markdown
-# Feature Name
-
-## Project Overview
-What you're building and why.
-
-## Requirements
-- Functional requirement 1
-- Functional requirement 2
-- Non-functional requirements
-
-## Technical Constraints
-- Use TypeScript strict mode
-- Follow existing patterns in src/
-- Minimize dependencies
-
-## API Design
-```typescript
-interface MyFeature {
-  doSomething(input: string): Promise<Result>
-}
-```
-
-## Testing & Verification
-- Unit tests for all functions
-- Integration test for end-to-end flow
-- Manual test: do X and verify Y
-```
-
-### 2. Generate a Plan with AI
-
-Use Claude or ChatGPT to generate your task breakdown:
-
-**Example prompt:**
-```
-I have a spec.md file describing a new feature. Please read @spec.md
-and generate a plan.md with 6-10 tasks in the Ralph loop JSON format.
-Each task should have: category, description, clear steps, and verification.
-Tasks should be 5-15 minutes of work each.
-```
-
-### 3. Review and Refine the Plan
-
-Edit `plan.md` to ensure quality:
-
-```markdown
-# Project Plan
-
-## Project Overview
-Brief description of what you're building.
-
-@spec.md
-
----
-
-## Task List
-
-```json
-[
-  {
-    "category": "setup",
-    "description": "Set up database schema and install dependencies",
-    "steps": [
-      "Install required npm packages: zod, bcrypt",
-      "Create database migration for users table",
-      "Run migration: npm run migrate",
-      "Verify table exists: psql -c '\\d users'",
-      "Run npm run build - should have no TypeScript errors"
-    ],
-    "passes": false
-  },
-  {
-    "category": "implementation",
-    "description": "Create User repository with CRUD operations",
-    "steps": [
-      "Create src/repositories/UserRepository.ts",
-      "Implement create, findById, findByEmail, update methods",
-      "Add proper TypeScript types and error handling",
-      "Write unit tests in tests/repositories/UserRepository.test.ts",
-      "Run npm test - verify UserRepository tests pass"
-    ],
-    "passes": false
-  }
-]
-```
-```
-
-**Good task characteristics:**
-- ✅ Clear, specific description
-- ✅ 5-15 minutes of focused work
-- ✅ Explicit verification step
-- ✅ Lists specific files to create/modify
-- ❌ Avoid: "Implement everything" (too vague)
-- ❌ Avoid: "Add one import" (too small)
-
-### 4. Customize the Prompt (Optional)
-
-Edit `prompt.md` to add project-specific guidance:
-
-```markdown
-## Project Context
-- TypeScript Node.js API using Express and PostgreSQL
-- Follow existing patterns in src/repositories/ and src/services/
-- Use Zod for validation
-
-## Coding Standards
-- Add JSDoc comments for public functions
-- Prefer async/await over .then() chains
-
-## Testing Requirements
-- Write unit tests for all new functions
-- Mock external dependencies (database, APIs)
-```
 
 ## Choosing max-iterations
 
@@ -447,8 +326,6 @@ Examples:
 - Build errors need resolution
 - Tasks might be more complex than anticipated
 
-**Cost:** Typically $0.05-$0.15 per iteration depending on context size.
-
 **Tip:** Start conservative and run again if needed. Progress is saved.
 
 ```bash
@@ -456,17 +333,6 @@ ral run -m 5    # Run 5 iterations
 cat activity.md # Check progress
 ral run -m 5    # Continue where you left off
 ```
-
-## Common Pitfalls and Solutions
-
-| Pitfall | Solution |
-|---------|----------|
-| Tasks too large (>30 min) | Break into smaller tasks (<15 min each) |
-| Unclear success criteria | Add explicit verification: "Run tests, verify X passes" |
-| Missing dependencies | Include installation in task steps |
-| Tests don't exist yet | Order tasks: implement → write tests → run tests |
-| Context grows too large | Keep plan focused; completed tasks marked `passes: true` |
-| Loop gets stuck on a task | Pause, fix manually or refine task steps, resume |
 
 ## Example Workflows
 
@@ -479,154 +345,24 @@ For detailed, real-world examples see [EXAMPLES.md](EXAMPLES.md):
 Quick example - Building a feature:
 ```bash
 # 1. Create feature directory and spec
-mkdir -p features/notifications
-cd features/notifications
-# Write spec.md with requirements
+ral scaffold-json -w features/notifications
 
 # 2. Generate plan with AI assistant
-# "Please read @spec.md and generate a plan.md..."
+# Use /ralph-plan skill in Claude Code to generate PRD
+# Use /ralph-tasks skill to convert PRD to tasks.json
 
-# 3. Scaffold and run
-cd ../..  # back to project root
-ral scaffold -w features/notifications
-ral run -w features/notifications -m 15
+# 3. run
+ral run-json -w features/notifications -m 15
 
 # 4. Review results
 cat features/notifications/activity.md
+cat features/notifications/tasks.json
 git log --oneline
-```
-
-## Tips and Best Practices
-
-### Writing Effective Plans
-
-- **Task granularity**: Aim for 5-15 minute tasks
-- **Clear steps**: Use action verbs, specify files, include verification
-- **Verification**: Every task needs a "verify it works" step
-- **Dependencies**: Order tasks properly (create before using)
-- **Categories**: Use consistent categories: setup, implementation, refactoring, testing, verification, cleanup
-
-### Customizing prompt.md
-
-Add project-specific context, coding standards, and testing requirements. Keep it concise - the prompt is included in every iteration. Works with both Claude and Cursor runners.
-
-### Using spec.md
-
-For non-trivial features, write a spec.md and reference it with `@spec.md` in plan.md. Include:
-- Requirements and constraints
-- API contracts and data structures
-- Examples and use cases
-- Testing criteria
-
-Benefits: separation of concerns, better context for Claude, easier to maintain.
-
-### Cost Optimization
-
-- Monitor cumulative cost output
-- Keep context focused (smaller plan.md and prompt.md)
-- Break large features into separate loops
-- Typical feature: $0.50-$1.50 for 10 iterations
-
-### Workflow Tips
-
-1. **Start small**: First loop? Try 3-5 simple tasks
-2. **Review frequently**: Check activity.md after iterations
-3. **Use git effectively**: Each task = 1 commit, easy to review/revert
-4. **Leverage AI for planning**: Let AI generate task breakdown, then review
-5. **Parallel features**: Use different working directories for multiple features
-6. **Document learnings**: activity.md captures insights, root causes, patterns
-
-## Local Development Setup
-
-For contributors working on the CLI itself:
-
-### 1. Clone and Install
-
-```bash
-git clone <repository-url>
-cd ralph-test
-pnpm install
-pnpm build
-```
-
-### 2. Make `ral` Command Available
-
-**Option 1: pnpm link (Recommended)**
-```bash
-pnpm link --global
-```
-Auto-updates when you rebuild. Run from project directory.
-
-**Option 2: Shell Alias**
-```bash
-# Add to .zshrc or .bashrc
-alias ral='/absolute/path/to/ralph-test/dist/index.js'
-```
-
-**Option 3: Add to PATH**
-```bash
-# Add to .zshrc or .bashrc
-export PATH="/absolute/path/to/ralph-test/dist:$PATH"
-```
-
-### 3. Development Commands
-
-```bash
-pnpm run lint                    # Lint code
-pnpm run dev scaffold            # Run in dev mode
-pnpm run dev run -m 10           # Dev mode with args
 ```
 
 ## Testing
 
 ```bash
-pnpm test                        # Run all tests
-pnpm run test:watch              # Watch mode
+pnpm test:run                # Run all tests
+pnpm test                    # Watch mode
 ```
-
-Test coverage: 66 tests across 9 test files covering file operations, commands, and utilities.
-
-## Package Manager
-
-This project uses **pnpm** for faster installs and efficient disk space usage.
-
-## Ralph Loop Philosophy
-
-- **Structured Planning**: Clear tasks with pass/fail states
-- **Activity Logging**: Every change documented with verification
-- **Incremental Progress**: One task at a time, git commit per task
-- **Self-Verification**: AI tests its own work before marking complete
-- **Cost Tracking**: Token usage tracked per-iteration and cumulatively (Claude runner)
-- **Early Exit**: Completes when AI outputs `<promise>COMPLETE</promise>`
-- **Multi-Backend Support**: Works with Claude CLI or Cursor CLI via ral.json configuration
-
-## File Structure
-
-```
-my-project/
-├── .claude/
-│   └── settings.json       # Claude config (optional)
-├── .mcp.json               # MCP server config (optional)
-├── ral.json                # Runner configuration (optional, defaults to Claude)
-├── activity.md             # Activity log (required for run)
-├── plan.md                 # Project plan (required for run)
-├── prompt.md               # Instructions (required for run)
-├── spec.md                 # Specification (optional)
-└── screenshots/            # Screenshots directory
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make changes with tests
-4. Run `pnpm test` to verify
-5. Submit a pull request
-
-## License
-
-MIT
-
-## Support
-
-For issues or questions, visit the project repository.
