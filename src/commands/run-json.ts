@@ -133,10 +133,11 @@ export function buildSmartSelectionPrompt(tasks: Task[]): string {
 
 ${taskList}
 
+IMPORTANT: All tasks listed above are INCOMPLETE and require work. Do NOT assume any task is complete based on activity.md, code changes, or other project state. The task list above is the authoritative source of what remains to be done.
+
 Consider:
 - Task dependencies (some tasks may need to be done before others)
 - Logical ordering (configuration before implementation, implementation before testing, testing before documentation)
-- Current project state and what makes the most sense to tackle next
 
 Respond with ONLY valid JSON in this exact format:
 {"index": N}
