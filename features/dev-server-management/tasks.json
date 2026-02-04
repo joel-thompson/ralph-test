@@ -37,7 +37,7 @@
       "Run pnpm test:run to verify tests pass",
       "Typecheck passes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "implementation",
@@ -51,7 +51,7 @@
       "Run pnpm test:run to verify tests pass",
       "Typecheck passes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "implementation",
@@ -65,7 +65,7 @@
       "Run pnpm test:run to verify tests pass",
       "Typecheck passes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",
@@ -76,7 +76,7 @@
       "Ensure README guidance tells agents not to run dev servers directly, and to use `ral service …` instead",
       "Typecheck passes"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",
@@ -88,6 +88,6 @@
       "Run pnpm test:run to verify tests pass",
       "Typecheck passes"
     ],
-    "passes": false
+    "passes": true
   }
 ]
