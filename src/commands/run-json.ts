@@ -1,6 +1,9 @@
 import path from "path";
 import { FileSystem, DefaultFileSystem } from "../utils/file-helpers.js";
-import { PROMPT_JSON_TEMPLATE } from "../templates/index.js";
+import {
+  PROMPT_JSON_TEMPLATE,
+  PROMPT_TASK_PLACEHOLDER,
+} from "../templates/index.js";
 
 export interface RunJsonOptions {
   workingDirectory: string;
@@ -379,7 +382,7 @@ ${task.steps.map((step, i) => `${i + 1}. ${step}`).join("\n")}
 
   // Replace the placeholder with the actual task details
   const promptWithTask = promptTemplate.replace(
-    "The CLI will insert the current task details here when invoking the agent.",
+    PROMPT_TASK_PLACEHOLDER,
     taskSection
   );
 
@@ -492,7 +495,8 @@ export async function runJson(
 
     // Attempt smart selection if configured
     let selected: { task: Task; index: number } | null = null;
-    let selectionUsage: import("../utils/claude-runner.js").AgentUsage | null = null;
+    let selectionUsage: import("../utils/claude-runner.js").AgentUsage | null =
+      null;
     let selectionCost: number = 0;
 
     if (config.taskSelection === "smart") {
@@ -515,7 +519,13 @@ export async function runJson(
 
         if (hasSelectionSpend) {
           console.log("\nTask selection (smart)");
-          console.log(`  Tokens In: ${selectionUsage.input_tokens}  Tokens Out: ${selectionUsage.output_tokens}  Cache Read: ${selectionUsage.cache_read_input_tokens}  Cost: $${selectionCost.toFixed(4)}`);
+          console.log(
+            `  Tokens In: ${selectionUsage.input_tokens}  Tokens Out: ${
+              selectionUsage.output_tokens
+            }  Cache Read: ${
+              selectionUsage.cache_read_input_tokens
+            }  Cost: $${selectionCost.toFixed(4)}`
+          );
         }
       }
 
@@ -523,7 +533,8 @@ export async function runJson(
       if (selectionUsage) {
         cumulative.totalInputTokens += selectionUsage.input_tokens;
         cumulative.totalOutputTokens += selectionUsage.output_tokens;
-        cumulative.totalCacheReadTokens += selectionUsage.cache_read_input_tokens;
+        cumulative.totalCacheReadTokens +=
+          selectionUsage.cache_read_input_tokens;
         cumulative.totalCost += selectionCost;
       }
 

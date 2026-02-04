@@ -109,11 +109,46 @@ export const PLAN_DETAILS_TEMPLATE = `# Project Plan
 
 ## Project Overview
 
-[Describe your project here]
+[Describe your project here - what you're building and why]
+
+## Goals
+
+[Specific, measurable objectives]
+- [Goal 1]
+- [Goal 2]
+
+## Non-Goals (Out of Scope)
+
+[What this feature will NOT include - critical for managing scope]
+- [Out of scope item 1]
+- [Out of scope item 2]
+
+## Technical Considerations
+
+[Known constraints, dependencies, or integration points]
+- [Technical constraint or dependency]
+- [Performance requirements if applicable]
+
+## Design Considerations
+
+[UI/UX requirements, relevant existing components to reuse, or design decisions]
+- [Design decision or component reference]
+
+## Success Metrics
+
+[How will success be measured?]
+- [Metric 1]
+- [Metric 2]
+
+## Open Questions
+
+[Remaining questions or areas needing clarification]
+- [Question 1]
+- [Question 2]
 
 ## Additional Context
 
-[Add any design decisions, architectural notes, or other relevant details here]
+[Add any other design decisions, architectural notes, or relevant details here]
 `;
 
 export const TASKS_JSON_TEMPLATE = [
@@ -124,6 +159,9 @@ export const TASKS_JSON_TEMPLATE = [
     passes: false,
   },
 ];
+
+export const PROMPT_TASK_PLACEHOLDER =
+  "The CLI will insert the current task details here when invoking the agent.";
 
 export const PROMPT_JSON_TEMPLATE = `@plan.md @activity.md @tasks.json
 
@@ -142,7 +180,7 @@ IMPORTANT: Do NOT edit tasks.json directly. The CLI manages task completion stat
 
 ## Current Task
 
-The CLI will insert the current task details here when invoking the agent.
+${PROMPT_TASK_PLACEHOLDER}
 
 ## Activity Log
 
