@@ -25,18 +25,21 @@ pnpm link --global # run pnpm build when you make changes to the code
 # 2. Create a new project in a separate directory
 mkdir my-project && cd my-project
 
-# 3. Set up Ralph loop files for JSON workflow
+# 3. (Optional) Generate configuration files
+ral create-settings
+
+# 4. Set up Ralph loop files for JSON workflow
 ral scaffold-json -w features/my-feature
 
-# 4. Edit your plan and tasks
+# 5. Edit your plan and tasks
 # Edit plan.md - add project details and context (no tasks)
 # Edit tasks.json - define your tasks array
 # Edit prompt.md - customize instructions (optional)
 
-# 5. Run the loop
+# 6. Run the loop
 ral run-json -m 10 -w features/my-feature
 
-# 6. Monitor progress
+# 7. Monitor progress
 cat activity.md
 cat tasks.json  # See which tasks are complete
 git log
@@ -397,6 +400,25 @@ Ralph provides two separate workflows:
 1. **JSON workflow** (`scaffold-json` + `run-json`): Tasks in tasks.json with CLI-controlled task completion (recommended)
 2. **Markdown workflow** (`scaffold` + `run`): Tasks embedded in plan.md with AI-controlled task completion (legacy)
 
+### `ral create-settings`
+
+Generate Ralph, Claude, and MCP configuration files (optional).
+
+```bash
+ral create-settings    # Create in current directory
+ral create-settings -f # Overwrite existing files
+```
+
+Creates: `ral.json`, `.claude/settings.json`, `.mcp.json`
+
+**Files created:**
+
+- **`ral.json`**: Ralph configuration with default runner and task selection settings
+- **`.claude/settings.json`**: Claude Code settings including permissions, sandbox configuration, and environment variables
+- **`.mcp.json`**: MCP server configuration (Context7 by default)
+
+**Note:** This command always creates files in the current working directory. Change to your desired directory before running the command.
+
 ### `ral scaffold-json`
 
 Generate Ralph loop file structure for JSON workflow.
@@ -514,18 +536,6 @@ Duration: 2525ms
 ```
 
 Note: Cursor runner does not provide token usage or cost information.
-
-### `ral create-settings`
-
-Generate Claude and MCP configuration files (optional).
-
-```bash
-ral create-settings              # Create in current directory
-ral create-settings -w ./project # Create in subdirectory
-ral create-settings -f           # Overwrite existing
-```
-
-Creates: `.claude/settings.json`, `.mcp.json`
 
 ## Choosing max-iterations
 

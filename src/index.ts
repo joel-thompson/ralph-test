@@ -23,16 +23,13 @@ program
 // Register commands
 program
   .command("create-settings")
-  .description("Create .claude/settings.json and .mcp.json configuration files")
-  .option(
-    "-w, --working-directory <path>",
-    "Working directory (default: current directory)"
+  .description(
+    "Create ral.json, .claude/settings.json, and .mcp.json configuration files"
   )
   .option("-f, --force", "Overwrite existing files")
   .action(async (options) => {
     try {
       await createSettings({
-        workingDirectory: options.workingDirectory,
         force: options.force,
       });
     } catch (error) {
@@ -146,7 +143,9 @@ program
   });
 
 // Service management commands
-const serviceCommand = program.command("service").description("Manage services");
+const serviceCommand = program
+  .command("service")
+  .description("Manage services");
 
 serviceCommand
   .command("start <name>")

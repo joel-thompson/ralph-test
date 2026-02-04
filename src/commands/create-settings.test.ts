@@ -28,87 +28,71 @@ describe("create-settings", () => {
     };
   });
 
-  it("should create .claude/settings.json and .mcp.json in working directory", async () => {
-    const workingDir = "/test/dir";
+  it("should create ral.json, .claude/settings.json and .mcp.json in current working directory", async () => {
+    const cwd = process.cwd();
 
-    await createSettings({ workingDirectory: workingDir }, mockFs);
+    await createSettings({}, mockFs);
 
-    const claudeSettingsPath = path.join(workingDir, ".claude", "settings.json");
-    const mcpPath = path.join(workingDir, ".mcp.json");
+    const ralPath = path.join(cwd, "ral.json");
+    const claudeSettingsPath = path.join(cwd, ".claude", "settings.json");
+    const mcpPath = path.join(cwd, ".mcp.json");
 
+    expect(writtenFiles.has(ralPath)).toBe(true);
     expect(writtenFiles.has(claudeSettingsPath)).toBe(true);
     expect(writtenFiles.has(mcpPath)).toBe(true);
   });
 
   it("should create valid JSON in settings files", async () => {
-    const workingDir = "/test/dir";
+    const cwd = process.cwd();
 
-    await createSettings({ workingDirectory: workingDir }, mockFs);
+    await createSettings({}, mockFs);
 
-    const claudeSettingsPath = path.join(workingDir, ".claude", "settings.json");
-    const mcpPath = path.join(workingDir, ".mcp.json");
+    const ralPath = path.join(cwd, "ral.json");
+    const claudeSettingsPath = path.join(cwd, ".claude", "settings.json");
+    const mcpPath = path.join(cwd, ".mcp.json");
 
+    const ralSettings = writtenFiles.get(ralPath);
     const claudeSettings = writtenFiles.get(claudeSettingsPath);
     const mcpSettings = writtenFiles.get(mcpPath);
 
+    expect(() => JSON.parse(ralSettings!)).not.toThrow();
     expect(() => JSON.parse(claudeSettings!)).not.toThrow();
     expect(() => JSON.parse(mcpSettings!)).not.toThrow();
   });
 
   it("should not overwrite existing files when force is false", async () => {
-    const workingDir = "/test/dir";
-    const claudeSettingsPath = path.join(workingDir, ".claude", "settings.json");
+    const cwd = process.cwd();
+    const ralPath = path.join(cwd, "ral.json");
+    const claudeSettingsPath = path.join(cwd, ".claude", "settings.json");
 
     // Pre-populate with existing content
+    writtenFiles.set(ralPath, '{"existing": "content"}');
     writtenFiles.set(claudeSettingsPath, '{"existing": "content"}');
 
-    await createSettings({ workingDirectory: workingDir, force: false }, mockFs);
+    await createSettings({ force: false }, mockFs);
 
-    expect(writtenFiles.get(claudeSettingsPath)).toBe('{"existing": "content"}');
+    expect(writtenFiles.get(ralPath)).toBe('{"existing": "content"}');
+    expect(writtenFiles.get(claudeSettingsPath)).toBe(
+      '{"existing": "content"}'
+    );
   });
 
   it("should overwrite existing files when force is true", async () => {
-    const workingDir = "/test/dir";
-    const claudeSettingsPath = path.join(workingDir, ".claude", "settings.json");
+    const cwd = process.cwd();
+    const ralPath = path.join(cwd, "ral.json");
+    const claudeSettingsPath = path.join(cwd, ".claude", "settings.json");
 
     // Pre-populate with existing content
+    writtenFiles.set(ralPath, '{"existing": "content"}');
     writtenFiles.set(claudeSettingsPath, '{"existing": "content"}');
 
-    await createSettings({ workingDirectory: workingDir, force: true }, mockFs);
+    await createSettings({ force: true }, mockFs);
 
-    const newContent = writtenFiles.get(claudeSettingsPath);
-    expect(newContent).not.toBe('{"existing": "content"}');
-    expect(newContent).toContain("mcpServers");
-  });
-
-  it("should use current working directory when no workingDirectory option provided", async () => {
-    const cwd = process.cwd();
-
-    await createSettings({}, mockFs);
-
-    const claudeSettingsPath = path.join(cwd, ".claude", "settings.json");
-    const mcpPath = path.join(cwd, ".mcp.json");
-
-    expect(writtenFiles.has(claudeSettingsPath)).toBe(true);
-    expect(writtenFiles.has(mcpPath)).toBe(true);
-  });
-
-  it("should throw ValidationError when working directory does not exist", async () => {
-    const nonExistentDir = "/non/existent/dir";
-    const mockFsWithNoDir: FileSystem = {
-      ...mockFs,
-      exists: async (filePath: string) => {
-        // Check for the specific non-existent directory first
-        if (filePath === nonExistentDir) return false;
-        // Directories always exist in our mock (except the non-existent one)
-        if (!filePath.includes(".")) return true;
-        // Files exist if they've been written
-        return writtenFiles.has(filePath);
-      },
-    };
-
-    await expect(
-      createSettings({ workingDirectory: nonExistentDir }, mockFsWithNoDir)
-    ).rejects.toThrow();
+    const ralContent = writtenFiles.get(ralPath);
+    const claudeContent = writtenFiles.get(claudeSettingsPath);
+    expect(ralContent).not.toBe('{"existing": "content"}');
+    expect(ralContent).toContain("runner");
+    expect(claudeContent).not.toBe('{"existing": "content"}');
+    expect(claudeContent).toContain("permissions");
   });
 });

@@ -1,20 +1,53 @@
-// TODO: i think there's a bug with the settings scaffolding. not sure if these below are correct. need to test and fix.
 export const CLAUDE_SETTINGS_TEMPLATE = {
-  mcpServers: {
-    filesystem: {
-      command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-filesystem", process.cwd()],
+  env: {
+    XDG_CACHE_HOME: ".cache",
+    npm_config_cache: ".cache/npm",
+    PIP_CACHE_DIR: ".cache/pip",
+  },
+  permissions: {
+    allow: [
+      "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:github.com)",
+      "mcp__playwright__*",
+      "Bash(kill -9 $(lsof -ti:3001))",
+      "Bash(lsof -ti:3001)",
+      "Bash(kill -9 $(lsof -ti:3002))",
+      "Bash(lsof -ti:3002)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+    ],
+    deny: [
+      "Bash(sudo *)",
+      "Bash(docker *)",
+      "Read(./.env)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+    ],
+    ask: ["Bash(git push:*)"],
+    defaultMode: "acceptEdits",
+  },
+  sandbox: {
+    enabled: true,
+    autoAllowBashIfSandboxed: true,
+    allowUnsandboxedCommands: false,
+    network: {
+      allowLocalBinding: true,
     },
   },
 };
 
 export const MCP_SETTINGS_TEMPLATE = {
   mcpServers: {
-    filesystem: {
+    context7: {
       command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-filesystem", process.cwd()],
+      args: ["-y", "@upstash/context7-mcp"],
     },
   },
+};
+
+export const RAL_JSON_TEMPLATE = {
+  runner: "claude",
+  taskSelection: "smart",
 };
 
 export const ACTIVITY_TEMPLATE = `# Project Build - Activity Log
