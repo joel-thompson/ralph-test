@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-02-04
-**Tasks Completed:** 4
-**Current Task:** US-005 (service logs command) - COMPLETED
+**Tasks Completed:** 6
+**Current Task:** All tasks completed
 
 ---
 
@@ -333,3 +333,42 @@ No dependencies were added. This is a documentation-only change.
 - Prominent warnings help AI agents avoid common pitfalls (like running long-lived processes directly)
 - Complete working examples (like the Vite + React setup) help users understand how all pieces fit together
 - Organizing service commands with clear behavior descriptions makes the feature more approachable
+
+---
+
+### 2026-02-04 - US-006: Add "don't run dev servers directly" guidance to scaffolded prompt.md templates
+
+**Task:** Add guidance to prompt.md templates instructing agents not to run dev servers directly
+
+**Changes Made:**
+1. Updated `src/templates/index.ts` to add "Dev Server Management" section to both prompt templates:
+   - Added guidance section to `PROMPT_TEMPLATE` (regular scaffold command)
+   - Added guidance section to `PROMPT_JSON_TEMPLATE` (JSON workflow scaffold-json command)
+   - Section placed after the Instructions section, near other operational constraints
+   - Guidance includes:
+     - Warning not to start dev servers directly (e.g., `pnpm dev`, `npm run dev`, `vite`)
+     - Explanation that long-running processes will hang the agent loop
+     - Instruction to use `ral service start|stop|status|logs` commands instead
+
+2. Added unit tests to verify the guidance is present:
+   - Added test in `src/commands/scaffold.test.ts`: "should include dev server management guidance in prompt.md"
+   - Added test in `src/commands/scaffold-json.test.ts`: "should include dev server management guidance in prompt.md"
+   - Both tests verify the prompt content contains:
+     - "## Dev Server Management" heading
+     - "Do not start dev servers directly" warning text
+     - "ral service start|stop|status|logs" command reference
+
+**Verification Results:**
+- All tests pass: 221 tests passing across 17 test files
+- TypeScript typecheck passes with no errors
+- New tests verify the guidance text is included in both scaffold templates
+- Guidance is properly placed near operational constraints for visibility
+
+**Dependencies:**
+No new dependencies were added. This is a documentation-only change.
+
+**Lessons Learned:**
+- Adding guidance to scaffolded templates ensures agents see it from the start of every project
+- Placing the guidance section after the Instructions but before Task sections provides good visibility
+- Testing template content helps ensure critical guidance doesn't get accidentally removed in future updates
+- Both scaffold commands (regular and JSON workflow) needed the same guidance to cover all use cases

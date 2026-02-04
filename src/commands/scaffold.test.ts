@@ -160,4 +160,17 @@ describe("scaffold", () => {
     expect(writtenFiles.has(promptPath)).toBe(true);
     expect(writtenFiles.has(configPath)).toBe(true);
   });
+
+  it("should include dev server management guidance in prompt.md", async () => {
+    const workingDir = "/test/dir";
+
+    await scaffold({ workingDirectory: workingDir }, mockFs);
+
+    const promptPath = path.join(workingDir, "prompt.md");
+    const promptContent = writtenFiles.get(promptPath);
+
+    expect(promptContent).toContain("## Dev Server Management");
+    expect(promptContent).toContain("Do not start dev servers directly");
+    expect(promptContent).toContain("ral service start|stop|status|logs");
+  });
 });

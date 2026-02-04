@@ -82,6 +82,10 @@ export const PROMPT_TEMPLATE = `@plan.md @activity.md
 7. Update that task's passes value in plan.md from false to true. Important: Only modify the passes field. Do not remove or rewrite tasks.
 8. Make one git commit for that task only with a clear message. Important: Do not git init, do not change remotes, do not push.
 
+## Dev Server Management
+
+IMPORTANT: Do not start dev servers directly (e.g., \`pnpm dev\`, \`npm run dev\`, \`vite\`, etc.) as these are long-running processes that will hang the agent loop. Instead, use \`ral service start|stop|status|logs\` commands to manage dev servers via Docker Compose.
+
 ## Activity Log
 
 After completing a task, append a dated progress entry to activity.md describing what you changed, and the result of verifying the task is working.
@@ -177,6 +181,10 @@ export const PROMPT_JSON_TEMPLATE = `@plan.md @activity.md @tasks.json
 8. Output <promise>success</promise> if and only if the task is fully complete and verified.
 
 IMPORTANT: Do NOT edit tasks.json directly. The CLI manages task completion status.
+
+## Dev Server Management
+
+IMPORTANT: Do not start dev servers directly (e.g., \`pnpm dev\`, \`npm run dev\`, \`vite\`, etc.) as these are long-running processes that will hang the agent loop. Instead, use \`ral service start|stop|status|logs\` commands to manage dev servers via Docker Compose.
 
 ## Current Task
 
