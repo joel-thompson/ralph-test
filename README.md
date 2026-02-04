@@ -86,11 +86,11 @@ This workflow enables: *Idea → PRD → tasks.json → Autonomous Execution*
 
 ## Configuration
 
-Ralph supports multiple AI backends through a `ral.json` configuration file in your working directory.
+Ralph supports multiple AI backends through a `ral.json` configuration file in your project root.
 
 ### ral.json
 
-Create a `ral.json` file in your project root or feature directory to configure the AI runner:
+Create a `ral.json` file in your project root to configure the AI runner:
 
 **Using Claude (default):**
 

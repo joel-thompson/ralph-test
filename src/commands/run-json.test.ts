@@ -14,6 +14,17 @@ import {
 import { FileSystem } from "../utils/file-helpers.js";
 import type { AgentRunner, AgentResponse } from "../utils/claude-runner.js";
 
+// Mock config module to prevent loading real ral.json during tests
+vi.mock("../utils/config.js", () => ({
+  loadConfig: vi.fn().mockResolvedValue({
+    config: {
+      runner: "claude",
+      taskSelection: "first-incomplete",
+    },
+    source: "default",
+  }),
+}));
+
 class MockFileSystem implements FileSystem {
   private files: Map<string, string> = new Map();
 
@@ -1106,7 +1117,6 @@ Do not edit tasks.json`;
 
         expect(mockExit).toHaveBeenCalledWith(0);
       });
-
     });
   });
 

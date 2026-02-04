@@ -40,7 +40,7 @@ describe("scaffold", () => {
     };
   });
 
-  it("should create activity.md, plan.md, prompt.md, ral.json and screenshots/ folder", async () => {
+  it("should create activity.md, plan.md, prompt.md and screenshots/ folder", async () => {
     const workingDir = "/test/dir";
 
     await scaffold({ workingDirectory: workingDir }, mockFs);
@@ -48,13 +48,11 @@ describe("scaffold", () => {
     const activityPath = path.join(workingDir, "activity.md");
     const planPath = path.join(workingDir, "plan.md");
     const promptPath = path.join(workingDir, "prompt.md");
-    const configPath = path.join(workingDir, "ral.json");
     const screenshotsDir = path.join(workingDir, "screenshots");
 
     expect(writtenFiles.has(activityPath)).toBe(true);
     expect(writtenFiles.has(planPath)).toBe(true);
     expect(writtenFiles.has(promptPath)).toBe(true);
-    expect(writtenFiles.has(configPath)).toBe(true);
     expect(createdDirs.has(screenshotsDir)).toBe(true);
   });
 
@@ -74,19 +72,6 @@ describe("scaffold", () => {
     expect(activityContent).toContain("# Project Build - Activity Log");
     expect(planContent).toContain("# Project Plan");
     expect(promptContent).toContain("@plan.md @activity.md");
-  });
-
-  it("should create ral.json with correct content", async () => {
-    const workingDir = "/test/dir";
-
-    await scaffold({ workingDirectory: workingDir }, mockFs);
-
-    const configPath = path.join(workingDir, "ral.json");
-    const configContent = writtenFiles.get(configPath);
-
-    expect(configContent).toBeDefined();
-    const parsed = JSON.parse(configContent!);
-    expect(parsed).toEqual({ runner: "claude", taskSelection: "smart" });
   });
 
   it("should not overwrite existing files when force is false", async () => {
@@ -123,13 +108,11 @@ describe("scaffold", () => {
     const activityPath = path.join(cwd, "activity.md");
     const planPath = path.join(cwd, "plan.md");
     const promptPath = path.join(cwd, "prompt.md");
-    const configPath = path.join(cwd, "ral.json");
     const screenshotsDir = path.join(cwd, "screenshots");
 
     expect(writtenFiles.has(activityPath)).toBe(true);
     expect(writtenFiles.has(planPath)).toBe(true);
     expect(writtenFiles.has(promptPath)).toBe(true);
-    expect(writtenFiles.has(configPath)).toBe(true);
     expect(createdDirs.has(screenshotsDir)).toBe(true);
   });
 
@@ -146,7 +129,6 @@ describe("scaffold", () => {
     const activityPath = path.join(workingDir, "activity.md");
     const planPath = path.join(workingDir, "plan.md");
     const promptPath = path.join(workingDir, "prompt.md");
-    const configPath = path.join(workingDir, "ral.json");
 
     // Pre-populate only activity.md
     writtenFiles.set(activityPath, "# Existing Activity");
@@ -158,7 +140,6 @@ describe("scaffold", () => {
     // Other files should be created
     expect(writtenFiles.has(planPath)).toBe(true);
     expect(writtenFiles.has(promptPath)).toBe(true);
-    expect(writtenFiles.has(configPath)).toBe(true);
   });
 
   it("should include dev server management guidance in prompt.md", async () => {

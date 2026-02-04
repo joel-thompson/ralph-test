@@ -17,11 +17,6 @@ export const MCP_SETTINGS_TEMPLATE = {
   },
 };
 
-export const CONFIG_TEMPLATE = {
-  runner: "claude",
-  taskSelection: "smart",
-};
-
 export const ACTIVITY_TEMPLATE = `# Project Build - Activity Log
 
 ## Current Status

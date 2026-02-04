@@ -40,7 +40,7 @@ describe("scaffold-json", () => {
     };
   });
 
-  it("should create activity.md, plan.md, tasks.json, prompt.md, ral.json and screenshots/ folder", async () => {
+  it("should create activity.md, plan.md, tasks.json, prompt.md and screenshots/ folder", async () => {
     const workingDir = "/test/dir";
 
     await scaffoldJson({ workingDirectory: workingDir }, mockFs);
@@ -49,14 +49,12 @@ describe("scaffold-json", () => {
     const planPath = path.join(workingDir, "plan.md");
     const tasksPath = path.join(workingDir, "tasks.json");
     const promptPath = path.join(workingDir, "prompt.md");
-    const configPath = path.join(workingDir, "ral.json");
     const screenshotsDir = path.join(workingDir, "screenshots");
 
     expect(writtenFiles.has(activityPath)).toBe(true);
     expect(writtenFiles.has(planPath)).toBe(true);
     expect(writtenFiles.has(tasksPath)).toBe(true);
     expect(writtenFiles.has(promptPath)).toBe(true);
-    expect(writtenFiles.has(configPath)).toBe(true);
     expect(createdDirs.has(screenshotsDir)).toBe(true);
   });
 
@@ -125,20 +123,9 @@ describe("scaffold-json", () => {
     expect(promptContent).toContain("Do NOT edit tasks.json");
     expect(promptContent).toContain("<promise>success</promise>");
     expect(promptContent).toContain("Make one git commit");
-    expect(promptContent).toContain("Do not git init, do not change remotes, do not push");
-  });
-
-  it("should create ral.json with correct content", async () => {
-    const workingDir = "/test/dir";
-
-    await scaffoldJson({ workingDirectory: workingDir }, mockFs);
-
-    const configPath = path.join(workingDir, "ral.json");
-    const configContent = writtenFiles.get(configPath);
-
-    expect(configContent).toBeDefined();
-    const parsed = JSON.parse(configContent!);
-    expect(parsed).toEqual({ runner: "claude", taskSelection: "smart" });
+    expect(promptContent).toContain(
+      "Do not git init, do not change remotes, do not push"
+    );
   });
 
   it("should not overwrite existing files when force is false", async () => {
@@ -176,14 +163,12 @@ describe("scaffold-json", () => {
     const planPath = path.join(cwd, "plan.md");
     const tasksPath = path.join(cwd, "tasks.json");
     const promptPath = path.join(cwd, "prompt.md");
-    const configPath = path.join(cwd, "ral.json");
     const screenshotsDir = path.join(cwd, "screenshots");
 
     expect(writtenFiles.has(activityPath)).toBe(true);
     expect(writtenFiles.has(planPath)).toBe(true);
     expect(writtenFiles.has(tasksPath)).toBe(true);
     expect(writtenFiles.has(promptPath)).toBe(true);
-    expect(writtenFiles.has(configPath)).toBe(true);
     expect(createdDirs.has(screenshotsDir)).toBe(true);
   });
 
@@ -201,7 +186,6 @@ describe("scaffold-json", () => {
     const planPath = path.join(workingDir, "plan.md");
     const tasksPath = path.join(workingDir, "tasks.json");
     const promptPath = path.join(workingDir, "prompt.md");
-    const configPath = path.join(workingDir, "ral.json");
 
     // Pre-populate only activity.md
     writtenFiles.set(activityPath, "# Existing Activity");
@@ -214,7 +198,6 @@ describe("scaffold-json", () => {
     expect(writtenFiles.has(planPath)).toBe(true);
     expect(writtenFiles.has(tasksPath)).toBe(true);
     expect(writtenFiles.has(promptPath)).toBe(true);
-    expect(writtenFiles.has(configPath)).toBe(true);
   });
 
   it("should include dev server management guidance in prompt.md", async () => {

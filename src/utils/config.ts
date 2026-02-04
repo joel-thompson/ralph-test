@@ -19,7 +19,7 @@ export interface RalConfig {
   services?: Record<string, ServiceConfig>;
 }
 
-export type ConfigSource = "working-directory" | "root-directory" | "default";
+export type ConfigSource = "root-directory" | "default";
 
 export interface ConfigResult {
   config: RalConfig;
@@ -56,10 +56,7 @@ function validateServiceConfig(
     );
   }
 
-  if (
-    !serviceObj.composeFile ||
-    typeof serviceObj.composeFile !== "string"
-  ) {
+  if (!serviceObj.composeFile || typeof serviceObj.composeFile !== "string") {
     throw new CommandError(
       `Invalid ral.json: services.${serviceName}.composeFile is required and must be a string`
     );
@@ -116,13 +113,17 @@ function validateServices(services: unknown): Record<string, ServiceConfig> {
 }
 
 export async function loadConfig(
-  workingDirectory: string,
   rootDirectory?: string
 ): Promise<ConfigResult> {
-  const workingConfigPath = path.join(workingDirectory, "ral.json");
+  if (!rootDirectory) {
+    console.log("No ral.json found, using default config (runner: claude)");
+    return { config: DEFAULT_CONFIG, source: "default" };
+  }
+
+  const configPath = path.join(rootDirectory, "ral.json");
 
   try {
-    const content = await readFile(workingConfigPath, "utf-8");
+    const content = await readFile(configPath, "utf-8");
     const config = JSON.parse(content);
 
     // Validate config structure
@@ -159,7 +160,7 @@ export async function loadConfig(
       validatedServices = validateServices(config.services);
     }
 
-    console.log(`Using config from ${workingConfigPath}`);
+    console.log(`Using config from ${configPath}`);
 
     return {
       config: {
@@ -168,111 +169,13 @@ export async function loadConfig(
         taskSelection: config.taskSelection || DEFAULT_CONFIG.taskSelection,
         services: validatedServices,
       },
-      source: "working-directory",
-      path: workingConfigPath,
+      source: "root-directory",
+      path: configPath,
     };
   } catch (error) {
-    // If file doesn't exist and rootDirectory is provided, try root directory
-    if (
-      error instanceof Error &&
-      "code" in error &&
-      error.code === "ENOENT" &&
-      rootDirectory
-    ) {
-      const rootConfigPath = path.join(rootDirectory, "ral.json");
-
-      try {
-        const content = await readFile(rootConfigPath, "utf-8");
-        const config = JSON.parse(content);
-
-        // Validate config structure
-        if (!config || typeof config !== "object") {
-          throw new CommandError("Invalid ral.json: config must be an object");
-        }
-
-        if (
-          config.runner &&
-          config.runner !== "claude" &&
-          config.runner !== "cursor"
-        ) {
-          throw new CommandError(
-            `Invalid ral.json: runner must be "claude" or "cursor", got "${config.runner}"`
-          );
-        }
-
-        if (config.model !== undefined && typeof config.model !== "string") {
-          throw new CommandError("Invalid ral.json: model must be a string");
-        }
-
-        if (
-          config.taskSelection !== undefined &&
-          config.taskSelection !== "first-incomplete" &&
-          config.taskSelection !== "smart"
-        ) {
-          throw new CommandError(
-            `Invalid ral.json: taskSelection must be "first-incomplete" or "smart", got "${config.taskSelection}"`
-          );
-        }
-
-        let validatedServices: Record<string, ServiceConfig> | undefined;
-        if (config.services !== undefined) {
-          validatedServices = validateServices(config.services);
-        }
-
-        console.log(
-          `Config not found in working directory, using root config from ${rootConfigPath}`
-        );
-
-        return {
-          config: {
-            runner: config.runner || DEFAULT_CONFIG.runner,
-            model: config.model,
-            taskSelection: config.taskSelection || DEFAULT_CONFIG.taskSelection,
-            services: validatedServices,
-          },
-          source: "root-directory",
-          path: rootConfigPath,
-        };
-      } catch (rootError) {
-        // If root directory config also doesn't exist, return default config
-        if (
-          rootError instanceof Error &&
-          "code" in rootError &&
-          rootError.code === "ENOENT"
-        ) {
-          console.log(
-            "No ral.json found, using default config (runner: claude)"
-          );
-
-          return {
-            config: DEFAULT_CONFIG,
-            source: "default",
-          };
-        }
-
-        // If it's already a CommandError, rethrow it
-        if (rootError instanceof CommandError) {
-          throw rootError;
-        }
-
-        // Handle JSON parse errors
-        if (rootError instanceof SyntaxError) {
-          throw new CommandError(`Invalid ral.json: ${rootError.message}`);
-        }
-
-        // Handle other errors
-        throw rootError;
-      }
-    }
-
-    // If file doesn't exist and no rootDirectory provided, return default config
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       console.log("No ral.json found, using default config (runner: claude)");
-
-      return {
-        config: DEFAULT_CONFIG,
-        source: "default",
-      };
+      return { config: DEFAULT_CONFIG, source: "default" };
     }
 
     // If it's already a CommandError, rethrow it

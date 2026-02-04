@@ -28,7 +28,7 @@ export async function serviceStatus(
   const { workingDirectory, serviceName, json } = options;
 
   // Load config to get service definitions
-  const { config } = await loadConfig(workingDirectory);
+  const { config } = await loadConfig(process.cwd());
 
   if (!config.services) {
     throw new CommandError(
@@ -39,7 +39,9 @@ export async function serviceStatus(
   const service = config.services[serviceName];
   if (!service) {
     throw new CommandError(
-      `Service "${serviceName}" not found in ral.json. Available services: ${Object.keys(config.services).join(", ")}`
+      `Service "${serviceName}" not found in ral.json. Available services: ${Object.keys(
+        config.services
+      ).join(", ")}`
     );
   }
 

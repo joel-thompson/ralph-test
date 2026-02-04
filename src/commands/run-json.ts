@@ -424,7 +424,7 @@ export async function runJson(
   await validateWorkingDirectory(workingDirectory, fs);
 
   // Load config and select runner if not provided
-  const configResult = await loadConfig(workingDirectory, process.cwd());
+  const configResult = await loadConfig(process.cwd());
   const config = configResult.config;
 
   if (!runner) {
@@ -432,8 +432,6 @@ export async function runJson(
     console.log("\n--- Configuration ---");
     if (configResult.source === "default") {
       console.log("Using default config (no ral.json found)");
-    } else if (configResult.source === "working-directory") {
-      console.log(`Config loaded from: ${configResult.path}`);
     } else if (configResult.source === "root-directory") {
       console.log(`Config loaded from: ${configResult.path}`);
     }

@@ -18,7 +18,7 @@ export async function serviceStart(
   const { workingDirectory, serviceName } = options;
 
   // Load config to get service definitions
-  const { config } = await loadConfig(workingDirectory);
+  const { config } = await loadConfig(process.cwd());
 
   if (!config.services) {
     throw new CommandError(
@@ -29,7 +29,9 @@ export async function serviceStart(
   const service = config.services[serviceName];
   if (!service) {
     throw new CommandError(
-      `Service "${serviceName}" not found in ral.json. Available services: ${Object.keys(config.services).join(", ")}`
+      `Service "${serviceName}" not found in ral.json. Available services: ${Object.keys(
+        config.services
+      ).join(", ")}`
     );
   }
 
@@ -58,7 +60,9 @@ export async function serviceStart(
     // Docker compose up -d is idempotent - it will return 0 even if already running
     if (result.exitCode !== 0) {
       throw new CommandError(
-        `Failed to start service "${serviceName}": ${result.stderr || result.stdout}`
+        `Failed to start service "${serviceName}": ${
+          result.stderr || result.stdout
+        }`
       );
     }
 
@@ -80,7 +84,10 @@ export async function serviceStart(
   } catch (error) {
     if (error instanceof Error) {
       // Check if docker is not available
-      if (error.message.includes("ENOENT") || error.message.includes("spawn docker")) {
+      if (
+        error.message.includes("ENOENT") ||
+        error.message.includes("spawn docker")
+      ) {
         throw new CommandError(
           "Docker is not available. Please ensure Docker is installed and the Docker daemon is running."
         );

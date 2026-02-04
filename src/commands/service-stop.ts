@@ -12,13 +12,11 @@ export interface ServiceStopOptions {
  * Stop a service using Docker Compose.
  * This command is idempotent - it's safe to call when the service is already stopped.
  */
-export async function serviceStop(
-  options: ServiceStopOptions
-): Promise<void> {
+export async function serviceStop(options: ServiceStopOptions): Promise<void> {
   const { workingDirectory, serviceName } = options;
 
   // Load config to get service definitions
-  const { config } = await loadConfig(workingDirectory);
+  const { config } = await loadConfig(process.cwd());
 
   if (!config.services) {
     throw new CommandError(
@@ -29,7 +27,9 @@ export async function serviceStop(
   const service = config.services[serviceName];
   if (!service) {
     throw new CommandError(
-      `Service "${serviceName}" not found in ral.json. Available services: ${Object.keys(config.services).join(", ")}`
+      `Service "${serviceName}" not found in ral.json. Available services: ${Object.keys(
+        config.services
+      ).join(", ")}`
     );
   }
 
@@ -58,7 +58,9 @@ export async function serviceStop(
     // Docker compose stop is idempotent - it will return 0 even if already stopped
     if (result.exitCode !== 0) {
       throw new CommandError(
-        `Failed to stop service "${serviceName}": ${result.stderr || result.stdout}`
+        `Failed to stop service "${serviceName}": ${
+          result.stderr || result.stdout
+        }`
       );
     }
 
@@ -76,7 +78,10 @@ export async function serviceStop(
   } catch (error) {
     if (error instanceof Error) {
       // Check if docker is not available
-      if (error.message.includes("ENOENT") || error.message.includes("spawn docker")) {
+      if (
+        error.message.includes("ENOENT") ||
+        error.message.includes("spawn docker")
+      ) {
         throw new CommandError(
           "Docker is not available. Please ensure Docker is installed and the Docker daemon is running."
         );

@@ -28,7 +28,7 @@ export async function serviceLogs(
   const { workingDirectory, serviceName, tail = 200, json } = options;
 
   // Load config to get service definitions
-  const { config } = await loadConfig(workingDirectory);
+  const { config } = await loadConfig(process.cwd());
 
   if (!config.services) {
     throw new CommandError(
@@ -39,7 +39,9 @@ export async function serviceLogs(
   const service = config.services[serviceName];
   if (!service) {
     throw new CommandError(
-      `Service "${serviceName}" not found in ral.json. Available services: ${Object.keys(config.services).join(", ")}`
+      `Service "${serviceName}" not found in ral.json. Available services: ${Object.keys(
+        config.services
+      ).join(", ")}`
     );
   }
 
@@ -58,7 +60,15 @@ export async function serviceLogs(
   try {
     const result = await executeShell(
       "docker",
-      ["compose", "-f", service.composeFile, "logs", "--tail", String(tail), service.service],
+      [
+        "compose",
+        "-f",
+        service.composeFile,
+        "logs",
+        "--tail",
+        String(tail),
+        service.service,
+      ],
       {
         cwd: serviceCwd,
         timeout: 30000, // 30 second timeout for fetching logs
@@ -67,7 +77,9 @@ export async function serviceLogs(
 
     if (result.exitCode !== 0) {
       throw new CommandError(
-        `Failed to fetch logs for service "${serviceName}": ${result.stderr || result.stdout}`
+        `Failed to fetch logs for service "${serviceName}": ${
+          result.stderr || result.stdout
+        }`
       );
     }
 
@@ -94,7 +106,10 @@ export async function serviceLogs(
   } catch (error) {
     if (error instanceof Error) {
       // Check if docker is not available
-      if (error.message.includes("ENOENT") || error.message.includes("spawn docker")) {
+      if (
+        error.message.includes("ENOENT") ||
+        error.message.includes("spawn docker")
+      ) {
         throw new CommandError(
           "Docker is not available. Please ensure Docker is installed and the Docker daemon is running."
         );
