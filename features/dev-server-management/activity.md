@@ -2,8 +2,8 @@
 
 ## Current Status
 **Last Updated:** 2026-02-04
-**Tasks Completed:** 2
-**Current Task:** US-003 (service stop command)
+**Tasks Completed:** 4
+**Current Task:** US-005 (service logs command) - COMPLETED
 
 ---
 
@@ -232,3 +232,64 @@ No new dependencies were added. Used existing shell execution utility from `src/
 - Only performing healthcheck when service is running saves unnecessary network calls
 - Mocking global fetch in tests requires careful setup but allows for comprehensive healthcheck testing
 - Providing both human-readable and JSON output modes makes the command useful for both manual inspection and programmatic use
+
+---
+
+### 2026-02-04 - US-005: Implement `ral service logs <name>` command
+
+**Task:** Implement Docker Compose service logs fetch with `--tail` option (tail-and-exit default) and optional `--json` output
+
+**Changes Made:**
+1. Created service logs command in `src/commands/service-logs.ts`:
+   - `serviceLogs()` function that resolves service from ral.json config
+   - Validates service exists and is of type "docker-compose"
+   - Executes `docker compose -f <composeFile> logs --tail <n> <service>` from configured cwd
+   - Default tail value of 200 lines (prevents following/attaching indefinitely)
+   - Supports custom tail value via `--tail <n>` option
+   - Provides clear error messages for:
+     - No services configured
+     - Unknown service names (lists available services)
+     - Unsupported service types
+     - Docker not available/daemon not running
+   - Handles both relative and absolute service cwd paths
+   - 30 second timeout for log fetch operations
+   - Returns ServiceLogsResult object with: name, type, composeFile, composeService, lines
+   - Supports `--json` flag for machine-readable JSON output containing metadata and lines array
+   - Human-readable output format (plain text logs) when `--json` is not provided
+
+2. Added CLI command wiring in `src/index.ts`:
+   - Added `service logs <name>` subcommand to the existing `service` command group
+   - Supports `-w, --working-directory` option
+   - Supports `--tail <n>` option for custom line count (default: 200)
+   - Supports `--json` flag for JSON output
+   - Proper error handling and exit codes
+
+3. Added comprehensive unit tests in `src/commands/service-logs.test.ts` (10 tests):
+   - No services configured error
+   - Unknown service name error
+   - Unsupported service type error
+   - Fetch logs with default tail of 200 lines
+   - Fetch logs with custom tail value
+   - JSON output format when --json flag is provided
+   - Docker command failure handling
+   - Docker not installed error
+   - Absolute path handling
+   - Empty logs output handling
+
+**Verification Results:**
+- All tests pass: 219 tests passing across 17 test files
+- TypeScript typecheck passes with no errors
+- CLI command `ral service logs --help` displays correct usage
+- Default behavior: tail 200 lines and exit (no follow/attach)
+- Custom tail values work correctly via --tail option
+- JSON output includes metadata (name, type, composeFile, composeService) and lines array
+
+**Dependencies:**
+No new dependencies were added. Used existing shell execution utility from `src/utils/shell.ts`.
+
+**Lessons Learned:**
+- Docker Compose `logs --tail N` command naturally exits after fetching the specified number of lines (no --follow flag needed)
+- Splitting stdout by newlines provides a clean way to return logs as an array in JSON mode
+- Maintaining consistent error handling patterns across all service commands improves maintainability
+- Providing both JSON (for agent consumption) and plain text (for human inspection) output modes maximizes utility
+- Default tail value of 200 lines prevents commands from hanging while still providing sufficient context for debugging

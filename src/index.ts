@@ -9,6 +9,7 @@ import { runJson } from "./commands/run-json.js";
 import { serviceStart } from "./commands/service-start.js";
 import { serviceStop } from "./commands/service-stop.js";
 import { serviceStatus } from "./commands/service-status.js";
+import { serviceLogs } from "./commands/service-logs.js";
 
 const program = new Command();
 
@@ -202,6 +203,31 @@ serviceCommand
       await serviceStatus({
         workingDirectory: options.workingDirectory || process.cwd(),
         serviceName: name,
+        json: options.json,
+      });
+    } catch (error) {
+      console.error(
+        `Error: ${error instanceof Error ? error.message : String(error)}`
+      );
+      process.exit(1);
+    }
+  });
+
+serviceCommand
+  .command("logs <name>")
+  .description("Fetch logs from a service using Docker Compose")
+  .option(
+    "-w, --working-directory <path>",
+    "Working directory (default: current directory)"
+  )
+  .option("--tail <n>", "Number of lines to fetch (default: 200)", parseInt)
+  .option("--json", "Output logs in JSON format")
+  .action(async (name: string, options) => {
+    try {
+      await serviceLogs({
+        workingDirectory: options.workingDirectory || process.cwd(),
+        serviceName: name,
+        tail: options.tail,
         json: options.json,
       });
     } catch (error) {
