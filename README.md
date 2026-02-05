@@ -337,23 +337,41 @@ ral service logs web --json              # JSON output with metadata
 }
 ```
 
-#### Example: Vite + React Dev Server
+#### Example 1: Vite + React Dev Server
 
-Here's a complete example for managing a Vite dev server:
+Here's a complete, real-world example for managing a Vite dev server:
+
+**vite.config.ts:**
+
+```typescript
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: "0.0.0.0",  // Required for Docker: listen on all interfaces
+    port: 5176,
+  },
+});
+```
 
 **docker-compose.yml:**
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   web:
-    image: node:18
+    image: node:22
     working_dir: /app
     volumes:
       - .:/app
+      - /app/node_modules  # Separate volume prevents host/container conflicts
     ports:
-      - "5173:5173"
-    command: npm run dev -- --host 0.0.0.0
+      - "5176:5176"  # Match the port in vite.config.ts
+    command: sh -c "npm install -g pnpm && pnpm install && pnpm run dev"
+    environment:
+      - NODE_ENV=development
 ```
 
 **ral.json:**
@@ -361,17 +379,25 @@ services:
 ```json
 {
   "runner": "claude",
+  "taskSelection": "smart",
   "services": {
     "web": {
       "type": "docker-compose",
       "cwd": ".",
       "composeFile": "docker-compose.yml",
       "service": "web",
-      "healthcheckUrl": "http://localhost:5173/"
+      "healthcheckUrl": "http://localhost:5176/"
     }
   }
 }
 ```
+
+**Key points:**
+
+- **`host: "0.0.0.0"`** in `vite.config.ts` is required so Vite listens on all network interfaces inside the Docker container, allowing access from the host machine
+- **`/app/node_modules` volume** prevents conflicts between host and container `node_modules` directories
+- **Port consistency**: Ensure the port matches across `vite.config.ts` (server.port), `docker-compose.yml` (ports mapping), and `ral.json` (healthcheckUrl)
+- Dependencies are installed inside the container to ensure compatibility with the container's Node.js version
 
 **Usage in a Ralph loop:**
 
@@ -387,6 +413,85 @@ ral service logs web --tail 100
 
 # Stop when done
 ral service stop web
+```
+
+#### Example 2: Multi-Service Setup (Frontend + API)
+
+For projects with multiple services, define each service in `ral.json`:
+
+**docker-compose.yml:**
+
+```yaml
+version: "3.8"
+services:
+  frontend:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5176:5176"
+    command: sh -c "pnpm install && pnpm run dev"
+    environment:
+      - NODE_ENV=development
+
+  api:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+```
+
+**ral.json:**
+
+```json
+{
+  "runner": "claude",
+  "services": {
+    "frontend": {
+      "type": "docker-compose",
+      "cwd": ".",
+      "composeFile": "docker-compose.yml",
+      "service": "frontend",
+      "healthcheckUrl": "http://localhost:5176/"
+    },
+    "api": {
+      "type": "docker-compose",
+      "cwd": ".",
+      "composeFile": "docker-compose.yml",
+      "service": "api",
+      "healthcheckUrl": "http://localhost:3000/health"
+    }
+  }
+}
+```
+
+**Usage:**
+
+```bash
+# Start both services independently
+ral service start frontend
+ral service start api
+
+# Check status of each
+ral service status frontend
+ral service status api
+
+# View logs from either service
+ral service logs frontend
+ral service logs api
+
+# Stop services individually
+ral service stop frontend
+ral service stop api
 ```
 
 ## Core Concepts
