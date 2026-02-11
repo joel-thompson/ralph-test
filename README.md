@@ -229,14 +229,13 @@ Add a `services` section to your `ral.json` to define one or more services:
 
 **Service Configuration Fields:**
 
-
-| Field            | Type               | Required | Description                                                                            |
-| ---------------- | ------------------ | -------- | -------------------------------------------------------------------------------------- |
-| `type`           | `"docker-compose"` | Yes      | Service type (only `docker-compose` supported in v1)                                   |
-| `cwd`            | `string`           | Yes      | Working directory where Docker Compose will run (relative to project root or absolute) |
-| `composeFile`    | `string`           | Yes      | Docker Compose file name (e.g., `docker-compose.yml`)                                  |
-| `service`        | `string`           | Yes      | Service name from the Compose file to manage                                           |
-| `healthcheckUrl` | `string`           | Yes      | HTTP URL to check if the service is healthy (e.g., `http://localhost:5173/`)           |
+| Field            | Type               | Required | Description                                                                                                                                 |
+| ---------------- | ------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`           | `"docker-compose"` | Yes      | How the service is run. Currently only `docker-compose` is supported; other types may be added later.                                       |
+| `cwd`            | `string`           | Yes      | Directory where `docker compose` runs. If relative (e.g. `./my-app`), resolved against the project working directory; use absolute for fixed paths. Relative paths in the compose file (Dockerfile, volumes) resolve from this directory. |
+| `composeFile`    | `string`           | Yes      | Name of the Docker Compose file (e.g., `docker-compose.yml`). Resolved relative to `cwd`.                                                    |
+| `service`        | `string`           | Yes      | Name of the service in the Compose file to start, stop, or inspect (e.g., the `web` under `services.web`).                                   |
+| `healthcheckUrl` | `string`           | Yes      | HTTP URL used by `ral service status` to verify the service is healthy (e.g., `http://localhost:5173/`). Must be a valid URL.                 |
 
 
 #### Service Commands
