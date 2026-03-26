@@ -45,55 +45,6 @@ cat tasks.json  # See which tasks are complete
 git log
 ```
 
-## Pre-Commit Hooks (Recommended)
-
-When using Ralph with autonomous agents, we recommend setting up pre-commit hooks. Since agents make commits as part of the loop, pre-commit hooks act as a safety net—they ensure code quality gates (like linting and type checking) are enforced automatically on every commit. The agent will fix issues before completing a task because its commit won't succeed otherwise.
-
-### Setup
-
-1. **Install `@j178/prek`** as a dev dependency:
-
-```bash
-pnpm add -D @j178/prek
-# or: npm install -D @j178/prek
-# or: yarn add -D @j178/prek
-```
-
-2. **Create `.pre-commit-config.yaml`** in your project root. Here's an example you can adapt for your own project:
-
-```yaml
-repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
-    hooks:
-      - id: check-yaml
-      - id: no-commit-to-branch
-  - repo: local
-    hooks:
-      - id: pnpm-lint
-        name: pnpm lint
-        entry: pnpm run lint
-        language: system
-        pass_filenames: false
-      - id: pnpm-typecheck
-        name: pnpm typecheck
-        entry: pnpm run typecheck
-        language: system
-        pass_filenames: false
-```
-
-3. **Install the hooks** so they run automatically on commits:
-
-```bash
-pnpm prek install
-```
-
-4. **Test the hooks** manually to verify they work:
-
-```bash
-pnpm prek run
-```
-
 ## Claude Code Skills
 
 Ralph includes two powerful skills for use with Claude Code that help you plan and structure your work before running the autonomous loop:
